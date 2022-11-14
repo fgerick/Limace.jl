@@ -13,18 +13,18 @@ function _coriolis_ts(is,js,aijs, i,j, l,l2,m,m2,n,n2; Ω = 2)
     end
     if (l==l2+1) && (n>=n2-1)
         if n+1==n2
-            aij = sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1.0+n)*(3.0+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
+            aij = sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
         else
-            aij = -sqrt((l^2-1)*(l-m)*(l+m)*(3.0+2l+4n2)*(7.0+2l+4n))/sqrt((4l^2-1.0)*(n+1)*(n+2)*(3.0+2l+2n)*(5.0+2l+2n))/l
+            aij = -sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
         end
         push!(is,i)
         push!(js,j)
         push!(aijs,Ω*aij)
     elseif (l==l2-1) && (n>=n2)
         if n==n2
-            aij = (l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1.0)*(l+m+1.0)*(2l+2n+3.0))/sqrt((l+2.0)*(2l+1.0)*(2l+3.0)*(n+2.0)*(2l+2n+5.0))
+            aij = (l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
         else
-            aij = -sqrt((2l+4n2+7)*l*(l+2.0)*(l-m+1.0)*(l+m+1.0)*(2l+4n+7.0))/((l+1)*sqrt((4l*(l+2)+3.0)*(n+1)*(n+2)*(2l+2n+3.0)*(2l+2n+5.0)))
+            aij = -sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
         end
         push!(is,i)
         push!(js,j)
@@ -39,18 +39,18 @@ function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2)
     end
     if (l==l2+1) && (n>=n2-1)
         if n+1==n2
-            aij = -sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3.0+2l+2n))/l/sqrt((4l^2-1)*(2.0+n)*(5.0+2l+2n))
+            aij = -sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
         else
-            aij = sqrt((l^2-1)*(l-m)*(l+m)*(3.0+2l+4n2)*(7.0+2l+4n))/sqrt((4l^2-1)*(n+1.0)*(n+2)*(3.0+2l+2n)*(5.0+2l+2n))/l
+            aij = sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
         end
         push!(is,i)
         push!(js,j)
         push!(aijs,Ω*aij)
     elseif (l==l2-1) && (n>=n2)
         if n==n2
-            aij = -(l+2)/(l+1)*sqrt(l*(n+1.0)*(l-m+1)*(l+m+1)*(2l+2n+3.0))/sqrt((l+2.0)*(2l+1)*(2l+3.0)*(n+2)*(2l+2n+5.0))
+            aij = -(l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
         else
-            aij = sqrt((2l+4n2+7.0)*l*(l+2.0)*(l-m+1.0)*(l+m+1)*(2l+4n+7.0))/((l+1)*sqrt((4l*(l+2)+3)*(n+1.0)*(n+2)*(2l+2n+3.0)*(2l+2n+5.0)))
+            aij = sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
         end
         push!(is,i)
         push!(js,j)
@@ -64,13 +64,13 @@ function _viscous_tt(is,js,aijs, i,j, l,m,n,n2; ν = 1.0)
     
    
     if n>=n2 
-        aij = -((1 + n2)*sqrt(2 + n2)*sqrt((7.0 + 2*l + 4*n)*(3.0 + 2*l + 2*n2))*sqrt(5.0 + 2*l + 2*n2)*sqrt(7 + 2*l + 4*n2)*(9.0 + 2*n2*(7 + 2*n2) + l*(6.0 + 4*n2)))/sqrt((1 + n)*(2 + n)*(3.0 + 2*l + 2*n)*(5.0 + 2*l + 2*n)*(1.0 + n2))/6
+        aij = -((1 + n2)*sqrt(2 + n2)*sqrt((7 + 2*l + 4*n)*(3 + 2*l + 2*n2))*sqrt(5 + 2*l + 2*n2)*sqrt(7 + 2*l + 4*n2)*(9 + 2*n2*(7 + 2*n2) + l*(6 + 4*n2)))/sqrt((1 + n)*(2 + n)*(3 + 2*l + 2*n)*(5 + 2*l + 2*n)*(1 + n2))/6
     else
         #symmetric.
         nt = n
         n = n2
         n2 = nt
-        aij = -((1 + n2)*sqrt(2 + n2)*sqrt((7.0 + 2*l + 4*n)*(3.0 + 2*l + 2*n2))*sqrt(5.0 + 2*l + 2*n2)*sqrt(7.0 + 2*l + 4*n2)*(9.0 + 2*n2*(7.0 + 2*n2) + l*(6.0 + 4*n2)))/sqrt((1 + n)*(2 + n)*(3.0 + 2*l + 2*n)*(5.0 + 2*l + 2*n)*(1 + n2))/6.0
+        aij = -((1 + n2)*sqrt(2 + n2)*sqrt((7 + 2*l + 4*n)*(3 + 2*l + 2*n2))*sqrt(5 + 2*l + 2*n2)*sqrt(7 + 2*l + 4*n2)*(9 + 2*n2*(7 + 2*n2) + l*(6 + 4*n2)))/sqrt((1 + n)*(2 + n)*(3 + 2*l + 2*n)*(5 + 2*l + 2*n)*(1 + n2))/6
     end
     push!(is,i)
     push!(js,j)
@@ -85,7 +85,7 @@ function _viscous_ss(is,js,aijs, i,j, l,m,n,n2; ν = 1.0)
     
    
     if n<n2 
-        aij = -(n - n2)*(1 + n2)*(5.0 + 2*l + 2*n + 2*n2)*sqrt(((5.0 + 2*l + 4*n)*(5.0 + 2*l + 4*n2))/(1.0 + n2)^2)
+        aij = -(n - n2)*(1 + n2)*(5 + 2*l + 2*n + 2*n2)*sqrt(((5 + 2*l + 4*n)*(5 + 2*l + 4*n2))/(1 + n2)^2)
         push!(is,i)
         push!(js,j)
         push!(aijs,ν*aij)
@@ -108,29 +108,35 @@ function rhs(N,m; Ω = 2.0, ν = 1.0)
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
+        l,m,n = Float64.((l,m,n))
         push!(is,i)
         push!(js,i)
         push!(aijs,_coriolis_ss(l,m; Ω))
         for (j, (l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = Float64.((l2,m2,n2))
             if (l==l2) && (m==m2)
                 _viscous_ss(is,js,aijs,i,j, l,m,n,n2; ν)
             end
         end
         for (j,(l2,m2,n2)) in enumerate(lmn_t)
+            l2,m2,n2 = Float64.((l2,m2,n2))
             _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
+        l,m,n = Float64.((l,m,n))
         push!(is,i+np)
         push!(js,i+np)
         push!(aijs,_coriolis_tt(l,m; Ω))
         for (j, (l2,m2,n2)) in enumerate(lmn_t)
             if (l==l2) && (m==m2)
+                l2,m2,n2 = Float64.((l2,m2,n2))
                 _viscous_tt(is,js,aijs, i+np,j+np, l,m,n,n2; ν)  
             end
         end
         for (j,(l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = Float64.((l2,m2,n2))
             _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
         end
     end

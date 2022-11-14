@@ -54,19 +54,23 @@ function rhs_inviscid(N,m; Ω = 2.0)
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
+        l,m,n = Float64.((l,m,n))
         push!(is,i)
         push!(js,i)
         push!(aijs,_coriolis_ss(l,m; Ω))
         for (j,(l2,m2,n2)) in enumerate(lmn_t)
+            l2,m2,n2 = Float64.((l2,m2,n2))
             _coriolis_st_inviscid(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
+        l,m,n = Float64.((l,m,n))
         push!(is,i+np)
         push!(js,i+np)
         push!(aijs,_coriolis_tt(l,m; Ω))
         for (j,(l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = Float64.((l2,m2,n2))
             _coriolis_ts_inviscid(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
         end
     end
