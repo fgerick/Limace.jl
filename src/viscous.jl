@@ -2,6 +2,9 @@ module ViscousBasis
 
 
 using SparseArrays
+using Distributed
+using DistributedArrays
+using Random
 
 lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:(N-l+1)÷2 if abs(m)<=l]
 # lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for n in 0:(N-1) for l in 1:(N-1) if (abs(m)<=l) && (n<=(N-l+1)÷2)]
@@ -100,20 +103,12 @@ function _viscous_ss(is,js,aijs, i,j, l,m,n,n2; ν = 1.0)
     return nothing
 end
 
-function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
-
-    np = length(lmn_p)
-    @show np
-    nt = length(lmn_t)
-    nu = np+nt
-
+function rhs1(indices, lmn_p,lmn_t,Ω::T,ν::T) where T
     is,js,aijs = Int[], Int[], Complex{T}[]
+    np = length(lmn_p)
 
-
-    for (i,(l,m,n)) in enumerate(lmn_p)
-        l,m,n = T.((l,m,n))
+    for i in indices
+        l,m,n = T.(lmn_p[i])
         push!(is,i)
         push!(js,i)
         push!(aijs,_coriolis_ss(l,m; Ω))
@@ -128,9 +123,15 @@ function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
             _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
         end
     end
+    return is, js, aijs
+end
 
-    for (i,(l,m,n)) in enumerate(lmn_t)
-        l,m,n = T.((l,m,n))
+function rhs2(indices,lmn_p,lmn_t,Ω::T,ν::T) where T
+    is,js,aijs = Int[], Int[], Complex{T}[]
+    np = length(lmn_p)
+
+    for i in indices
+        l,m,n = T.(lmn_t[i])
         push!(is,i+np)
         push!(js,i+np)
         push!(aijs,_coriolis_tt(l,m; Ω))
@@ -145,65 +146,97 @@ function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
             _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
         end
     end
+    
+    return is, js, aijs
+end
+function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
+    lmn_p = lmn_upol(N,m)
+    lmn_t = lmn_utor(N,m)
 
+    np = length(lmn_p)
+    # @show np
+    nt = length(lmn_t)
+    nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    is, js, aijs = rhs1(eachindex(lmn_p), lmn_p, lmn_t, Ω, ν)
+    # for (i,(l,m,n)) in enumerate(lmn_p)
+    #     l,m,n = T.((l,m,n))
+    #     push!(is,i)
+    #     push!(js,i)
+    #     push!(aijs,_coriolis_ss(l,m; Ω))
+    #     for (j, (l2,m2,n2)) in enumerate(lmn_p)
+    #         l2,m2,n2 = T.((l2,m2,n2))
+    #         if (l==l2) && (m==m2)
+    #             _viscous_ss(is,js,aijs,i,j, l,m,n,n2; ν)
+    #         end
+    #     end
+    #     for (j,(l2,m2,n2)) in enumerate(lmn_t)
+    #         l2,m2,n2 = T.((l2,m2,n2))
+    #         _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
+    #     end
+    # end
+
+    # for (i,(l,m,n)) in enumerate(lmn_t)
+    #     l,m,n = T.((l,m,n))
+    #     push!(is,i+np)
+    #     push!(js,i+np)
+    #     push!(aijs,_coriolis_tt(l,m; Ω))
+    #     for (j, (l2,m2,n2)) in enumerate(lmn_t)
+    #         if (l==l2) && (m==m2)
+    #             l2,m2,n2 = T.((l2,m2,n2))
+    #             _viscous_tt(is,js,aijs, i+np,j+np, l,m,n,n2; ν)  
+    #         end
+    #     end
+    #     for (j,(l2,m2,n2)) in enumerate(lmn_p)
+    #         l2,m2,n2 = T.((l2,m2,n2))
+    #         _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
+    #     end
+    # end
+
+    is2, js2, aijs2 = rhs2(eachindex(lmn_t), lmn_p, lmn_t, Ω, ν)
+    append!(is,is2)
+    append!(js,js2)
+    append!(aijs,aijs2)
     RHS = sparse(is,js,aijs, nu, nu)
     return RHS
 
 end
 
-# function rhsd(N,m; Ω = 2.0, ν = 1.0)
-#     lmn_p = lmn_upol(N,m)
-#     lmn_t = lmn_utor(N,m)
+# function dist_ind(indices, np)
+#     ni = indices÷np
 
-#     np = length(lmn_p)
-#     @show np
-#     nt = length(lmn_t)
-#     nu = np+nt
+
+function rhsd(N,m; Ω::T = 2.0, ν::T = 1.0) where T
+    lmn_p = lmn_upol(N,m)
+    lmn_t = lmn_utor(N,m)
+
+    np = length(lmn_p)
+    # @show np
+    nt = length(lmn_t)
+    nu = np+nt 
+    f1 = i -> rhs1(i,lmn_p, lmn_t, Ω, ν)
+    dist_indices = getindex.(distribute(lmn_p).indices,1)
+    ijaijs = pmap(f1, dist_indices)
+    # @show ijaijs[1]
+    is,js,aijs = vcat(getindex.(ijaijs,1)...),vcat(getindex.(ijaijs,2)...) , vcat(getindex.(ijaijs,3)...)
+
+    f2 = i -> rhs2(i,lmn_p, lmn_t, Ω, ν)
+    dist_indices = getindex.(distribute(lmn_t).indices, 1)
+    ijaijs2 = pmap(f2, dist_indices)
+    is2, js2, aijs2 = vcat(getindex.(ijaijs2,1)...),vcat(getindex.(ijaijs2,2)...) , vcat(getindex.(ijaijs2,3)...)
 
     
+    append!(is,is2)
+    append!(js,js2)
+    append!(aijs,aijs2)
+ 
+    RHS = sparse(is, js, aijs, nu, nu)
+    return RHS
 
-#     # wig_temp_init(2p.vbasis.n)
-#     is, js, aijs = distribute([Int[] for _=1:nprocs()]), distribute([Int[] for _=1:nprocs()]), distribute([ComplexF64[] for _=1:nprocs()])
-
-#     @inbounds @sync @distributed for i in shuffle(eachindex(lmn_p))
-#         # (i,(l,m,n)) in enumerate(lmn_p)
-#         l,m,n = Float64.(lmn_p[i])
-#         push!(first(localpart(is)),i)
-#         push!(first(localpart(js)),i)
-#         push!(first(localpart(aijs)),_coriolis_ss(l,m; Ω))
-#         for (j, (l2,m2,n2)) in enumerate(lmn_p)
-#             l2,m2,n2 = Float64.((l2,m2,n2))
-#             if (l==l2) && (m==m2)
-#                 _viscous_ss(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j, l,m,n,n2; ν)
-#             end
-#         end
-#         for (j,(l2,m2,n2)) in enumerate(lmn_t)
-#             l2,m2,n2 = Float64.((l2,m2,n2))
-#             _coriolis_st(first(localpart(is)),first(localpart(js)),first(localpart(aijs)), i,j+np, l,l2,m,m2,n,n2; Ω)
-#         end
-#     end
-
-#     @inbounds @sync @distributed for i in shuffle(eachindex(lmn_t))
-#         l,m,n = Float64.(lmn_t[i])
-#         push!(first(localpart(is)),i)
-#         push!(first(localpart(js)),i)
-#         push!(first(localpart(aijs)),_coriolis_tt(l,m; Ω))
-#         for (j, (l2,m2,n2)) in enumerate(lmn_t)
-#             if (l==l2) && (m==m2)
-#                 l2,m2,n2 = Float64.((l2,m2,n2))
-#                 _viscous_tt(first(localpart(is)),first(localpart(js)),first(localpart(aijs)), i+np,j+np, l,m,n,n2; ν)  
-#             end
-#         end
-#         for (j,(l2,m2,n2)) in enumerate(lmn_p)
-#             l2,m2,n2 = Float64.((l2,m2,n2))
-#             _coriolis_ts(first(localpart(is)),first(localpart(js)),first(localpart(aijs)), i+np,j, l,l2,m,m2,n,n2; Ω)
-#         end
-#     end
-
-#     RHS = sparse(vcat(is...),vcat(js...),vcat(aijs...), nu, nu)
-#     return RHS
-
-# end
+end
 
 function rhst(N,m; Ω = 2.0, ν = 1.0)
     lmn_p = lmn_upol(N,m)
@@ -218,7 +251,6 @@ function rhst(N,m; Ω = 2.0, ν = 1.0)
 
     
 
-    # wig_temp_init(2p.vbasis.n)
     is, js, aijs = [Int[] for _=1:nth] , [Int[] for _=1:nth], [ComplexF64[] for _=1:nth]
 
     @inbounds @sync Threads.@threads for i in shuffle(eachindex(lmn_p))
