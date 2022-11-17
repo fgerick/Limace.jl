@@ -89,6 +89,45 @@ end
     return nothing
 end
 
+# function lhs_original(N,m; Ω::T = 1.0) where T
+#     lmn_p = lmn_upol(N,m)
+#     lmn_t = lmn_utor(N,m)
+
+#     np = length(lmn_p)
+#     @show np
+#     nt = length(lmn_t)
+#     nu = np+nt
+
+#     is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+#     for (i,(l,m,n)) in enumerate(lmn_p)
+#         # l,m,n = T.((l,m,n))
+#         for (j, (l2,m2,n2)) in enumerate(lmn_p)
+#             # l2,m2,n2 = T.((l2,m2,n2))
+#             if (l==l2) && (m==m2)
+#                 _inner_ss(is,js,aijs,i,j, T(l),T(n),T(n2))
+#             # j+=1
+#             end
+#         end
+#     end
+
+#     for (i,(l,m,n)) in enumerate(lmn_t)
+#         for (j, (l2,m2,n2)) in enumerate(lmn_t)
+#             if (l==l2) && (m==m2)
+#                 # l2,m2,n2 = T.((l2,m2,n2))
+#                 _inner_tt(is,js,aijs, i+np,j+np, T(l),T(n),T(n2))
+#                 # j+=1
+#             end
+#         end
+#     end
+
+#     LHS = sparse(is,js,aijs, nu, nu)
+#     return LHS
+
+# end
+
+
 function lhs(N,m; Ω::T = 1.0) where T
     lmn_p = lmn_upol(N,m)
     lmn_t = lmn_utor(N,m)
@@ -102,22 +141,16 @@ function lhs(N,m; Ω::T = 1.0) where T
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
-        l,m,n = T.((l,m,n))
-        for (j, (l2,m2,n2)) in enumerate(lmn_p)
-            l2,m2,n2 = T.((l2,m2,n2))
-            if (l==l2) && (m==m2)
-                _inner_ss(is,js,aijs,i,j, l,n,n2)
-            end
+        _inner_ss(is,js,aijs,i,i, T(l),T(n),T(n))
+        if n>1
+            _inner_ss(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
-        l,m,n = T.((l,m,n))
-        for (j, (l2,m2,n2)) in enumerate(lmn_t)
-            if (l==l2) && (m==m2)
-                l2,m2,n2 = T.((l2,m2,n2))
-                _inner_tt(is,js,aijs, i+np,j+np, l,n,n2)  
-            end
+        _inner_tt(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
+        if n>1
+            _inner_tt(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
         end
     end
 
