@@ -344,7 +344,7 @@ function rhs_coriolis(N,m; Ω::T = 2.0) where T
 
 end
 
-function rhs_visosicty(N,m; ν::T = 1.0) where T
+function rhs_viscosity(N,m; ν::T = 1.0) where T
     lmn_p = lmn_upol(N,m)
     lmn_t = lmn_utor(N,m)
 
