@@ -300,4 +300,84 @@ function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
 
 end
 
+function rhs_coriolis(N,m; Ω::T = 2.0) where T
+    lmn_p = lmn_upol(N,m)
+    lmn_t = lmn_utor(N,m)
+
+    np = length(lmn_p)
+    nt = length(lmn_t)
+    nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        l,m,n = T.((l,m,n))
+        for (j, (l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = T.((l2,m2,n2))
+            if (l==l2) && (m==m2)
+                _coriolis_ss(is,js,aijs,i,j, l,m,n,n2; Ω)
+            end
+        end
+        for (j,(l2,m2,n2)) in enumerate(lmn_t)
+            l2,m2,n2 = T.((l2,m2,n2))
+            _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
+        end
+    end
+
+    for (i,(l,m,n)) in enumerate(lmn_t)
+        l,m,n = T.((l,m,n))
+        for (j, (l2,m2,n2)) in enumerate(lmn_t)
+            if (l==l2) && (m==m2)
+                l2,m2,n2 = T.((l2,m2,n2))
+                _coriolis_tt(is,js,aijs, i+np,j+np, l,m,n,n2; Ω)
+            end
+        end
+        for (j,(l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = T.((l2,m2,n2))
+            _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
+        end
+    end
+
+    RHS = sparse(is,js,aijs, nu, nu)
+    return RHS
+
+end
+
+function rhs_visosicty(N,m; ν::T = 1.0) where T
+    lmn_p = lmn_upol(N,m)
+    lmn_t = lmn_utor(N,m)
+
+    np = length(lmn_p)
+    nt = length(lmn_t)
+    nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        l,m,n = T.((l,m,n))
+        for (j, (l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = T.((l2,m2,n2))
+            if (l==l2) && (m==m2) && (n==n2)
+                _viscous_ss( is,js,aijs,i,j, l,m,n,n2; ν)
+            end
+        end
+    end
+
+    for (i,(l,m,n)) in enumerate(lmn_t)
+        l,m,n = T.((l,m,n))
+        for (j, (l2,m2,n2)) in enumerate(lmn_t)
+            if (l==l2) && (m==m2) && (n==n2)
+                l2,m2,n2 = T.((l2,m2,n2))
+                _viscous_tt( is,js,aijs, i+np,j+np, l,m,n,n2; ν)  
+            end
+        end
+    end
+
+    RHS = sparse(is,js,aijs, nu, nu)
+    return RHS
+
+end
+
 end
