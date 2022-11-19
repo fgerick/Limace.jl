@@ -2,18 +2,37 @@ module ChenBasis
 
 using SparseArrays
 
-lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] 
+# lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] 
 
-lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2+1) if abs(m)<=l] 
+# lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2+1) if abs(m)<=l] 
 
+function lmn_upol(N, ms = 0:N, ns = 0) 
+    if (ns != 0)
+        [(l,m,n) for m in ms for l in 1:(N-1) for n in ns if abs(m)<=l]
+    else
+        [(l,m,n) for m in ms for l in 1:(N-1) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] 
+    end
+end
+
+function lmn_utor(N, ms = 0:N, ns = 0) 
+    if (ns != 0)
+        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
+    else
+        [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2+1) if abs(m)<=l] 
+    end
+end
 
 # lmn_upol_l(N, ms = 0:N) = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)]
 
 # lmn_utor_l(N, ms = 0:N) = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
 
-function lmn_upol_l(N, ms = 0:N)
-    lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
-
+function lmn_upol_l(N, ms = 0:N, ns=0)
+    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
+    if (ns != 0)
+        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:(N-1)]
+    else
+        lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)]
+    end
     lmnk = Vector{NTuple{4,Int}}[]
     k=1
     for l in eachindex(lmn)
@@ -26,9 +45,13 @@ function lmn_upol_l(N, ms = 0:N)
     return lmnk
 end
 
-function lmn_utor_l(N, ms = 0:N)
-    lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
-
+function lmn_utor_l(N, ms = 0:N, ns=0)
+    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
+    if (ns != 0)
+        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:N] 
+    else
+        lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l]  for l in 1:N]
+    end
     lmnk = Vector{NTuple{4,Int}}[]
     k=1
     for l in eachindex(lmn)
@@ -128,9 +151,9 @@ end
 # end
 
 
-function lhs(N,m; Ω::T = 1.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
+function lhs(N,m; ns = 0, Ω::T = 1.0) where T
+    lmn_p = lmn_upol(N,m,ns)
+    lmn_t = lmn_utor(N,m,ns)
 
     np = length(lmn_p)
     @show np
@@ -475,11 +498,11 @@ end
 
     return is, js, aijs
 end
-function rhs_coriolis(N,m; Ω::T = 2.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
-    lmn_p_l = lmn_upol_l(N,m)
-    lmn_t_l = lmn_utor_l(N,m)
+function rhs_coriolis(N,m; ns = 0, Ω::T = 2.0) where T
+    lmn_p = lmn_upol(N,m,ns)
+    lmn_t = lmn_utor(N,m,ns)
+    lmn_p_l = lmn_upol_l(N,m,ns)
+    lmn_t_l = lmn_utor_l(N,m,ns)
 
     np = length(lmn_p)
     nt = length(lmn_t)
@@ -500,9 +523,9 @@ function rhs_coriolis(N,m; Ω::T = 2.0) where T
 end
 
 
-function rhs_viscosity(N,m; ν::T = 1.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
+function rhs_viscosity(N,m; ns = 0, ν::T = 1.0) where T
+    lmn_p = lmn_upol(N,m,ns)
+    lmn_t = lmn_utor(N,m,ns)
 
     np = length(lmn_p)
     nt = length(lmn_t)

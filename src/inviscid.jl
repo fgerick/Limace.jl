@@ -47,7 +47,7 @@ function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2.0)
     return nothing
 end
 
-function rhs(N,m; Ω = 2.0)
+function rhs(N,m; Ω::T = 2.0, aijs = Complex{T}[]) where T
     lmn_p = lmn_upol(N,m)
     lmn_t = lmn_utor(N,m)
 
@@ -55,28 +55,28 @@ function rhs(N,m; Ω = 2.0)
     nt = length(lmn_t)
     nu = np+nt
 
-    is,js,aijs = Int[], Int[], ComplexF64[]
+    is,js = Int[], Int[]
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
-        l,m,n = Float64.((l,m,n))
+        # l,m,n = Float64.((l,m,n))
         push!(is,i)
         push!(js,i)
-        push!(aijs,_coriolis_ss(l,m; Ω))
+        push!(aijs,_coriolis_ss(T(l),T(m); Ω))
         for (j,(l2,m2,n2)) in enumerate(lmn_t)
-            l2,m2,n2 = Float64.((l2,m2,n2))
-            _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
+            # l2,m2,n2 = T.((l2,m2,n2))
+            _coriolis_st(is,js,aijs, i,j+np, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
-        l,m,n = Float64.((l,m,n))
+        # l,m,n = Float64.((l,m,n))
         push!(is,i+np)
         push!(js,i+np)
-        push!(aijs,_coriolis_tt(l,m; Ω))
+        push!(aijs,_coriolis_tt(T(l),T(m); Ω))
         for (j,(l2,m2,n2)) in enumerate(lmn_p)
-            l2,m2,n2 = Float64.((l2,m2,n2))
-            _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
+            # l2,m2,n2 = T.((l2,m2,n2))
+            _coriolis_ts(is,js,aijs, i+np,j, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
         end
     end
 
