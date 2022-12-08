@@ -12,5 +12,8 @@ using Random
 include("viscous.jl")
 include("inviscid.jl")
 include("viscous_chen.jl")
+include("insulating_allspace.jl")
+
+include("discrete/DiscretePart.jl")
 
 end
