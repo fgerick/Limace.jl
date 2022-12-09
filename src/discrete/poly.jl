@@ -10,7 +10,7 @@ end
 Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1))
 
 function elsasser(la,lb,lc,ma,mb,mc)
-    return sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*Δ(la,lb,lc)*wigner3j(la+1, lb+1, lc+1, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc) 
+    return im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*Δ(la,lb,lc)*wigner3j(la+1, lb+1, lc+1, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc) 
 end
 
 @inline function jacobi(n,a,b,x)

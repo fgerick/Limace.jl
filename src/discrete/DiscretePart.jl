@@ -6,8 +6,10 @@ using Wigxjpf
 using FastGaussQuadrature
 
 #only for dev
-wig_table_init(200, 9)
-wig_temp_init(200)
+function __init__()
+    wig_table_init(200, 9)
+    wig_temp_init(200)
+end
 
 include("poly.jl")
 include("quad.jl")

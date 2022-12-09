@@ -51,7 +51,7 @@ end
         aij = one(l)
         #also add the all space contribution here (only nonzero for n==n2==1):
         if n==1
-            aij += (5+2l)/(l*(1 + l)*(6 + l*(11 + 6l)))
+            aij += l^2*(1 + l)*(5 + 2l)^2
         end
         push!(is,i)
         push!(js,j)

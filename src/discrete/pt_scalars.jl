@@ -1,6 +1,6 @@
 @inline function t_chen(l,m,n,r) 
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
-    return fac*r^l*(jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) #/(l+n+1)
+    return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
 end
 
 #2.38,2.39 poloidal scalar
@@ -9,7 +9,7 @@ end
     c2 = -2(2l+4n+3)
     c3 = 2l+4n+5
     fac = 1/(sqrt(2l*(1 + l)*(1 + 2*l + 4*n)*(3 + 2*l + 4*n)*(5 + 2*l + 4*n)))
-    return fac*r^l*(c1*jacobi(n+1,0,l+1/2,2r^2-1) + c2*jacobi(n,0,l+1/2,2r^2-1) + c3*jacobi(n-1,0,l+1/2,2r^2-1)  ) #/(l^(3/2) + n^(3/2) + 1)
+    return fac*r^l*(c1*jacobi(n+1,0,l+1/2,2r^2-1) + c2*jacobi(n,0,l+1/2,2r^2-1) + c3*jacobi(n-1,0,l+1/2,2r^2-1)  ) 
 end
 
 @inline function s_mf(l, m, n, r)
@@ -17,11 +17,12 @@ end
     return fac * r^l * ( (2*l + 4*n - 3) * jacobi(n,0,l+1/2,2*r^2-1) - 2*(2*l + 4*n - 1)*jacobi(n-1,0,l+1/2,2*r^2-1) +(2*l + 4*n + 1)*jacobi(n-2,0,l+1/2,2*r^2-1))
 end
 
+const t_mf = t_chen
 
-@inline function t_mf(l, m, n, r) 
-    fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
-    return fac * r^l * (jacobi(n,0,l+1/2,2*r^2-1) - jacobi(n-1,0,l+1/2,2*r^2-1))
-end
+# @inline function t_mf(l, m, n, r) 
+#     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
+#     return fac * r^l * (jacobi(n,0,l+1/2,2*r^2-1) - jacobi(n-1,0,l+1/2,2*r^2-1))
+# end
 
 
 # @inline function t_visc(l,m,n,r) 

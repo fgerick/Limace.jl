@@ -11,8 +11,9 @@ function _induction_sSS(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc)
     Aabc = adamgaunt(la,lb,lc,ma,mb,mc)
 
     @inline f = r -> (-p(la)*(-p(la)+p(lb)+p(lc))*sa(la,ma,na,r)*∂(r->r*Sb(lb,mb,nb,r),r) + 
-                      p(lb)*( p(la)-p(lb)+p(lc))*Sb(lb,mb,nb,r)*∂(r->r*sa(la,ma,na,r),r))*Sc(lc,mc,nc,r)/r^2
+                      p(lb)*( p(la)-p(lb)+p(lc))*Sb(lb,mb,nb,r)*∂(r->r*sa(la,ma,na,r),r))*Sc(lc,mc,nc,r)/(2r^2*p(lc))
     
+    # @show f(0.5)
     aij = ∫dr(f,r,wr)*Aabc
     return aij
 end
