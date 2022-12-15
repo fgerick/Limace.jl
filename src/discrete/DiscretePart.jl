@@ -1,5 +1,6 @@
 module DiscretePart
 
+using Limace
 using ForwardDiff
 using SparseArrays
 using Wigxjpf

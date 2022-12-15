@@ -20,6 +20,45 @@ function lmn_btor(N, ms = 0:(N-2), ns = 0)
     end
 end
 
+
+function lmn_bpol_l(N, ms = 0:(N-1), ns=0)
+    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
+    if (ns != 0)
+        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:(N-1)]
+    else
+        lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)]
+    end
+    lmnk = Vector{NTuple{4,Int}}[]
+    k=1
+    for l in eachindex(lmn)
+        push!(lmnk,NTuple{4,Int}[])
+        for lmn in lmn[l]
+            push!(lmnk[l], (k,lmn...))
+            k+=1
+        end
+    end
+    return lmnk
+end
+
+function lmn_btor_l(N, ms = 0:(N-2), ns=0)
+    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
+    if (ns != 0)
+        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:(N-2)] 
+    else
+        lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2) if abs(m)<=l]  for l in 1:(N-2)]
+    end
+    lmnk = Vector{NTuple{4,Int}}[]
+    k=1
+    for l in eachindex(lmn)
+        push!(lmnk,NTuple{4,Int}[])
+        for lmn in lmn[l]
+            push!(lmnk[l], (k,lmn...))
+            k+=1
+        end
+    end
+    return lmnk
+end
+
 #inner products
 
 @inline function _inner_tt(is,js,aijs, i,j, l,n,n2)
@@ -51,7 +90,8 @@ end
         aij = one(l)
         #also add the all space contribution here (only nonzero for n==n2==1):
         if n==1
-            aij += l^2*(1 + l)*(5 + 2l)^2
+            # aij += l^2*(1 + l)*(5 + 2l)^2
+            aij += (l*(5 + 2*l))/(6 + l*(11 + 6*l))
         end
         push!(is,i)
         push!(js,j)
@@ -59,9 +99,8 @@ end
     elseif (n==n2+1) 
         if n2 == 1
             aij = -(((1 + 2l)*(9 + 2l))/(sqrt(2*(7 + 2l)*(9 + 2l)*(6 + l*(11 + 6l)))))
-            
         else
-            aij = -((5 + 2l + 4n)*(9 + 2l + 4n))/2sqrt((-3 + 2l + 4n)*(-1 + 2l + 4n)*(3 + 2l + 4n)*(5 + 2l + 4n))
+            aij = -sqrt(1 + 3/(5 - 2*l - 4*n) + 3/(-1 + 2*l + 4*n))/2
         end
         push!(is,i)
         push!(js,j)
@@ -127,7 +166,10 @@ end
    
     if n==n2 
         if n==1
-            aij = -(((3 + 2*l)*(5 + 12*l + 4*l^2)^2)/((5 + 2*l)*(6 + l*(11 + 6*l)))) #-((3 + 4*l*(2 + l))^2/(6 + l*(11 + 6*l)))
+            # aij = -((3 + 8*l + 4*l^2)^2/(6 + l*(11 + 6*l)))
+            # aij = -(3 + 4*l*(2 + l))^2/(6 + l*(11 + 6*l))
+            aij = -(((1 + 2*l)^2*(3 + 2*l)*(5 + 2*l))/(6 + l*(11 + 6*l)))
+            # aij = -(((3 + 2*l)*(5 + 12*l + 4*l^2)^2)/((5 + 2*l)*(6 + l*(11 + 6*l)))) #-((3 + 4*l*(2 + l))^2/(6 + l*(11 + 6*l)))
         else
             aij = -((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
         end
