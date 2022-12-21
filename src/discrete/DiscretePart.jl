@@ -17,6 +17,7 @@ include("quad.jl")
 include("pt_scalars.jl")
 
 include("induction.jl")
+include("lorentz.jl")
 
 
 end

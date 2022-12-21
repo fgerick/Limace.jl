@@ -47,7 +47,7 @@ function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2.0)
     return nothing
 end
 
-function rhs(N,m; Ω::T = 2.0, aijs = Complex{T}[]) where T
+function rhs(N,m; Ω::T = 2.0) where T
     lmn_p = lmn_upol(N,m)
     lmn_t = lmn_utor(N,m)
 
@@ -55,7 +55,7 @@ function rhs(N,m; Ω::T = 2.0, aijs = Complex{T}[]) where T
     nt = length(lmn_t)
     nu = np+nt
 
-    is,js = Int[], Int[]
+    is,js,aijs = Int[], Int[], Complex{T}[]
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)

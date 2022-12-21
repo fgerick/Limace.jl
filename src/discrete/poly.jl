@@ -4,13 +4,13 @@ wigner3j(j1,j2,j3,j4,j5,j6) = wig3jj(2j1,2j2,2j3,2j4,2j5,2j6)
 
 
 function adamgaunt(la,lb,lc,ma,mb,mc)
-    return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1))*wigner3j(la, lb, lc, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc)
+    return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(la, lb, lc, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc)
 end
 
 Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
 
 function elsasser(la,lb,lc,ma,mb,mc)
-    return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1))*Δ(la,lb,lc)*wigner3j(la+1, lb+1, lc+1, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc) 
+    return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*Δ(la,lb,lc)*wigner3j(la+1, lb+1, lc+1, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc) 
 end
 
 @inline function jacobi(n,a,b,x)

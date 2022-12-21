@@ -40,6 +40,43 @@ function lmn_bpol_l(N, ms = 0:(N-1), ns=0)
     return lmnk
 end
 
+function lmn_bpol_ml(N, ms = 0:(N-1), ns=0)
+    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
+    # if (ns != 0)
+    #     lmn = [[[(l,m,n) for n in ns if abs(m)<=l] for m in ms] for l in 1:(N-1)] 
+    # else
+    #     lmn = [[[(l,m,n) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for m in ms] for l in 1:(N-1)] 
+    # end
+    # lmnk = Vector{Vector{NTuple{4,Int}}}[]
+    # k=1
+    # for l in eachindex(lmn)
+    #     push!(lmnk,Vector{Vector{NTuple{4,Int}}}[])
+    #     for m in eachindex(lmn[l])
+    #         push!(lmnk[l],Vector{NTuple{4,Int}}[])
+    #         for (n,lmn) in enumerate(lmn[l][m])
+    #             push!(lmnk[l][m],(k,lmn...))
+    #             k+=1
+    #         end
+    #     end
+    # end
+
+    lmnk = Vector{Vector{NTuple{4,Int}}}[]
+    k=1
+    for l in 1:(N-1)
+        push!(lmnk,Vector{Vector{NTuple{4,Int}}}[])
+        for m in ms
+            if abs(m)<=l
+                push!(lmnk[l],Vector{NTuple{4,Int}}[])
+                for n in (ns==0 ? (1:((N-l+1)÷2 +1)) : ns)
+                    push!(lmnk[l][m+1],(k,l,m,n))
+                    k+=1
+                end
+            end
+        end
+    end
+    return lmnk
+end
+
 function lmn_btor_l(N, ms = 0:(N-2), ns=0)
     # lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
     if (ns != 0)
@@ -166,10 +203,7 @@ end
    
     if n==n2 
         if n==1
-            # aij = -((3 + 8*l + 4*l^2)^2/(6 + l*(11 + 6*l)))
-            # aij = -(3 + 4*l*(2 + l))^2/(6 + l*(11 + 6*l))
             aij = -(((1 + 2*l)^2*(3 + 2*l)*(5 + 2*l))/(6 + l*(11 + 6*l)))
-            # aij = -(((3 + 2*l)*(5 + 12*l + 4*l^2)^2)/((5 + 2*l)*(6 + l*(11 + 6*l)))) #-((3 + 4*l*(2 + l))^2/(6 + l*(11 + 6*l)))
         else
             aij = -((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
         end

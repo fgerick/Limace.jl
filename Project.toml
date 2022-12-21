@@ -18,6 +18,9 @@ julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
+FunctionZeros = "b21f74c0-b399-568f-9643-d20f4fa2c814"
+LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
 
 [targets]
-test = ["Test"]
+test = ["Test", "ArnoldiMethod", "FunctionZeros", "LinearMaps"]

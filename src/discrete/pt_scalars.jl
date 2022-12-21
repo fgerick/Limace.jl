@@ -19,11 +19,20 @@ end
 
 const t_mf = t_chen
 
-# @inline function t_mf(l, m, n, r) 
-#     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
-#     return fac * r^l * (jacobi(n,0,l+1/2,2*r^2-1) - jacobi(n-1,0,l+1/2,2*r^2-1))
-# end
 
+@inline function s_mf1(l, m, n, r)
+    c0 = -2n^2*(l + 1) - n*(l + 1)*(2l - 1) - l*(2l + 1)
+    c1 = (2*(l + 1)*n^2 + (2l + 3)*(l + 1)*n + (2l + 1)^2)
+    c2 = (4n*l + l*(2l+1))
+    fac = 1/sqrt(l*(l+1.0)*(1.0+2l+4n)*((1.0+2l)^2 + (l+1)*(3+2l)*n + 2(1.0+l)*n^2) * (2l^2*(n+1.0) + n*(2n-1.0) + l*(2n^2+n+1.0)) )
+    return (fac*c0 * jacobi(n, 0.0, 1 / 2 + l, -1 + 2 * r ^ 2) + fac*c1 * jacobi(-1 + n, 0, 1 / 2 + l, -1 + 2 * r ^ 2) + fac*c2)*r^l
+end
+
+
+@inline function t_mf1(l, m, n, r) 
+    fac = 1/2*sqrt(9.0+8l^3+36n+44n^2+16n^3+4l^2*(7.0+8n)+l*(30.0+72n+40.0n^2))/sqrt(l*(l+1.0)*n*(n+1))
+    return (1 - r^2) * jacobi(n - 1, 2.0, l + 1/2, 2r^2 - 1) * r^l * fac
+end
 
 # @inline function t_visc(l,m,n,r) 
 #     fac = 1/2 * sqrt((3+2l+2n)*(5+2l+2n)*(7+2l+4n))/sqrt(l*(l+1)*(n+1)*(n+2))
