@@ -44,3 +44,24 @@ end
 
 
 const ∂ =  ForwardDiff.derivative
+
+
+@inline djacobidr(n,a,b,r) = 2(1+a+b+n)*r*jacobi(n-1,1+a,1+b,2r^2-1)
+@inline djacobid2r(n,a,b,r) = 2(1+a+b+n)*jacobi(n-1,1+a,1+b,2r^2-1) + 2*(1+a+b+n)*r*djacobidr(n-1,a+1,b+1,r) 
+@inline djacobid3r(n,a,b,r) = 2(1+a+b+n)*djacobidr(n-1,1+a,1+b,r) + 2*(1+a+b+n)*djacobidr(n-1,a+1,b+1,r) + 2*(1+a+b+n)*r*djacobid2r(n-1,a+1,b+1,r)
+
+@inline function djacobi(n,a,b,x,k)
+    exp(loggamma(a+b+n+1+k)-loggamma(a+b+n+1))/2^k*jacobi(n-k,a+k,b+k,x)
+end
+
+function jacobis(N,a,b,r,kmax)
+    nr = length(r)
+    js = zeros(eltype(r),nr,N,kmax+1)
+    # for n in 1:N
+    #     js[:,n,1] .= jacobi.(n,a,b,r)
+    # end
+    for k in 0:kmax, n in 1:N
+        js[:,n, k+1] .= djacobi.(n,a,b,r,k)
+    end
+    return js
+end

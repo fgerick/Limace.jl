@@ -19,11 +19,11 @@ function _lorentz_SSs(lmna, lmnb, lmnc, r,wr, Sa,Sb,sc)
     @inline _Sb = r->Sb(lb,mb,nb,r)
     @inline _sc = r->sc(lc,mc,nc,r)
 
-    @inline f1 = r -> (-p(lc)*(p(la)+p(lb)-p(lc))*D(_Sa,la,r)*∂(r->r*_Sb(r),r) + 
+    @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*D(_Sa,la,r)*∂(r->r*_Sb(r),r) + 
                         p(lb)*(p(la)-p(lb)+p(lc))*r*∂(r->D(_Sa,la,r)*_Sb(r),r))/(2r^2*p(lc))
     
-    # @inline f = r-> innert(_sc,f1, lc, r)
-    @inline f = r->_sc(r)*f1(r) #inners(_sc,f1,lc,r)
+    @inline f = r-> -innert(_sc,f1, lc, r)
+    # @inline f = r->_sc(r)*f1(r) #inners(_sc,f1,lc,r)
 
     aij = ∫dr(f,r,wr)*Aabc
     return aij
@@ -42,9 +42,16 @@ function _lorentz_STs(lmna, lmnb, lmnc, r,wr, Sa,Tb,sc)
     @inline _Tb = r->Tb(lb,mb,nb,r)
     @inline _sc = r->sc(lc,mc,nc,r)
 
-    @inline f1 = r -> (p(lc)*r^2*D(_Sa,la,r)*_Tb(r) + (p(la)+p(lb)+p(lc))*_Sa(r)*_Tb(r) - (p(la)-p(lb)-p(lc))*(r*_Sa(r)*∂(_Tb,r) + r*∂(_Sa,r)*_Tb(r)+ r^2*∂(_Sa,r)*∂(_Tb,r)) - p(la)*r^2*∂(r->∂(_Sa,r),r)*_Tb(r) - p(lb)*r^2*∂(r->∂(_Tb,r),r)*_Sa(r))/(r^3*p(lc))
+    @inline f1 = r -> (p(lc)*r^2*D(_Sa,la,r)*_Tb(r) + 
+                        (p(la)+p(lb)+p(lc))*_Sa(r)*_Tb(r) - 
+                        (p(la)+p(lb)-p(lc))*(r*_Sa(r)*∂(_Tb,r) + 
+                                            r*∂(_Sa,r)*_Tb(r) + 
+                                            r^2*∂(_Sa,r)*∂(_Tb,r)) - 
+                        p(la)*r^2*∂(r->∂(_Sa,r),r)*_Tb(r) - 
+                        p(lb)*r^2*∂(r->∂(_Tb,r),r)*_Sa(r)
+                        )/(r^3*p(lc))
     
-    @inline f = r->innert(_sc,f1,lc,r)
+    @inline f = r-> -innert(_sc, f1, lc,r)
     # @inline f = r->_sc(r)*f1(r) #inners(_sc,f1,lc,r)
     
     aij = ∫dr(f,r,wr)*Eabc
@@ -66,7 +73,7 @@ function _lorentz_TTs(lmna, lmnb, lmnc, r,wr, Ta,Tb,sc)
 
     @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*∂(r->r*_Ta(r),r)*_Tb(r) + p(la)*(-p(la)+p(lb)+p(lc))*r*∂(r->_Ta(r)*_Tb(r),r))/(2r^2*p(lc))
 
-    @inline f = r->inners(_sc,f1,lc,r)
+    @inline f = r->-innert(_sc,f1,lc,r)
     
     aij = ∫dr(f,r,wr)*Aabc
     return aij

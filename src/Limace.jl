@@ -2,6 +2,7 @@ module Limace
 
 using LinearAlgebra
 using SparseArrays
+using SpecialFunctions
 # using Distributed
 # using DistributedArrays
 using Random

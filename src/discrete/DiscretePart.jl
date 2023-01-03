@@ -3,6 +3,7 @@ module DiscretePart
 using Limace
 using ForwardDiff
 using SparseArrays
+using SpecialFunctions
 using Wigxjpf
 using FastGaussQuadrature
 
