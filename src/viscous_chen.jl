@@ -156,7 +156,7 @@ function lhs(N,m; ns = 0, Ω::T = 1.0) where T
     lmn_t = lmn_utor(N,m,ns)
 
     np = length(lmn_p)
-    @show np
+    # @show np
     nt = length(lmn_t)
     nu = np+nt
 

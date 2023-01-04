@@ -9,7 +9,7 @@
 end
 
 #poloidal B1, poloidal B2
-function _lorentz_SSs(lmna, lmnb, lmnc, r,wr, Sa,Sb,sc)
+function _lorentz_SSs(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Sb,sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -31,7 +31,7 @@ end
 
 
 #poloidal B1, toroidal B0
-function _lorentz_STs(lmna, lmnb, lmnc, r,wr, Sa,Tb,sc)
+function _lorentz_STs(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Tb,sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -59,7 +59,7 @@ end
 
 
 #toroidal B1, toroidal B0
-function _lorentz_TTs(lmna, lmnb, lmnc, r,wr, Ta,Tb,sc)
+function _lorentz_TTs(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Ta,Tb,sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -86,7 +86,7 @@ end
 
 
 #poloidal B1, poloidal B0
-function _lorentz_SSt(lmna, lmnb, lmnc, r,wr, Sa,Sb,tc)
+function _lorentz_SSt(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Sb,tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -107,7 +107,7 @@ end
 
 
 #poloidal B1, toroidal B0
-function _lorentz_STt(lmna, lmnb, lmnc, r,wr, Sa,Tb,tc)
+function _lorentz_STt(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Tb,tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -128,7 +128,7 @@ end
 
 
 #toroidal B1, toroidal B0
-function _lorentz_TTt(lmna, lmnb, lmnc, r,wr, Ta,Tb,tc)
+function _lorentz_TTt(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Ta,Tb,tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -153,7 +153,7 @@ flist = [:_lorentz_SSs, :_lorentz_STs, :_lorentz_TTs,
 
 for f in flist
     @eval begin
-        function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna, lmnb, lmnc, r,wr, fa,fb,fc; thresh=sqrt(eps()))
+        function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, fa,fb,fc; thresh=sqrt(eps()))
             aij = $(f)(lmna, lmnb, lmnc, r,wr, fa,fb,fc)
             if abs(aij) > thresh
                 push!(is,i)
@@ -169,8 +169,12 @@ end
 
 #matrix assembly
 
-function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), su=s_chen, tu = t_chen, smf = s_mf, tmf = t_mf, smfb0 = s_mf) where T
-
+function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+    su=s_chen 
+    tu = t_chen 
+    smf = s_mf 
+    tmf = t_mf 
+    smfb0 = s_mf
     lb0,mb0,nb0 = lmnb0
     lmn_p = Limace.ChenBasis.lmn_upol(N,m,ns)
     lmn_t = Limace.ChenBasis.lmn_utor(N,m,ns)
@@ -191,17 +195,16 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), s
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
             # !ncondition(lb0,ni,nb0,nj) && continue
-            # !condition1(li,lb0,lj,mi,mb0,mj) && continue
-            # _dummy!(is,js,aijs,i,j)
+
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_SSs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, smfb0, su; thresh)
             _lorentz_SSs!(is,js,aijs,i,j,lmnb0,lmnj,lmni, r, wr, smfb0, smf, su; thresh)
             #using i,j indices twice for sparse matrix means values are added!
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            # !ncondition(lb0,ni,nb0,nj) && continue
-            # !condition2(li,lb0,lj,mi,mb0,mj) && continue
-            # _dummy!(is,js,aijs,i,j+np)
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_STs!(is,js,aijs,i,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0, tmf, su; thresh)
         end
     end
@@ -210,15 +213,15 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), s
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            # !ncondition(lb0,ni,nb0,nj) && continue
-            # !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_SSt!(is,js,aijs,i+np,j,lmnj,lmnb0,lmni, r, wr, smfb0,smf,tu; thresh)
             _lorentz_SSt!(is,js,aijs,i+np,j,lmnb0,lmnj,lmni, r, wr, smf,smfb0,tu; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            # !ncondition(lb0,ni,nb0,nj) && continue
-            # !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_STt!(is,js,aijs,i+np,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0,tmf,tu; thresh)
         end
     end
@@ -228,7 +231,13 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), s
     return sparse(is,js,aijs,nmatu, nmatb)
 end
 
-function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), su=s_chen, tu = t_chen, smf = s_mf, tmf = t_mf, tmfb0 = s_mf) where T
+function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+    su=s_chen 
+    tu = t_chen 
+    smf = s_mf 
+    tmf = t_mf 
+    tmfb0 = t_mf
+    
     lb0,mb0,nb0 = lmnb0
     lmn_p = Limace.ChenBasis.lmn_upol(N,m,ns)
     lmn_t = Limace.ChenBasis.lmn_utor(N,m,ns)
@@ -248,8 +257,8 @@ function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), s
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            # !ncondition(lb0,ni,nb0,nj) && continue
-            # !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_STs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, su; thresh)
         end
     end
@@ -258,14 +267,14 @@ function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), s
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            # !ncondition(lb0,ni,nb0,nj) && continue
-            # !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_STt!(is,js,aijs,i+np,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, tu; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            # !ncondition(lb0,ni,nb0,nj) && continue
-            # !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, tu; thresh)
             _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0,  tmf, tu; thresh)
         end

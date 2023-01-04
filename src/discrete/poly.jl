@@ -3,13 +3,13 @@ wigner6j(j1,j2,j3,j4,j5,j6) = wig6jj(2j1,2j2,2j3,2j4,2j5,2j6)
 wigner3j(j1,j2,j3,j4,j5,j6) = wig3jj(2j1,2j2,2j3,2j4,2j5,2j6)
 
 
-function adamgaunt(la,lb,lc,ma,mb,mc)
+@inline function adamgaunt(la,lb,lc,ma,mb,mc)
     return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(la, lb, lc, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc)
 end
 
-Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
+@inline Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
 
-function elsasser(la,lb,lc,ma,mb,mc)
+@inline function elsasser(la,lb,lc,ma,mb,mc)
     return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*Δ(la,lb,lc)*wigner3j(la+1, lb+1, lc+1, 0, 0, 0)*wigner3j(la,lb,lc,ma,mb,-mc) 
 end
 
@@ -29,11 +29,12 @@ end
     p2 = zx;
 
     for i = 1:(n-1)
-        a1 = 2*(i+1)*(i+a+b+1)*(2*i+a+b);
-        a2 = (2*i+a+b+1)*(a*a-b*b);
-        a3 = (2*i+a+b)*(2*i+a+b+1)*(2*i+a+b+2);
-        a4 = 2*(i+a)*(i+b)*(2*i+a+b+2);
-        p2 = ox/a1*( (a2 + a3*x)*p1 - a4*p0);
+        _2iab = 2i+a+b
+        a1 = 2*(i+1)*(i+a+b+1)*_2iab
+        a2 = (_2iab+1)*(a*a-b*b)
+        a3 = _2iab*(_2iab+1)*(_2iab+2)
+        a4 = 2*(i+a)*(i+b)*(_2iab+2)
+        p2 = ox/a1*( (a2 + a3*x)*p1 - a4*p0)
 
         p0 = p1
         p1 = p2

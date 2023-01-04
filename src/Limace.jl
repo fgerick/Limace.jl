@@ -17,4 +17,6 @@ include("insulating_allspace.jl")
 
 include("discrete/DiscretePart.jl")
 
+include("mhdproblem.jl")
+
 end

@@ -7,6 +7,8 @@ using LinearMaps
 using ArnoldiMethod
 
 
+Limace.DiscretePart.__wiginit(50)
+
 @testset "Inviscid inertial modes" begin
 
     zhang(m,N)=-2/(m+2)*(√(1+m*(m+2)/(N*(2N+2m+1)))-1)*im
@@ -65,6 +67,7 @@ end
     m=0
     LHS = Limace.InsulatingMFBasis.lhs(N,m)
     RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N,m)
+
     ind_upol = Limace.DiscretePart.rhs_induction_upol(N,m,(2,0,1); su=s_20, smf = s_mf, tmf = t_mf,  condition=true)
     ind_utor = Limace.DiscretePart.rhs_induction_utor(N,m,(1,0,1); tu=t_10, smf = s_mf, tmf = t_mf, condition=true)
 
@@ -80,3 +83,34 @@ end
     λ_lj2005 = -8.01600246
     @test λ ≈ λ_lj2005
 end
+
+@testset "solid body rotation kinematic dynamo" begin
+    
+    
+    using Limace.DiscretePart: s_mf, t_mf, s_in, t_in
+
+    DP = Limace.DiscretePart
+    N =12
+    m=1
+    
+    LHS = Limace.InsulatingMFBasis.lhs(N,m)
+    RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N,m)
+    DP.__wiginit(N)
+    ind_utor = DP.rhs_induction_utor(N,m,(1,0,0); tu=t_in, smf = s_mf, tmf = t_mf, condition=false)
+
+    Rm = 10
+    RHS_ind = Rm * ind_utor
+    RHS = RHS_diff + RHS_ind
+
+    λdyn = eigvals(inv(Matrix(LHS))*Matrix(RHS))
+    Limace.DiscretePart.wig_temp_free()
+
+
+   #solid body rotation should add a constant imaginary part ( = frequency) to all eigenvalues
+   
+    @test all( imag.(λdyn).≈imag(λdyn[1]))
+
+end
+
+
+Limace.DiscretePart.wig_temp_free()

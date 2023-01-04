@@ -34,6 +34,20 @@ end
     return (1 - r^2) * jacobi(n - 1, 2.0, l + 1/2, 2r^2 - 1) * r^l * fac
 end
 
+#inviscid velocities
+#https://homepages.see.leeds.ac.uk/~earpwl/Galerkin/Galerkin.html (5.1, 5.6)
+function t_in(l,m,n,r) 
+    fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
+    return r^l*jacobi(n,0,l+1/2, 2r^2-1)*fac
+end
+
+
+function s_in(l,m,n,r) 
+    fac = sqrt(5+2l+4n)/sqrt(4l*(l+1)*(n+1)^2)
+    return (1-r^2)*r^l*jacobi(n,1,l+1/2, 2r^2-1)*fac
+end
+
+
 # @inline function t_visc(l,m,n,r) 
 #     fac = 1/2 * sqrt((3+2l+2n)*(5+2l+2n)*(7+2l+4n))/sqrt(l*(l+1)*(n+1)*(n+2))
 #     return (1-r^2)*r^l*jacobi(n,2,l+1/2, 2r^2-1)*fac

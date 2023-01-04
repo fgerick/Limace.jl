@@ -8,9 +8,9 @@ using Wigxjpf
 using FastGaussQuadrature
 
 #only for dev
-function __init__()
-    wig_table_init(200, 9)
-    wig_temp_init(200)
+function __wiginit(N)
+    wig_table_init(2N, 9)
+    wig_temp_init(2N)
 end
 
 include("poly.jl")
