@@ -4,7 +4,7 @@ using Limace
 using SparseArrays
 using Wigxjpf
 
-VB = Limace.ChenBasis
+VB = Limace.InviscidBasis
 BB = Limace.InsulatingMFBasis
 DP = Limace.DiscretePart 
 
@@ -21,13 +21,13 @@ function rhs(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal = tr
 
     @time "Coriolis" RHSc = VB.rhs_coriolis(N,m; ns, Ω)
     nu = size(RHSc,1)
-    @time "Viscous" if ν != 0
-        RHSv = VB.rhs_viscosity(N,m; ns, ν)
-    else
-        RHSv = spzeros(Complex{T}, nu, nu)
-    end
+    # @time "Viscous" if ν != 0
+    #     RHSv = VB.rhs_viscosity(N,m; ns, ν)
+    # else
+    #     RHSv = spzeros(Complex{T}, nu, nu)
+    # end
 
-    RHSuu = RHSv + RHSc
+    RHSuu = RHSc #+ RHSv
 
 
     #wigner symbol temporary arrays alloc

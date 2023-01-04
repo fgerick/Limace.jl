@@ -14,7 +14,7 @@ Limace.DiscretePart.__wiginit(50)
     zhang(m,N)=-2/(m+2)*(√(1+m*(m+2)/(N*(2N+2m+1)))-1)*im
 
     N = 7
-    RHS = Limace.InviscidBasis.rhs(N,1:N)
+    RHS = Limace.InviscidBasis.rhs_coriolis(N,1:N)
     evals = eigvals(Matrix(RHS))
 
     @test any(evals.≈1im)
@@ -107,10 +107,36 @@ end
 
 
    #solid body rotation should add a constant imaginary part ( = frequency) to all eigenvalues
-   
+
     @test all( imag.(λdyn).≈imag(λdyn[1]))
 
 end
 
+# @testset "Luo & Jackson 2022 mode" begin
+   
+#     function eigstarget(A,B,target; kwargs...)
+#         P = lu(A-target*B)
+#         LO = LinearMap{ComplexF64}((y,x)->ldiv!(y,P,B*x),size(A,2))
+#         pschur,history = partialschur(LO; kwargs...)
+#         evals, u = partialeigen(pschur)
+#         λ = 1 ./evals .+ target
+#         return λ,u
+#     end
+    
+#     using Limace.MHDProblem: rhs, lhs
+#     N = 150
+#     m = 0
+#     Le = 1e-3
+#     Lu = 2/Le
+
+#     lmnb0 = (1,0,1)
+
+
+#     LHS = lhs(N,m)
+#     RHS = rhs(N,m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal=true)
+
+#     evals,evecs = eigstarget(RHS,LHS, -0.042+0.66im; nev=5)
+
+# end
 
 Limace.DiscretePart.wig_temp_free()

@@ -170,14 +170,14 @@ end
 #matrix assembly
 
 function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
-    su=s_chen 
-    tu = t_chen 
+    su = s_in 
+    tu = t_in
     smf = s_mf 
     tmf = t_mf 
     smfb0 = s_mf
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.ChenBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.ChenBasis.lmn_utor(N,m,ns)
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
 
     np = length(lmn_p)
 
@@ -232,15 +232,15 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) w
 end
 
 function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
-    su=s_chen 
-    tu = t_chen 
+    su=s_in 
+    tu = t_in
     smf = s_mf 
     tmf = t_mf 
     tmfb0 = t_mf
     
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.ChenBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.ChenBasis.lmn_utor(N,m,ns)
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
 
     np = length(lmn_p)
 
