@@ -47,12 +47,11 @@ function _lorentz_STs(lmna, lmnb, lmnc, r,wr, Sa,Tb,sc)
                         (p(la)+p(lb)-p(lc))*(r*_Sa(r)*∂(_Tb,r) + 
                                             r*∂(_Sa,r)*_Tb(r) + 
                                             r^2*∂(_Sa,r)*∂(_Tb,r)) - 
-                        p(la)*r^2*∂(r->∂(_Sa,r),r)*_Tb(r) - 
-                        p(lb)*r^2*∂(r->∂(_Tb,r),r)*_Sa(r)
+                        p(lb)*r^2*∂(r->∂(_Sa,r),r)*_Tb(r) - 
+                        p(la)*r^2*∂(r->∂(_Tb,r),r)*_Sa(r)
                         )/(r^3*p(lc))
     
     @inline f = r-> -innert(_sc, f1, lc,r)
-    # @inline f = r->_sc(r)*f1(r) #inners(_sc,f1,lc,r)
     
     aij = ∫dr(f,r,wr)*Eabc
     return aij
@@ -135,9 +134,9 @@ function _lorentz_TTt(lmna, lmnb, lmnc, r,wr, Ta,Tb,tc)
     lc,mc,nc = lmnc
 
     Eabc = elsasser(la,lb,lc,ma,mb,mc)
-    @inline _ta = r->Ta(la,ma,na,r)
+    @inline _Ta = r->Ta(la,ma,na,r)
     @inline _Tb = r->Tb(lb,mb,nb,r)
-    @inline _Tc = r->tc(lc,mc,nc,r)
+    @inline _tc = r->tc(lc,mc,nc,r)
 
 
     @inline f1 = r -> p(la)*_Ta(r)*_Tb(r)/(r*p(lc))
@@ -229,49 +228,50 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), s
     return sparse(is,js,aijs,nmatu, nmatb)
 end
 
-# function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
-#     lb0,mb0,nb0 = lmnb0
-#     lmn_p = Limace.ChenBasis.lmn_upol(N,m,ns)
-#     lmn_t = Limace.ChenBasis.lmn_utor(N,m,ns)
+function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), su=s_chen, tu = t_chen, smf = s_mf, tmf = t_mf, tmfb0 = s_mf) where T
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.ChenBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.ChenBasis.lmn_utor(N,m,ns)
 
-#     np = length(lmn_p)
+    np = length(lmn_p)
 
-#     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-#     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
 
-#     npb = length(lmn_bp)
+    npb = length(lmn_bp)
 
-#     is,js,aijs = Int[],Int[],Complex{T}[]
+    is,js,aijs = Int[],Int[],Complex{T}[]
 
-#     r, wr = rquad(N+lb0+nb0+5)
+    r, wr = rquad(N+lb0+nb0+5)
 
-#     for (i,lmni) in enumerate(lmn_bp)
-#         li,mi,ni = lmni
-#         for (j, lmnj) in enumerate(lmn_p)
-#             lj,mj,nj = lmnj
-#             !ncondition(lb0,ni,nb0,nj) && continue
-#             !condition2(li,lb0,lj,mi,mb0,mj) && continue
-#             _lorentz_sTS!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, s_chen, t_mf, s_mf; thresh)
-#         end
-#     end
+    for (i,lmni) in enumerate(lmn_p)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            # !ncondition(lb0,ni,nb0,nj) && continue
+            # !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_STs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, su; thresh)
+        end
+    end
 
-#     for (i,lmni) in enumerate(lmn_bt)
-#         li,mi,ni = lmni
-#         for (j, lmnj) in enumerate(lmn_p)
-#             lj,mj,nj = lmnj
-#             !ncondition(lb0,ni,nb0,nj) && continue
-#             !condition1(li,lb0,lj,mi,mb0,mj) && continue
-#             _lorentz_sTT!(is,js,aijs,i+npb,j,lmnj,lmnb0,lmni, r, wr, s_chen, t_mf, t_mf; thresh)
-#         end
-#         for (j, lmnj) in enumerate(lmn_t)
-#             lj,mj,nj = lmnj
-#             !ncondition(lb0,ni,nb0,nj) && continue
-#             !condition2(li,lb0,lj,mi,mb0,mj) && continue
-#             _lorentz_tTT!(is,js,aijs,i+npb,j+np,lmnj,lmnb0,lmni, r, wr, t_chen, t_mf, t_mf; thresh)
-#         end
-#     end
-#     nmatb = length(lmn_bp)+length(lmn_bt)
-#     nmatu = length(lmn_p)+length(lmn_t)
+    for (i,lmni) in enumerate(lmn_t)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            # !ncondition(lb0,ni,nb0,nj) && continue
+            # !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_STt!(is,js,aijs,i+np,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, tu; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            # !ncondition(lb0,ni,nb0,nj) && continue
+            # !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, tu; thresh)
+            _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0,  tmf, tu; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
 
-#     return sparse(is,js,aijs,nmatb, nmatu)
-# end
+    return sparse(is,js,aijs,nmatu, nmatb)
+end
