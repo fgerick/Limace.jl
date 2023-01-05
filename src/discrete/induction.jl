@@ -288,7 +288,7 @@ function _dummy!(is,js,aijs,i,j)
     return nothing
 end
 
-function rhs_induction_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_induction_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), smfb0 = s_mf) where T
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
@@ -313,14 +313,14 @@ function rhs_induction_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()))
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            _induction_sSS!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, su, s_mf, s_mf; thresh)
+            _induction_sSS!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, su, smfb0, s_mf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_t)
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j+np)
-            _induction_tSS!(is,js,aijs,i,j+np,lmnj,lmnb0,lmni, r, wr, tu, s_mf, s_mf; thresh)
+            _induction_tSS!(is,js,aijs,i,j+np,lmnj,lmnb0,lmni, r, wr, tu, smfb0, s_mf; thresh)
         end
     end
 
@@ -330,14 +330,14 @@ function rhs_induction_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()))
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
-            _induction_sST!(is,js,aijs,i+npb,j,lmnj,lmnb0,lmni, r, wr, su, s_mf, t_mf; thresh)
+            _induction_sST!(is,js,aijs,i+npb,j,lmnj,lmnb0,lmni, r, wr, su, smfb0, t_mf; thresh)
             # _dummy!(is,js,aijs,i+npb,j)
         end
         for (j, lmnj) in enumerate(lmn_t)
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
-            _induction_tST!(is,js,aijs,i+npb,j+np,lmnj,lmnb0,lmni, r, wr, tu, s_mf, t_mf; thresh)
+            _induction_tST!(is,js,aijs,i+npb,j+np,lmnj,lmnb0,lmni, r, wr, tu, smfb0, t_mf; thresh)
             # _dummy!(is,js,aijs,i+npb,j+np)
         end
     end
@@ -484,4 +484,56 @@ function rhs_induction_utor(N,m, lmnu0; ns = 0, η::T=1.0, thresh = sqrt(eps()),
     nmatb = length(lmn_bp)+length(lmn_bt)
 
     return sparse(is,js,aijs,nmatb, nmatb)
+end
+
+
+function rhs_induction_btor_cond(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+    su = s_in
+    tu = t_in
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    np = length(lmn_p)
+
+    tmf = t_in
+    smf = s_in
+    lmn_bp = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_bt = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    npb = length(lmn_bp)
+
+    is,js,aijs = Int[],Int[],Complex{T}[]
+
+    r, wr = rquad(N+lb0+nb0+5)
+
+    for (i,lmni) in enumerate(lmn_bp)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_p)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_sTS!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, su, tmf, smf; thresh)
+        end
+    end
+
+    for (i,lmni) in enumerate(lmn_bt)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_p)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_sTT!(is,js,aijs,i+npb,j,lmnj,lmnb0,lmni, r, wr, su, tmf, tmf; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_t)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_tTT!(is,js,aijs,i+npb,j+np,lmnj,lmnb0,lmni, r, wr, tu, tmf, tmf; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
+
+    return sparse(is,js,aijs,nmatb, nmatu)
 end

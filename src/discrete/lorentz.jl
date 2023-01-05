@@ -169,12 +169,12 @@ end
 
 #matrix assembly
 
-function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),smfb0 = s_mf) where T
     su = s_in 
     tu = t_in
     smf = s_mf 
     tmf = t_mf 
-    smfb0 = s_mf
+    
     lb0,mb0,nb0 = lmnb0
     lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
     lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
@@ -260,6 +260,75 @@ function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) w
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_STs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, su; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_TTs!(is,js,aijs,i,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, su; thresh)
+            _lorentz_TTs!(is,js,aijs,i,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0, tmf, su; thresh)
+        end
+    end
+
+    for (i,lmni) in enumerate(lmn_t)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_STt!(is,js,aijs,i+np,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, tu; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, tu; thresh)
+            _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0,  tmf, tu; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
+
+    return sparse(is,js,aijs,nmatu, nmatb)
+end
+
+
+function rhs_lorentz_btor_cond(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+    su=s_in 
+    tu = t_in
+    smf = s_in
+    tmf = t_in
+    tmfb0 = t_in
+    
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    np = length(lmn_p)
+
+    lmn_bp = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_bt = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    npb = length(lmn_bp)
+
+    is,js,aijs = Int[],Int[],Complex{T}[]
+
+    r, wr = rquad(N+lb0+nb0+5)
+
+    for (i,lmni) in enumerate(lmn_p)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_STs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, su; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_TTs!(is,js,aijs,i,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, su; thresh)
+            _lorentz_TTs!(is,js,aijs,i,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0, tmf, su; thresh)
         end
     end
 

@@ -112,6 +112,35 @@ end
 
 end
 
+@testset "Malkus modes" begin
+
+    zhang(m,N)=-2/(m+2)*(√(1+m*(m+2)/(N*(2N+2m+1)))-1)*im
+
+    # Malkus J. Fluid Mech. (1967), vol. 28, pp. 793-802, eq. (2.28)
+    slow(m, N, Le, λ = imag(zhang(m,N))) = im*λ/2Le*(1 - √(1+4Le^2*m*(m-λ)/λ^2))
+    fast(m, N, Le, λ = imag(zhang(m,N))) = im*λ/2Le*(1 + √(1+4Le^2*m*(m-λ)/λ^2))
+
+    using Limace.MHDProblem: rhs_cond, lhs_cond
+    N = 5
+    m = 0:5
+    Le = 1e-4
+
+    lmnb0 = (1,0,0)
+
+    LHS = lhs_cond(N,m)
+    RHS = rhs_cond(N,m; Ω = 2/Le, lmnb0, B0poloidal=false, B0fac=sqrt(4pi)/(sqrt(3)*sqrt(5/2)))
+
+    evals = eigvals(inv(Matrix(LHS))*RHS)
+
+    @test any(evals .≈ 1.0*im/Le) 
+    @test any(evals .≈ slow(1,1,Le)) 
+    @test any(evals .≈ fast(1,1,Le))
+    @test any(evals .≈ slow(2,1,Le)) 
+    @test any(evals .≈ fast(2,1,Le)) 
+    @test any(evals .≈ slow(3,1,Le)) 
+    @test any(evals .≈ fast(3,1,Le))  
+end
+
 # @testset "Luo & Jackson 2022 mode" begin
    
 #     function eigstarget(A,B,target; kwargs...)
@@ -124,18 +153,24 @@ end
 #     end
     
 #     using Limace.MHDProblem: rhs, lhs
-#     N = 150
+#     N = 60
 #     m = 0
 #     Le = 1e-3
 #     Lu = 2/Le
 
-#     lmnb0 = (1,0,1)
+#     # lmnb0 = (2,0,1)
+#     # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)/(16*sqrt(182/3))
 
+#     lmnb0 = (1,0,1)
+#     lj22(l,m,n,r) = r*(5-3r^2)*sqrt(7/46)/2
 
 #     LHS = lhs(N,m)
-#     RHS = rhs(N,m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal=true)
+#     RHS = rhs(N,m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal=true, smfb0 = lj22)
 
-#     evals,evecs = eigstarget(RHS,LHS, -0.042+0.66im; nev=5)
+#     # target = -0.0066-1.033im
+#     target = -0.042+0.66im
+#     evals,evecs = eigstarget(RHS,LHS, target; nev=4)
+#     evals
 
 # end
 

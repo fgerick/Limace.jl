@@ -18,7 +18,7 @@ function lmn_utor(N, ms = 0:N, ns = 0)
     if (ns != 0)
         [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2) if abs(m)<=l] 
+        [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) if abs(m)<=l] 
     end
 end
 
