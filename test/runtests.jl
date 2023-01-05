@@ -141,37 +141,42 @@ end
     @test any(evals .≈ fast(3,1,Le))  
 end
 
-# @testset "Luo & Jackson 2022 mode" begin
+@testset "Luo & Jackson 2022 mode" begin
    
-#     function eigstarget(A,B,target; kwargs...)
-#         P = lu(A-target*B)
-#         LO = LinearMap{ComplexF64}((y,x)->ldiv!(y,P,B*x),size(A,2))
-#         pschur,history = partialschur(LO; kwargs...)
-#         evals, u = partialeigen(pschur)
-#         λ = 1 ./evals .+ target
-#         return λ,u
-#     end
+    function eigstarget(A,B,target; kwargs...)
+        P = lu(A-target*B)
+        LO = LinearMap{ComplexF64}((y,x)->ldiv!(y,P,B*x),size(A,2))
+        pschur,history = partialschur(LO; kwargs...)
+        evals, u = partialeigen(pschur)
+        λ = 1 ./evals .+ target
+        return λ,u
+    end
     
-#     using Limace.MHDProblem: rhs, lhs
-#     N = 60
-#     m = 0
-#     Le = 1e-3
-#     Lu = 2/Le
+    using Limace.MHDProblem: rhs, lhs
+    N = 50
+    m = 0
+    Le = 1e-4
+    Lu = 2/Le
 
-#     # lmnb0 = (2,0,1)
-#     # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)/(16*sqrt(182/3))
+    lmnb0 = (2,0,2)
+    lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)/(16*sqrt(182/3))
+    # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)*5/14*sqrt(3/182)
 
-#     lmnb0 = (1,0,1)
-#     lj22(l,m,n,r) = r*(5-3r^2)*sqrt(7/46)/2
+    # lmnb0 = (1,0,1)
+    # lj22(l,m,n,r) = r*(5-3r^2)*sqrt(7/46)/2
 
-#     LHS = lhs(N,m)
-#     RHS = rhs(N,m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal=true, smfb0 = lj22)
+    LHS = lhs(N,m)
+    RHS = rhs(N,m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal=true, smfb0 = lj22)
 
-#     # target = -0.0066-1.033im
-#     target = -0.042+0.66im
-#     evals,evecs = eigstarget(RHS,LHS, target; nev=4)
-#     evals
+    target = -0.0066-1.033im
+    # target = -0.042+0.66im
+    evals,evecs = eigstarget(RHS,LHS, target; nev=4)
 
-# end
+    lj22_n350 = -0.0065952461-1.0335959942im
+
+    @test any(isapprox.(evals,lj22_n350, atol=1e-7))
+
+
+end
 
 Limace.DiscretePart.wig_temp_free()

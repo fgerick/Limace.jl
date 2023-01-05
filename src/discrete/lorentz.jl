@@ -169,7 +169,7 @@ end
 
 #matrix assembly
 
-function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),smfb0 = s_mf) where T
+function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf) where {T,Sf}
     su = s_in 
     tu = t_in
     smf = s_mf 

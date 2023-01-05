@@ -62,9 +62,9 @@ function _induction_tSS(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3
     #if toroidal velocity is not 0 at r=1
     # aij += f1(1.0)*Eabc*lb*lc*Sc(lc,mc,nc,1.0)
     ta1 = ta(la,ma,na,1.0)
-    if ta1 != 0.0
-        aij += lc*p(lb)*ta1*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
-    end
+    # if ta1 != 0.0
+    aij += lc*p(lb)*ta1*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+    # end
     return aij
 end
 
@@ -288,7 +288,7 @@ function _dummy!(is,js,aijs,i,j)
     return nothing
 end
 
-function rhs_induction_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), smfb0 = s_mf) where T
+function rhs_induction_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf) where {T,Sf}
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
