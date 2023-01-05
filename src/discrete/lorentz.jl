@@ -9,7 +9,7 @@
 end
 
 #poloidal B1, poloidal B2
-function _lorentz_SSs(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Sb,sc)
+function _lorentz_SSs(lmna, lmnb, lmnc, r,wr, Sa,Sb,sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -31,7 +31,7 @@ end
 
 
 #poloidal B1, toroidal B0
-function _lorentz_STs(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Tb,sc)
+function _lorentz_STs(lmna, lmnb, lmnc, r,wr, Sa,Tb,sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -59,7 +59,7 @@ end
 
 
 #toroidal B1, toroidal B0
-function _lorentz_TTs(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Ta,Tb,sc)
+function _lorentz_TTs(lmna, lmnb, lmnc, r,wr, Ta,Tb,sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -86,7 +86,7 @@ end
 
 
 #poloidal B1, poloidal B0
-function _lorentz_SSt(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Sb,tc)
+function _lorentz_SSt(lmna, lmnb, lmnc, r,wr, Sa,Sb,tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -107,7 +107,7 @@ end
 
 
 #poloidal B1, toroidal B0
-function _lorentz_STt(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Sa,Tb,tc)
+function _lorentz_STt(lmna, lmnb, lmnc, r,wr, Sa,Tb,tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -128,7 +128,7 @@ end
 
 
 #toroidal B1, toroidal B0
-function _lorentz_TTt(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, Ta,Tb,tc)
+function _lorentz_TTt(lmna, lmnb, lmnc, r,wr, Ta,Tb,tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -153,7 +153,7 @@ flist = [:_lorentz_SSs, :_lorentz_STs, :_lorentz_TTs,
 
 for f in flist
     @eval begin
-        function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, fa,fb,fc; thresh=sqrt(eps()))
+        function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna, lmnb, lmnc, r,wr, fa,fb,fc; thresh=sqrt(eps()))
             aij = $(f)(lmna, lmnb, lmnc, r,wr, fa,fb,fc)
             if abs(aij) > thresh
                 push!(is,i)

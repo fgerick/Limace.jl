@@ -126,19 +126,19 @@ end
     if n==n2 
         aij = one(l)
         #also add the all space contribution here (only nonzero for n==n2==1):
-        if n==1
-            # aij += l^2*(1 + l)*(5 + 2l)^2
-            aij += (l*(5 + 2*l))/(6 + l*(11 + 6*l))
-        end
+        # if n==1
+        #     # aij += l^2*(1 + l)*(5 + 2l)^2
+        #     aij += (l*(5 + 2*l))/(6 + l*(11 + 6*l))
+        # end
         push!(is,i)
         push!(js,j)
         push!(aijs,aij)
     elseif (n==n2+1) 
-        if n2 == 1
-            aij = -(((1 + 2l)*(9 + 2l))/(sqrt(2*(7 + 2l)*(9 + 2l)*(6 + l*(11 + 6l)))))
-        else
+        # if n2 == 1
+        #     aij = -(((1 + 2l)*(9 + 2l))/(sqrt(2*(7 + 2l)*(9 + 2l)*(6 + l*(11 + 6l)))))
+        # else
             aij = -sqrt(1 + 3/(5 - 2*l - 4*n) + 3/(-1 + 2*l + 4*n))/2
-        end
+        # end
         push!(is,i)
         push!(js,j)
         push!(aijs,aij)
@@ -202,11 +202,11 @@ end
     
    
     if n==n2 
-        if n==1
-            aij = -(((1 + 2*l)^2*(3 + 2*l)*(5 + 2*l))/(6 + l*(11 + 6*l)))
-        else
+        # if n==1
+        #     aij = -(((1 + 2*l)^2*(3 + 2*l)*(5 + 2*l))/(6 + l*(11 + 6*l)))
+        # else
             aij = -((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
-        end
+        # end
         push!(is,i)
         push!(js,j)
         push!(aijs,η*aij)

@@ -9,7 +9,7 @@ function rquad(nr)
 end
 
 
-function ∫dr(f::F,r::Vector{Float64},wr::Vector{Float64})::ComplexF64 where F
+function ∫dr(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
 	out = zero(ComplexF64)
 	for (r,w) in zip(r,wr)
 		out+=f(r)*r^2*w
