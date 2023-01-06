@@ -3,6 +3,7 @@
 ##
 
 @inline D(f,l,r) = ∂(r->∂(f,r),r) + 2/r * ∂(f,r) - l*(l+1)/r^2 *f(r)
+@inline D(f,df,d2f, l,r) = d2f(r) + 2/r * df(r) - l*(l+1)/r^2 *f(r)
 
 @inline function inners2(s,s2, l, r) 
     return l*(l+1)*(s(r)*D(s2,l,r))
@@ -21,7 +22,7 @@ function _lorentz_SSs(lmna, lmnb, lmnc, r,wr, Sa,Sb,sc)
 
     @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*D(_Sa,la,r)*∂(r->r*_Sb(r),r) + 
                         p(lb)*(p(la)-p(lb)+p(lc))*r*∂(r->D(_Sa,la,r)*_Sb(r),r))/(2r^2*p(lc))
-    
+
     @inline f = r-> -innert(_sc,f1, lc, r)
     # @inline f = r->_sc(r)*f1(r) #inners(_sc,f1,lc,r)
 
@@ -194,9 +195,9 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            # !ncondition(lb0,ni,nb0,nj) && continue
-
+            !ncondition(lb0,ni,nb0+1,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
             _lorentz_SSs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, smfb0, su; thresh)
             _lorentz_SSs!(is,js,aijs,i,j,lmnb0,lmnj,lmni, r, wr, smfb0, smf, su; thresh)
             #using i,j indices twice for sparse matrix means values are added!
@@ -205,6 +206,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
             _lorentz_STs!(is,js,aijs,i,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0, tmf, su; thresh)
         end
     end
@@ -215,6 +217,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
             _lorentz_SSt!(is,js,aijs,i+np,j,lmnj,lmnb0,lmni, r, wr, smfb0,smf,tu; thresh)
             _lorentz_SSt!(is,js,aijs,i+np,j,lmnb0,lmnj,lmni, r, wr, smf,smfb0,tu; thresh)
         end
@@ -222,6 +225,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
             _lorentz_STt!(is,js,aijs,i+np,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0,tmf,tu; thresh)
         end
     end

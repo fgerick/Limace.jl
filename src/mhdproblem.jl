@@ -18,7 +18,7 @@ end
 
 function rhs(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal = true, lmnb0::NTuple{3,Int} = (1,0,1), thresh = sqrt(eps()), kwargs...) where T
     
-
+    lb0,mb0,nb0 = lmnb0
     @time "Coriolis" RHSc = VB.rhs_coriolis(N,m; ns, Ω)
     # nu = size(RHSc,1)
     # @time "Viscous" if ν != 0
@@ -37,9 +37,21 @@ function rhs(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal = tr
     if B0poloidal
         @time "Lorentz" RHSub = DP.rhs_lorentz_bpol(N,m, lmnb0; ns, η, thresh, kwargs...)
         @time "Induction" RHSbu = DP.rhs_induction_bpol(N,m, lmnb0; ns, η, thresh, kwargs...)
+        if mb0 != 0
+            @time "Lorentz" RHSub += (-1)^mb0*DP.rhs_lorentz_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            @time "Induction" RHSbu += (-1)^mb0*DP.rhs_induction_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub/=2
+            RHSbu/=2
+        end
     else
         @time "Lorentz" RHSub = DP.rhs_lorentz_btor(N,m, lmnb0; ns, η, thresh, kwargs...)
         @time "Induction" RHSbu = DP.rhs_induction_btor(N,m, lmnb0; ns, η, thresh, kwargs...)
+        if mb0 != 0
+            @time "Lorentz" RHSub += (-1)^mb0*DP.rhs_lorentz_btor(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            @time "Induction" RHSbu += (-1)^mb0*DP.rhs_induction_btor(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub/=2
+            RHSbu/=2
+        end
     end
 
     #wigner symbol temporary arrays dealloc
