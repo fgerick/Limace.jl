@@ -6,6 +6,8 @@ using SparseArrays
 using SpecialFunctions
 using Wigxjpf
 using FastGaussQuadrature
+using Distributed
+using DistributedArrays
 
 #only for dev
 function __wiginit(N)

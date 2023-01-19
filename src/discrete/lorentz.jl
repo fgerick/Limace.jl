@@ -198,8 +198,8 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
             !ncondition(lb0,ni,nb0+1,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            _lorentz_SSs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, smfb0, su; thresh)
-            _lorentz_SSs!(is,js,aijs,i,j,lmnb0,lmnj,lmni, r, wr, smfb0, smf, su; thresh)
+            _lorentz_SSs!(is,js,aijs,i,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf, smfb0, su; thresh)
+            _lorentz_SSs!(is,js,aijs,i,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, smf, su; thresh)
             #using i,j indices twice for sparse matrix means values are added!
         end
         for (j, lmnj) in enumerate(lmn_bt)
@@ -207,7 +207,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            _lorentz_STs!(is,js,aijs,i,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0, tmf, su; thresh)
+            _lorentz_STs!(is,js,aijs,i,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, tmf, su; thresh)
         end
     end
 
@@ -218,15 +218,15 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            _lorentz_SSt!(is,js,aijs,i+np,j,lmnj,lmnb0,lmni, r, wr, smfb0,smf,tu; thresh)
-            _lorentz_SSt!(is,js,aijs,i+np,j,lmnb0,lmnj,lmni, r, wr, smf,smfb0,tu; thresh)
+            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smfb0,smf,tu; thresh)
+            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smf,smfb0,tu; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            _lorentz_STt!(is,js,aijs,i+np,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0,tmf,tu; thresh)
+            _lorentz_STt!(is,js,aijs,i+np,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,tmf,tu; thresh)
         end
     end
     nmatb = length(lmn_bp)+length(lmn_bt)
@@ -356,4 +356,73 @@ function rhs_lorentz_btor_cond(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps(
     nmatu = length(lmn_p)+length(lmn_t)
 
     return sparse(is,js,aijs,nmatu, nmatb)
+end
+
+
+function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf) where {T,Sf}
+    su = s_in 
+    tu = t_in
+    smf = s_mf 
+    tmf = t_mf 
+    
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    np = length(lmn_p)
+
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+
+    npb = length(lmn_bp)
+
+    nt = nprocs()
+    is,js,aijs = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
+
+    r, wr = rquad(N+lb0+nb0+5)
+
+    @sync @distributed for (i,lmni) in enumerate(lmn_p)
+        it = Threads.threadid()
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0+1,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            _lorentz_SSs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,lmnj,lmnb0,lmni, r, wr, smf, smfb0, su; thresh)
+            _lorentz_SSs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,lmnb0,lmnj,lmni, r, wr, smfb0, smf, su; thresh)
+            #using i,j indices twice for sparse matrix means values are added!
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            _lorentz_STs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0, tmf, su; thresh)
+        end
+    end
+
+    @sync @distributed for (i,lmni) in enumerate(lmn_t)
+        it = Threads.threadid()
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnj,lmnb0,lmni, r, wr, smfb0,smf,tu; thresh)
+            _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnb0,lmnj,lmni, r, wr, smf,smfb0,tu; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            _lorentz_STt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0,tmf,tu; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
+
+    return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatu, nmatb)
 end
