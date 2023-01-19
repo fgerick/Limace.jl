@@ -12,7 +12,7 @@ end
 
 
 #poloidal flow, poloidal B0
-function _induction_sSS(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, sa,Sb,Sc)
+function _induction_sSS(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -30,7 +30,7 @@ end
 
 
 #poloidal flow, toroidal B0
-function _induction_sTS(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, sa,Tb,Sc)
+function _induction_sTS(lmna, lmnb, lmnc, r,wr, sa,Tb,Sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -46,7 +46,7 @@ end
 
 
 #toroidal flow, poloidal B0
-function _induction_tSS(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, ta,Sb,Sc)
+function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -83,7 +83,7 @@ end
 
 
 #poloidal flow, poloidal B0
-function _induction_sST(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, sa,Sb,Tc)
+function _induction_sST(lmna, lmnb, lmnc, r,wr, sa,Sb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -105,7 +105,7 @@ end
 
 
 #poloidal flow, toroidal B0
-function _induction_sTT(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, sa,Tb,Tc)
+function _induction_sTT(lmna, lmnb, lmnc, r,wr, sa,Tb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -126,7 +126,7 @@ function _induction_sTT(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3
 end 
 
 #toroidal flow, poloidal B0
-function _induction_tST(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, ta,Sb,Tc)
+function _induction_tST(lmna, lmnb, lmnc, r,wr, ta,Sb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -149,7 +149,7 @@ function _induction_tST(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3
 end 
 
 #toroidal flow, toroidal B0
-function _induction_tTT(lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, ta,Tb,Tc)
+function _induction_tTT(lmna, lmnb, lmnc, r,wr, ta,Tb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -176,7 +176,7 @@ flist = [:_induction_sSS, :_induction_tSS, :_induction_sTS,
 
 for f in flist
     @eval begin
-        function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna::NTuple{3,Int}, lmnb::NTuple{3,Int}, lmnc::NTuple{3,Int}, r,wr, fa,fb,fc; thresh=sqrt(eps()))
+        function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna, lmnb, lmnc, r,wr, fa,fb,fc; thresh=sqrt(eps()))
             aij = $(f)(lmna, lmnb, lmnc, r,wr, fa,fb,fc)
             if abs(aij) > thresh
                 push!(is,i)
