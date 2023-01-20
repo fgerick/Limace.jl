@@ -381,7 +381,8 @@ function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps(
 
     r, wr = rquad(N+lb0+nb0+5)
 
-    @sync @distributed for (i,lmni) in enumerate(lmn_p)
+    @sync @distributed for i in shuffle(eachindex(lmn_p))
+        lmni = lmn_p[i]
         it = Threads.threadid()
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
@@ -402,7 +403,8 @@ function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps(
         end
     end
 
-    @sync @distributed for (i,lmni) in enumerate(lmn_t)
+    @sync @distributed for i in shuffle(eachindex(lmn_t))
+        lmni = lmn_t[i]
         it = Threads.threadid()
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)

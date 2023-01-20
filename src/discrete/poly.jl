@@ -9,6 +9,14 @@ end
 
 @inline Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
 
+# @inline function Δ(la,lb,lc) 
+#     try
+#         return sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1))
+#     catch
+#         return 0.0
+#     end
+# end
+
 @inline function elsasser(la,lb,lc,ma,mb,mc)
     return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*Δ(la,lb,lc)*wigner3j(Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
 end

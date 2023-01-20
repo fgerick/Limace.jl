@@ -63,7 +63,7 @@ function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc)
     # aij += f1(1.0)*Eabc*lb*lc*Sc(lc,mc,nc,1.0)
     ta1 = ta(la,ma,na,1.0)
     # if ta1 != 0.0
-    aij += lc*p(lb)*ta1*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+    aij += lb*p(lc)*ta1*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
     # end
     return aij
 end
@@ -536,4 +536,68 @@ function rhs_induction_btor_cond(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(ep
     nmatu = length(lmn_p)+length(lmn_t)
 
     return sparse(is,js,aijs,nmatb, nmatu)
+end
+
+
+function rhs_induction_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf) where {T,Sf}
+    su = s_in
+    tu = t_in
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    np = length(lmn_p)
+
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+
+    npb = length(lmn_bp)
+
+
+    nt = nprocs()
+    is,js,aijs = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
+
+    r, wr = rquad(N+lb0+nb0+5)
+
+    @sync @distributed for i in shuffle(eachindex(lmn_bp))
+        lmni = lmn_bp[i]
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_p)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            _induction_sSS!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, su, smfb0, s_mf; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_t)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            # _dummy!(is,js,aijs,i,j+np)
+            _induction_tSS!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, s_mf; thresh)
+        end
+    end
+
+    @sync @distributed for i in shuffle(eachindex(lmn_bt))
+        lmni = lmn_bt[i]
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_p)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_sST!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, su, smfb0, t_mf; thresh)
+            # _dummy!(is,js,aijs,i+npb,j)
+        end
+        for (j, lmnj) in enumerate(lmn_t)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_tST!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, t_mf; thresh)
+            # _dummy!(is,js,aijs,i+npb,j+np)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
+
+    return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatb, nmatu)
 end

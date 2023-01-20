@@ -3,6 +3,7 @@ module MHDProblem
 using Limace
 using SparseArrays
 using Wigxjpf
+using Distributed
 
 VB = Limace.InviscidBasis
 BB = Limace.InsulatingMFBasis
@@ -56,6 +57,57 @@ function rhs(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal = tr
 
     #wigner symbol temporary arrays dealloc
     Limace.DiscretePart.wig_temp_free()
+
+    @time "Magnetic diffusion" RHSbb = BB.rhs_diffusion(N,m; ns, η)
+
+    RHS = [RHSuu RHSub
+           RHSbu RHSbb]
+    
+    return RHS
+end
+
+function rhs_dist(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal = true, lmnb0::NTuple{3,Int} = (1,0,1), thresh = 1000eps(), kwargs...) where T
+    
+    lb0,mb0,nb0 = lmnb0
+    @time "Coriolis" RHSc = VB.rhs_coriolis(N,m; ns, Ω)
+    # nu = size(RHSc,1)
+    # @time "Viscous" if ν != 0
+    #     RHSv = VB.rhs_viscosity(N,m; ns, ν)
+    # else
+    #     RHSv = spzeros(Complex{T}, nu, nu)
+    # end
+
+    RHSuu = RHSc #+ RHSv
+
+
+    #wigner symbol temporary arrays alloc
+    @everywhere begin
+        Limace.DiscretePart.wig_table_init($(2N), 9)
+        Limace.DiscretePart.wig_temp_init($(2N))
+    end
+
+    if B0poloidal
+        @time "Lorentz" RHSub = DP.rhs_lorentz_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        @time "Induction" RHSbu = DP.rhs_induction_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        if mb0 != 0
+            @time "Lorentz" RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            @time "Induction" RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub/=2
+            RHSbu/=2
+        end
+    else
+        @time "Lorentz" RHSub = DP.rhs_lorentz_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        @time "Induction" RHSbu = DP.rhs_induction_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        if mb0 != 0
+            @time "Lorentz" RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            @time "Induction" RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub/=2
+            RHSbu/=2
+        end
+    end
+
+    #wigner symbol temporary arrays dealloc
+    @everywhere Limace.DiscretePart.wig_temp_free()
 
     @time "Magnetic diffusion" RHSbb = BB.rhs_diffusion(N,m; ns, η)
 
