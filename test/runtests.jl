@@ -91,7 +91,7 @@ end
 
     DP = Limace.DiscretePart
     N =12
-    m=1
+    m=2
     
     LHS = Limace.InsulatingMFBasis.lhs(N,m)
     RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N,m)
