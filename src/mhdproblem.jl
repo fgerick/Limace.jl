@@ -177,6 +177,68 @@ function rhs_combined(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0polo
     
     return RHS
 end
+
+function rhs_dist_combined(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal::Vector{Bool} = [true], lmnb0::Vector{NTuple{3,Int}} = [(1,0,1)], B0fac = [1.0], thresh = sqrt(eps()), kwargs...) where T
+    
+    @time "Coriolis" RHSc = VB.rhs_coriolis(N,m; ns, Ω)
+    @time "Magnetic diffusion" RHSbb = BB.rhs_diffusion(N,m; ns, η)
+    # nu = size(RHSc,1)
+    # @time "Viscous" if ν != 0
+    #     RHSv = VB.rhs_viscosity(N,m; ns, ν)
+    # else
+    #     RHSv = spzeros(Complex{T}, nu, nu)
+    # end
+
+    RHSuu = RHSc #+ RHSv
+
+
+    #wigner symbol temporary arrays alloc
+    @everywhere begin
+        Limace.DiscretePart.wig_table_init($(2N), 9)
+        Limace.DiscretePart.wig_temp_init($(2N))
+    end
+
+    nu = size(RHSuu,1)
+    nb = size(RHSbb,1)
+    RHSub = spzeros(ComplexF64,nu,nb)
+    RHSbu = spzeros(ComplexF64,nb,nu)
+    
+    for (lmnb0,b0p,α) in zip(lmnb0,B0poloidal,B0fac)
+        lb0,mb0,nb0 = lmnb0
+        if b0p
+            @time "Lorentz" RHSubt = DP.rhs_lorentz_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+            @time "Induction" RHSbut = DP.rhs_induction_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+            if mb0 != 0
+                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+                RHSubt/=2
+                RHSbut/=2
+            end
+        else
+            @time "Lorentz" RHSubt = DP.rhs_lorentz_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+            @time "Induction" RHSbut = DP.rhs_induction_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+            if mb0 != 0
+                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+                RHSubt/=2
+                RHSbut/=2
+            end
+        end
+        RHSub +=RHSubt*α
+        RHSbu +=RHSbut*α
+    end
+
+    #wigner symbol temporary arrays dealloc
+    @everywhere Limace.DiscretePart.wig_temp_free()
+
+
+    RHS = [RHSuu RHSub
+           RHSbu RHSbb]
+    
+    return RHS
+end
+
+
 function lhs_cond(N,m; ns = 0, Ω::T = 1.0, η::T = 1.0) where T
     LHSu = VB.lhs(N,m; ns, Ω)
     LHSb = VB.lhs(N,m; ns, Ω)
