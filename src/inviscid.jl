@@ -23,42 +23,34 @@ function lmn_utor(N, ms = 0:N, ns = 0)
 end
 
 function lmn_upol_l(N, ms = 0:N, ns=0)
-    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
-    if (ns != 0)
-        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:(N-1)]
-    else
-        lmn = [[(l,m,n) for m in ms for n in 0:((N-l+1)÷2) if abs(m)<=l] for l in 1:(N-1)]
-    end
+    lmn = lmn_upol(N,ms,ns)
     lmnk = Vector{NTuple{4,Int}}[]
-    k=1
-    for l in eachindex(lmn)
+    L = N-1
+    for _ in 1:L
         push!(lmnk,NTuple{4,Int}[])
-        for lmn in lmn[l]
-            push!(lmnk[l], (k,lmn...))
-            k+=1
-        end
+    end
+
+    for k in eachindex(lmn)
+        l,m,n = lmn[k]
+        push!(lmnk[l], (k,l,m,n))
     end
     return lmnk
 end
 
 function lmn_utor_l(N, ms = 0:N, ns=0)
-    if (ns != 0)
-        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:N]
-    else
-        lmn = [[(l,m,n) for m in ms for n in 0:((N-l)÷2) if abs(m)<=l] for l in 1:N]
-    end
+    lmn = lmn_utor(N,ms,ns)
     lmnk = Vector{NTuple{4,Int}}[]
-    k=1
-    for l in eachindex(lmn)
+    L = N
+    for _ in 1:L
         push!(lmnk,NTuple{4,Int}[])
-        for lmn in lmn[l]
-            push!(lmnk[l], (k,lmn...))
-            k+=1
-        end
+    end
+
+    for k in eachindex(lmn)
+        l,m,n = lmn[k]
+        push!(lmnk[l], (k,l,m,n))
     end
     return lmnk
 end
-
 
 _coriolis_tt(l,m; Ω = 2) = Ω*im*m/(l*(l+1))
 _coriolis_ss(l,m; Ω = 2) = _coriolis_tt(l,m; Ω)
@@ -119,8 +111,8 @@ end
 
     is,js,aijs = Int[], Int[], Complex{T}[]
 
-    for (l,ilmn) in enumerate(lmn_p_l)
-        for (i,_,m,n) in ilmn
+    for ilmn in lmn_p_l
+        for (i,l,m,n) in ilmn
             _coriolis_ss(is,js,aijs, i,i, T(l),T(m); Ω)
             # for (j,l2,m2,n2) in lmn_p_l[l]
             #     if (m==m2) && (n==n2)
@@ -147,10 +139,10 @@ end
     is,js,aijs = Int[], Int[], Complex{T}[]
 
 
-    for (l,ilmn) in enumerate(lmn_t_l)
-        for (i,_,m,n) in ilmn
+    for ilmn in lmn_t_l
+        for (i,l,m,n) in ilmn
         #     # l,m,n = T.((l,m,n))
-        #     for (j,l2,m2,n2) in lmn_t_l[l]
+            # for (j,l2,m2,n2) in lmn_t_l[l]
         #         if (m==m2) && (n==n2)
         #         # l2,m2,n2 = T.(lmn_t[j])
         #         _coriolis_tt(is,js,aijs, i+np,j+np, T(l),T(m); Ω)
@@ -159,7 +151,7 @@ end
             # end
 
             # lrange = l == 1 ? [1,2] : (l-1:l+1)
-            lrange = (l== 1) ? [2] : ((l>=N-2) ? [l-1] : [l-1,l+1])
+            lrange = (l== 1) ? [2] : ((l>=N-1) ? [l-1] : [l-1,l+1])
             for lmn2 in view(lmn_p_l,lrange)
                 # l2,m2,n2 = T.(lmn_p[j])
                 for (j,l2,m2,n2) in lmn2
@@ -171,7 +163,7 @@ end
 
     return is, js, aijs
 end
-function rhs_coriolis_2(N,m; ns = 0, Ω::T = 2.0) where T
+function rhs_coriolis(N,m; ns = 0, Ω::T = 2.0) where T
     lmn_p = lmn_upol(N,m,ns)
     lmn_t = lmn_utor(N,m,ns)
     lmn_p_l = lmn_upol_l(N,m,ns)
@@ -195,7 +187,7 @@ function rhs_coriolis_2(N,m; ns = 0, Ω::T = 2.0) where T
 
 end
 
-function rhs_coriolis(N,m; ns = 0, Ω::T = 2.0) where T
+function rhs_coriolis_old(N,m; ns = 0, Ω::T = 2.0) where T
     lmn_p = lmn_upol(N,m)
     lmn_t = lmn_utor(N,m)
 
