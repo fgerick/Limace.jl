@@ -21,24 +21,36 @@ function lmn_btor(N, ms = 0:(N-2), ns = 0)
 end
 
 
-function lmn_bpol_l(N, ms = 0:(N-1), ns=0)
-    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
-    if (ns != 0)
-        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:(N-1)]
-    else
-        lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)]
-    end
+function lmn_bpol_l(N, ms = 0:N, ns=0)
+    lmn = lmn_bpol(N,ms,ns)
     lmnk = Vector{NTuple{4,Int}}[]
-    k=1
-    for l in eachindex(lmn)
+    L = N-1
+    for _ in 1:L
         push!(lmnk,NTuple{4,Int}[])
-        for lmn in lmn[l]
-            push!(lmnk[l], (k,lmn...))
-            k+=1
-        end
+    end
+
+    for k in eachindex(lmn)
+        l,m,n = lmn[k]
+        push!(lmnk[l], (k,l,m,n))
     end
     return lmnk
 end
+
+function lmn_btor_l(N, ms = 0:N, ns=0)
+    lmn = lmn_btor(N,ms,ns)
+    lmnk = Vector{NTuple{4,Int}}[]
+    L = N-2
+    for _ in 1:L
+        push!(lmnk,NTuple{4,Int}[])
+    end
+
+    for k in eachindex(lmn)
+        l,m,n = lmn[k]
+        push!(lmnk[l], (k,l,m,n))
+    end
+    return lmnk
+end
+
 
 function lmn_bpol_ml(N, ms = 0:(N-1), ns=0)
     # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
@@ -72,25 +84,6 @@ function lmn_bpol_ml(N, ms = 0:(N-1), ns=0)
                     k+=1
                 end
             end
-        end
-    end
-    return lmnk
-end
-
-function lmn_btor_l(N, ms = 0:(N-2), ns=0)
-    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
-    if (ns != 0)
-        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:(N-2)] 
-    else
-        lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2) if abs(m)<=l]  for l in 1:(N-2)]
-    end
-    lmnk = Vector{NTuple{4,Int}}[]
-    k=1
-    for l in eachindex(lmn)
-        push!(lmnk,NTuple{4,Int}[])
-        for lmn in lmn[l]
-            push!(lmnk[l], (k,lmn...))
-            k+=1
         end
     end
     return lmnk

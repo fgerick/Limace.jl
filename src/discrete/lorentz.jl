@@ -218,8 +218,8 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smfb0,smf,tu; thresh)
-            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smf,smfb0,tu; thresh)
+            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,smf,tu; thresh)
+            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf,smfb0,tu; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
@@ -234,6 +234,85 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),sm
 
     return sparse(is,js,aijs,nmatu, nmatb)
 end
+
+# function rhs_lorentz_bpol2(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf) where {T,Sf}
+#     su = s_in 
+#     tu = t_in
+#     smf = s_mf 
+#     tmf = t_mf 
+    
+#     lb0,mb0,nb0 = lmnb0
+#     lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+#     lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+#     np = length(lmn_p)
+
+#     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
+#     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+#     lmn_bp_l = Limace.InsulatingMFBasis.lmn_bpol_l(N,m,ns)
+#     LP = length(lmn_bp_l)
+#     lmn_bt_l = Limace.InsulatingMFBasis.lmn_btor_l(N,m,ns)
+#     LT = length(lmn_bt_l)
+
+#     npb = length(lmn_bp)
+
+#     is,js,aijs = Int[],Int[],Complex{T}[]
+
+#     r, wr = rquad(N+lb0+nb0+5)
+
+#     for (i,lmni) in enumerate(lmn_p)
+#         li,mi,ni = lmni
+#         for lmnbps in view(lmn_bp_l,max(1,li-lb0):min(LP,li+lb0))
+#             for (j, lj, mj, nj) in lmnbps 
+#                 # lj,mj,nj = lmnj
+#                 lmnj = (lj,mj,nj)
+#                 # !ncondition(lb0,ni,nb0+1,nj) && continue
+#                 # !condition1(li,lb0,lj,mi,mb0,mj) && continue
+#                 _dummy!(is,js,aijs,i,j)
+#                 # _lorentz_SSs!(is,js,aijs,i,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf, smfb0, su; thresh)
+#                 # _lorentz_SSs!(is,js,aijs,i,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, smf, su; thresh)
+#                 #using i,j indices twice for sparse matrix means values are added!
+#             end
+#         end
+#         for lmnbts in view(lmn_bt_l,max(1,li-lb0):min(LT,li+lb0))
+#             for (j,lj,mj,nj) in lmnbts
+#                 lmnj = (lj,mj,nj)
+#                 # !ncondition(lb0,ni,nb0,nj) && continue
+#                 # !condition2(li,lb0,lj,mi,mb0,mj) && continue
+#                 _dummy!(is,js,aijs,i,j+npb)
+#                 # _lorentz_STs!(is,js,aijs,i,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, tmf, su; thresh)
+#             end
+#         end
+#     end
+
+#     for (i,lmni) in enumerate(lmn_t)
+#         li,mi,ni = lmni
+#         for lmnbps in view(lmn_bp_l,max(1,li-lb0):min(LP,li+lb0))
+#             for (j, lj, mj, nj) in lmnbps 
+#                 lmnj = (lj,mj,nj)
+#                 # !ncondition(lb0,ni,nb0,nj) && continue
+#                 # !condition2(li,lb0,lj,mi,mb0,mj) && continue
+#                 _dummy!(is,js,aijs,i+np,j)
+#                 # _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smfb0,smf,tu; thresh)
+#                 # _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smf,smfb0,tu; thresh)
+#             end
+#         end
+#         for lmnbts in view(lmn_bt_l,max(1,li-lb0):min(LT,li+lb0))
+#             for (j,lj,mj,nj) in lmnbts
+#                 lmnj = (lj,mj,nj)
+#                 # !ncondition(lb0,ni,nb0,nj) && continue
+#                 # !condition1(li,lb0,lj,mi,mb0,mj) && continue
+#                 _dummy!(is,js,aijs,i+np,j+npb)
+#                 # _lorentz_STt!(is,js,aijs,i+np,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,tmf,tu; thresh)
+#             end
+#         end
+#     end
+#     nmatb = length(lmn_bp)+length(lmn_bt)
+#     nmatu = length(lmn_p)+length(lmn_t)
+
+#     return sparse(is,js,aijs,nmatu, nmatb)
+# end
+
 
 function rhs_lorentz_btor(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
     su=s_in 
