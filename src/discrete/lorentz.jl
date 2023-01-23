@@ -491,8 +491,8 @@ function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps(
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnj,lmnb0,lmni, r, wr, smfb0,smf,tu; thresh)
-            _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnb0,lmnj,lmni, r, wr, smf,smfb0,tu; thresh)
+            _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnj,lmnb0,lmni, r, wr, smf,smfb0,tu; thresh)
+            _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnb0,lmnj,lmni, r, wr, smfb0,smf,tu; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
