@@ -118,7 +118,7 @@ end
             #     if (m==m2) && (n==n2)
             #     end
             # end
-            lrange = (l== 1) ? [2] : ((l==(N-1)) ? [l-1] : [l-1,l+1])
+            lrange = (l== 1) ? [2] : ((l==(N)) ? [l-1] : [l-1,l+1])
             for lmn2 in view(lmn_t_l,lrange)
                 # l2,m2,n2 = T.(lmn_p[j])
                 for (j,l2,m2,n2) in lmn2

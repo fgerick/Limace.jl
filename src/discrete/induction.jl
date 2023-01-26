@@ -59,11 +59,11 @@ function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc)
     aij = ∫dr(f,r,wr)*Eabc
 
     #add contribution from external ∫dV (1<r<∞), 
-    #if toroidal velocity is not 0 at r=1
+    #if toroidal velocity is not 0 at r=11 
     # aij += f1(1.0)*Eabc*lb*lc*Sc(lc,mc,nc,1.0)
     ta1 = ta(la,ma,na,1.0)
     # if ta1 != 0.0
-    aij += la*lb*p(lb)*ta1*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+    aij += lc*p(lb)*ta1*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
     # end
     return aij
 end
