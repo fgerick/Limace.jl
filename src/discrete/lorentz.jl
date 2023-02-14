@@ -484,7 +484,6 @@ function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps(
 
     @sync @distributed for i in shuffle(eachindex(lmn_t))
         lmni = lmn_t[i]
-        it = Threads.threadid()
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
@@ -500,6 +499,69 @@ function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps(
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
             _lorentz_STt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0,tmf,tu; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
+
+    return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatu, nmatb)
+end
+
+function rhs_lorentz_btor_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+    su=s_in 
+    tu = t_in
+    smf = s_mf 
+    tmf = t_mf 
+    tmfb0 = t_mf
+    
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    np = length(lmn_p)
+
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+
+    npb = length(lmn_bp)
+    nt = nprocs()
+    is,js,aijs = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
+
+    r, wr = rquad(N+lb0+nb0+5)
+
+    @sync @distributed for i in shuffle(eachindex(lmn_p))
+        lmni = lmn_p[i]
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_STs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, su; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_TTs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, su; thresh)
+            _lorentz_TTs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0, tmf, su; thresh)
+        end
+    end
+
+    @sync @distributed for i in shuffle(eachindex(lmn_t))
+        lmni = lmn_t[i]
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_STt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, tu; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _lorentz_TTt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, tu; thresh)
+            _lorentz_TTt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0,  tmf, tu; thresh)
         end
     end
     nmatb = length(lmn_bp)+length(lmn_bt)

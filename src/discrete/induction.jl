@@ -601,3 +601,56 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(ep
 
     return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatb, nmatu)
 end
+
+function rhs_induction_btor_dist(N,m, lmnb0; ns = 0, η::T=1.0, thresh = sqrt(eps())) where T
+    su = s_in
+    tu = t_in
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    np = length(lmn_p)
+
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+
+    npb = length(lmn_bp)
+
+    nt = nprocs()
+    is,js,aijs = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
+
+
+    r, wr = rquad(N+lb0+nb0+5)
+
+    @sync @distributed for i in shuffle(eachindex(lmn_bp))
+        lmni = lmn_bp[i]
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_p)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_sTS!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, s_mf; thresh)
+        end
+    end
+
+    @sync @distributed for i in shuffle(eachindex(lmn_bt))
+        lmni = lmn_bt[i]
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_p)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_sTT!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, t_mf; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_t)
+            lj,mj,nj = lmnj
+            !ncondition(lb0,ni,nb0,nj) && continue
+            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            _induction_tTT!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j+np,lmnj,lmnb0,lmni, r, wr, tu, t_mf, t_mf; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
+
+    return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatb, nmatu)
+end
