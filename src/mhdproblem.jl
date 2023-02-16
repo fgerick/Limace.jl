@@ -178,6 +178,26 @@ function rhs_combined(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0polo
     return RHS
 end
 
+function rhs_lorentz_induction(N,m,b0p,lmnb0; ns, η, thresh, kwargs...)
+    lb0,mb0,nb0 = lmnb0
+    florentz = b0p ? DP.rhs_lorentz_bpol_dist : DP.rhs_lorentz_btor_dist
+    finduction = b0p ? DP.rhs_induction_bpol_dist : DP.rhs_induction_btor_dist
+    @time "Lorentz $lb0, $mb0, $nb0" RHSubt = florentz(N,m, lmnb0; ns, η, thresh, kwargs...)
+    @time "Induction $lb0, $mb0, $nb0" RHSbut = finduction(N,m, lmnb0; ns, η, thresh, kwargs...)
+    if mb0 != 0
+        @time "Lorentz $lb0, -$mb0, $nb0" RHSubt2 = florentz(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+        @time "Induction $lb0, -$mb0, $nb0" RHSbut2 = finduction(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+        if mb0<0
+            RHSubt = (RHSubt - (-1)^mb0*RHSubt2)*im/sqrt(2)
+            RHSbut = (RHSbut - (-1)^mb0*RHSbut2)*im/sqrt(2)
+        else
+            RHSubt = (RHSubt2 + (-1)^mb0*RHSubt)/sqrt(2)
+            RHSbut = (RHSbut2 + (-1)^mb0*RHSbut)/sqrt(2)
+        end
+    end
+    return RHSubt, RHSbut
+end
+
 function rhs_dist_combined(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal::Vector{Bool} = [true], lmnb0::Vector{NTuple{3,Int}} = [(1,0,1)], B0fac = [1.0], thresh = sqrt(eps()), kwargs...) where T
     
     @time "Coriolis" RHSc = VB.rhs_coriolis(N,m; ns, Ω)
@@ -204,26 +224,7 @@ function rhs_dist_combined(N,m; ns = 0, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B
     RHSbu = spzeros(ComplexF64,nb,nu)
     
     for (lmnb0,b0p,α) in zip(lmnb0,B0poloidal,B0fac)
-        lb0,mb0,nb0 = lmnb0
-        if b0p
-            @time "Lorentz" RHSubt = DP.rhs_lorentz_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-            @time "Induction" RHSbut = DP.rhs_induction_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-            if mb0 != 0
-                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-                RHSubt/=2
-                RHSbut/=2
-            end
-        else
-            @time "Lorentz" RHSubt = DP.rhs_lorentz_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-            @time "Induction" RHSbut = DP.rhs_induction_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-            if mb0 != 0
-                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-                RHSubt/=2
-                RHSbut/=2
-            end
-        end
+        RHSubt, RHSbut = rhs_lorentz_induction(N,m,b0p,lmnb0; ns, η, thresh, kwargs...)
         RHSub +=RHSubt*α
         RHSbu +=RHSbut*α
     end
