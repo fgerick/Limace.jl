@@ -10,7 +10,7 @@ function lmn_upol(N, ms = 0:N, ns = 0)
     if (ns != 0)
         [(l,m,n) for m in ms for l in 1:(N-1) for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:((N-l+1)÷2) if abs(m)<=l] 
+        [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
     end
 end
 
@@ -56,15 +56,17 @@ _coriolis_tt(l,m; Ω = 2) = Ω*im*m/(l*(l+1))
 _coriolis_ss(l,m; Ω = 2) = _coriolis_tt(l,m; Ω)
 
 function _coriolis_tt(is,js,aijs, i,j, l,m; Ω = 2.0)
+    aij =  _coriolis_tt(l,m; Ω)
     push!(is,i)
     push!(js,j)
-    push!(aijs, _coriolis_tt(l,m; Ω))
+    push!(aijs,aij)
 end
 
 function _coriolis_ss(is,js,aijs, i,j, l,m; Ω = 2.0)
+    aij = _coriolis_ss(l,m; Ω)
     push!(is,i)
     push!(js,j)
-    push!(aijs, _coriolis_ss(l,m; Ω))
+    push!(aijs,aij)
 end
 
 
@@ -74,15 +76,15 @@ function _coriolis_ts(is,js,aijs, i,j, l,l2,m,m2,n,n2; Ω = 2.0)
     end
     if (l==l2+1) && (n==n2)
         
-        aij = -sqrt((l^2-1)/(4l^2-1))*sqrt((l-m)*(l+m))/l
+        aij = -Ω*sqrt((l^2-1)/(4l^2-1))*sqrt((l-m)*(l+m))/l
         push!(is,i)
         push!(js,j)
-        push!(aijs,Ω*aij)
+        push!(aijs,aij)
     elseif (l==l2-1) && (n==n2+1)
-        aij = -sqrt(l*(l-m+1)*(l+m+1)/((2+l)*(2l+1)*(2l+3)))*(l+2)/(l+1)
+        aij = -Ω*sqrt(l*(l-m+1)*(l+m+1)/((2+l)*(2l+1)*(2l+3)))*(l+2)/(l+1)
         push!(is,i)
         push!(js,j)
-        push!(aijs,Ω*aij)
+        push!(aijs,aij)
     end
     return nothing
 end
@@ -93,15 +95,15 @@ function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2.0)
     end
     if (l==l2+1) && (n==n2)
         
-        aij = sqrt((l^2-1)/(4l^2-1))*sqrt((l-m)*(l+m))/l
+        aij = Ω*sqrt((l^2-1)/(4l^2-1))*sqrt((l-m)*(l+m))/l
         push!(is,i)
         push!(js,j)
-        push!(aijs, Ω*aij)
+        push!(aijs, aij)
     elseif (l==l2-1) && (n==n2+1)
-        aij = sqrt(l*(l-m+1)*(l+m+1)/((2+l)*(2l+1)*(2l+3)))*(l+2)/(l+1)
+        aij = Ω*sqrt(l*(l-m+1)*(l+m+1)/((2+l)*(2l+1)*(2l+3)))*(l+2)/(l+1)
         push!(is,i)
         push!(js,j)
-        push!(aijs,Ω*aij)
+        push!(aijs,aij)
     end
     return nothing
 end
