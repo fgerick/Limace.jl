@@ -4,27 +4,27 @@ using SparseArrays
 
 #lmns
 
-function lmn_bpol(N, ms = 0:(N-1), ns = 0) 
+function lmn_bpol(N, ms = -N:N, ns = 0) 
     if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:(N-1) for n in ns if abs(m)<=l]
+        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:(N-1) for n in 1:(N-l+1)÷2 if abs(m)<=l] 
+        [(l,m,n) for m in ms for l in 1:N for n in 1:(N-l+1)÷2 if abs(m)<=l] 
     end
 end
 
-function lmn_btor(N, ms = 0:(N-2), ns = 0) 
+function lmn_btor(N, ms = -N:N, ns = 0) 
     if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:(N-2) for n in ns if abs(m)<=l]
+        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:(N-2) for n in 1:((N-l)÷2)  if abs(m)<=l]  
+        [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2)  if abs(m)<=l]  
     end
 end
 
 
-function lmn_bpol_l(N, ms = 0:N, ns=0)
+function lmn_bpol_l(N, ms = -N:N, ns=0)
     lmn = lmn_bpol(N,ms,ns)
     lmnk = Vector{NTuple{4,Int}}[]
-    L = N-1
+    L = N
     for _ in 1:L
         push!(lmnk,NTuple{4,Int}[])
     end
@@ -36,10 +36,10 @@ function lmn_bpol_l(N, ms = 0:N, ns=0)
     return lmnk
 end
 
-function lmn_btor_l(N, ms = 0:N, ns=0)
+function lmn_btor_l(N, ms = -N:N, ns=0)
     lmn = lmn_btor(N,ms,ns)
     lmnk = Vector{NTuple{4,Int}}[]
-    L = N-2
+    L = N
     for _ in 1:L
         push!(lmnk,NTuple{4,Int}[])
     end
@@ -52,42 +52,42 @@ function lmn_btor_l(N, ms = 0:N, ns=0)
 end
 
 
-function lmn_bpol_ml(N, ms = 0:(N-1), ns=0)
-    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
-    # if (ns != 0)
-    #     lmn = [[[(l,m,n) for n in ns if abs(m)<=l] for m in ms] for l in 1:(N-1)] 
-    # else
-    #     lmn = [[[(l,m,n) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for m in ms] for l in 1:(N-1)] 
-    # end
-    # lmnk = Vector{Vector{NTuple{4,Int}}}[]
-    # k=1
-    # for l in eachindex(lmn)
-    #     push!(lmnk,Vector{Vector{NTuple{4,Int}}}[])
-    #     for m in eachindex(lmn[l])
-    #         push!(lmnk[l],Vector{NTuple{4,Int}}[])
-    #         for (n,lmn) in enumerate(lmn[l][m])
-    #             push!(lmnk[l][m],(k,lmn...))
-    #             k+=1
-    #         end
-    #     end
-    # end
+# function lmn_bpol_ml(N, ms = 0:(N-1), ns=0)
+#     # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
+#     # if (ns != 0)
+#     #     lmn = [[[(l,m,n) for n in ns if abs(m)<=l] for m in ms] for l in 1:(N-1)] 
+#     # else
+#     #     lmn = [[[(l,m,n) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for m in ms] for l in 1:(N-1)] 
+#     # end
+#     # lmnk = Vector{Vector{NTuple{4,Int}}}[]
+#     # k=1
+#     # for l in eachindex(lmn)
+#     #     push!(lmnk,Vector{Vector{NTuple{4,Int}}}[])
+#     #     for m in eachindex(lmn[l])
+#     #         push!(lmnk[l],Vector{NTuple{4,Int}}[])
+#     #         for (n,lmn) in enumerate(lmn[l][m])
+#     #             push!(lmnk[l][m],(k,lmn...))
+#     #             k+=1
+#     #         end
+#     #     end
+#     # end
 
-    lmnk = Vector{Vector{NTuple{4,Int}}}[]
-    k=1
-    for l in 1:(N-1)
-        push!(lmnk,Vector{Vector{NTuple{4,Int}}}[])
-        for m in ms
-            if abs(m)<=l
-                push!(lmnk[l],Vector{NTuple{4,Int}}[])
-                for n in (ns==0 ? (1:((N-l+1)÷2 +1)) : ns)
-                    push!(lmnk[l][m+1],(k,l,m,n))
-                    k+=1
-                end
-            end
-        end
-    end
-    return lmnk
-end
+#     lmnk = Vector{Vector{NTuple{4,Int}}}[]
+#     k=1
+#     for l in 1:(N-1)
+#         push!(lmnk,Vector{Vector{NTuple{4,Int}}}[])
+#         for m in ms
+#             if abs(m)<=l
+#                 push!(lmnk[l],Vector{NTuple{4,Int}}[])
+#                 for n in (ns==0 ? (1:((N-l+1)÷2 +1)) : ns)
+#                     push!(lmnk[l][m+1],(k,l,m,n))
+#                     k+=1
+#                 end
+#             end
+#         end
+#     end
+#     return lmnk
+# end
 
 #inner products
 
