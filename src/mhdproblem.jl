@@ -290,4 +290,5 @@ function rhs_cond(N,m; ns = 0, Ω::T = 2.0, B0poloidal = false, B0fac=1.0, lmnb0
     
     return RHS
 end
+
 end

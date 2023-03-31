@@ -6,21 +6,33 @@ using LinearAlgebra
 # lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:(N-l+1)÷2 if abs(m)<=l]
 # lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) if abs(m)<=l]
 
-function lmn_upol(N, ms = 0:N, ns = 0) 
+function _lmn_upol(N, ms = 0:N, ns = 0) 
     if (ns != 0)
         [(l,m,n) for m in ms for l in 1:(N-1) for n in ns if abs(m)<=l]
     else
         [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
+        # [(l,m,n) for n in 0:N for l in 1:(N-1) for m in ms if (abs(m)<=l) && (n<=((N-l+1)÷2-1))] 
     end
 end
 
-function lmn_utor(N, ms = 0:N, ns = 0) 
+function _lmn_utor(N, ms = 0:N, ns = 0) 
     if (ns != 0)
         [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
     else
         [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) if abs(m)<=l] 
+        # [(l,m,n) for n in 0:N for l in 1:N for m in ms if (abs(m)<=l) && (n<=((N-l)÷2))] 
     end
 end
+
+function lmn_upol(N, ms=0:N, ns=0)
+    vcat(_lmn_upol(1,ms,ns),[setdiff(_lmn_upol(n,ms,ns),_lmn_upol(n-1,ms,ns)) for n in 2:N]...)
+end
+function lmn_utor(N, ms=0:N, ns=0)
+    vcat(_lmn_utor(1,ms,ns),[setdiff(_lmn_utor(n,ms,ns),_lmn_utor(n-1,ms,ns)) for n in 2:N]...)
+end
+
+
+
 
 function lmn_upol_l(N, ms = 0:N, ns=0)
     lmn = lmn_upol(N,ms,ns)
