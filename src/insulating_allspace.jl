@@ -4,7 +4,7 @@ using SparseArrays
 
 #lmns
 
-function _lmn_bpol(N, ms = -N:N, ns = 0) 
+function lmn_bpol(N, ms = -N:N, ns = 0) 
     if (ns != 0)
         [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
     else
@@ -13,7 +13,7 @@ function _lmn_bpol(N, ms = -N:N, ns = 0)
     end
 end
 
-function _lmn_btor(N, ms = -N:N, ns = 0) 
+function lmn_btor(N, ms = -N:N, ns = 0) 
     if (ns != 0)
         [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
     else
@@ -22,12 +22,12 @@ function _lmn_btor(N, ms = -N:N, ns = 0)
     end
 end
 
-function lmn_bpol(N, ms=0:N, ns=0)
-    vcat(_lmn_bpol(1,ms,ns),[setdiff(_lmn_bpol(n,ms,ns),_lmn_bpol(n-1,ms,ns)) for n in 2:N]...)
-end
-function lmn_btor(N, ms=0:N, ns=0)
-    vcat(_lmn_btor(1,ms,ns),[setdiff(_lmn_btor(n,ms,ns),_lmn_btor(n-1,ms,ns)) for n in 2:N]...)
-end
+# function lmn_bpol(N, ms=-N:N, ns=0)
+#     vcat(_lmn_bpol(1,ms,ns),[setdiff(_lmn_bpol(n,ms,ns),_lmn_bpol(n-1,ms,ns)) for n in 2:N]...)
+# end
+# function lmn_btor(N, ms=-N:N, ns=0)
+#     vcat(_lmn_btor(1,ms,ns),[setdiff(_lmn_btor(n,ms,ns),_lmn_btor(n-1,ms,ns)) for n in 2:N]...)
+# end
 
 
 function lmn_bpol_l(N, ms = -N:N, ns=0)
