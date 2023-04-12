@@ -4,20 +4,20 @@ using SparseArrays
 
 #lmns
 
-function lmn_bpol(N, ms = -N:N, ns = 0) 
-    if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
+function lmn_bpol(N, ms = -N:N, ns = false) 
+    if ns != false
+        [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:N for n in 1:(N-l+1)÷2 if abs(m)<=l] 
+        [(l,m,n) for l in 1:N for m in ms for n in 1:(N-l+1)÷2 if abs(m)<=l] 
         # [(l,m,n) for n in 1:N for l in 1:N for m in ms if (abs(m)<=l) && (n<=((N-l+1)÷2))] 
     end
 end
 
-function lmn_btor(N, ms = -N:N, ns = 0) 
-    if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
+function lmn_btor(N, ms = -N:N, ns = false) 
+    if ns != false
+        [(l,m,n) for l in 1:N  for m in ms for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2)  if abs(m)<=l]  
+        [(l,m,n) for l in 1:N for m in ms for n in 1:((N-l)÷2)  if abs(m)<=l]  
         # [(l,m,n) for n in 1:N for l in 1:N for m in ms  if (abs(m)<=l) && (n<=((N-l)÷2))] 
     end
 end
@@ -28,6 +28,15 @@ end
 # function lmn_btor(N, ms=-N:N, ns=0)
 #     vcat(_lmn_btor(1,ms,ns),[setdiff(_lmn_btor(n,ms,ns),_lmn_btor(n-1,ms,ns)) for n in 2:N]...)
 # end
+n(N) = ((-1)^(2*N)*(-1 + N)*N*(5 + 2*N))÷6
+np(N) = ((-1)^N*(3 + (-1)^N*(-3 + 2*N*(-1 + N*(3 + N)))))÷12
+nt(N) = ((-1)^N*(-3 + (-1)^N*(3 - 8*N + 2*N^3)))÷12
+
+nlp(N,l) = ((-1)^N*(3 - 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(1 - 6*l - 4*l^2 + 6*(2 + l)*N))))÷12
+nlt(N,l) = ((-1)^N*(-3 + 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(-11 - 4*l*(3 + l) + 12*N + 6*l*N))))÷12
+
+lmn2k_p(l,m,n,N) = nlp(N,l-1) + (l+m)*((N-l+1)÷2) + n
+lmn2k_t(l,m,n,N) = nlt(N,l-1) + (l+m)*((N-l)÷2) + n
 
 
 function lmn_bpol_l(N, ms = -N:N, ns=0)
@@ -154,7 +163,7 @@ end
 end
 
 
-function lhs(N,m; ns = 0, Ω::T = 1.0) where T
+function lhs(N,m; ns = false, Ω::T = 1.0) where T
     lmn_p = lmn_bpol(N,m,ns)
     lmn_t = lmn_btor(N,m,ns)
 
@@ -217,7 +226,7 @@ end
     return nothing
 end
 
-function rhs_diffusion(N,m; ns = 0, η::T = 1.0) where T
+function rhs_diffusion(N,m; ns = false, η::T = 1.0) where T
     lmn_p = lmn_bpol(N,m,ns)
     lmn_t = lmn_btor(N,m,ns)
 
