@@ -7,9 +7,7 @@ using LinearMaps
 using ArnoldiMethod
 using Distributed
 
-Limace.DiscretePart.__wiginit(100)
-
 include("pre_test.jl")
-# include("modes.jl")
+include("modes.jl")
 
 Limace.DiscretePart.wig_temp_free()

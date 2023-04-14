@@ -92,7 +92,8 @@ function _induction_sST(lmna, lmnb, lmnc, r,wr, sa,Sb,Tc)
 
 
     @inline f1 = r -> ((p(la)+p(lb)+p(lc))*_sa(r)*_Sb(r) - 
-                       (p(la)+p(lb)-p(lc))*(r*∂(_sa,r)*_Sb(r) + r*_sa(r)*∂(_Sb,r) + r^2*∂(_sa,r)*∂(_Sb,r)) - p(la)*r^2*_sa(r)*∂(r->∂(_Sb,r),r) - p(lb)*r^2*_Sb(r)*∂(r->∂(_sa,r),r))/(r^3*p(lc))
+                       (p(la)+p(lb)-p(lc))*(r*∂(_sa,r)*_Sb(r) + r*_sa(r)*∂(_Sb,r) + r^2*∂(_sa,r)*∂(_Sb,r)) - 
+                       p(la)*r^2*_sa(r)*∂(r->∂(_Sb,r),r) - p(lb)*r^2*_Sb(r)*∂(r->∂(_sa,r),r))/(r^3*p(lc))
     
     @inline f = r-> innert(_Tc,f1, lc, r)
 

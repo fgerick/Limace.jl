@@ -5,8 +5,9 @@ using Limace.DiscretePart: t_in_pre, d_t_in_pre, d2_t_in_pre, d3_t_in_pre
 using Limace.DiscretePart: t_in, s_in, t_mf, s_mf, rquad, jacobis
 const DP = Limace.DiscretePart
 
+Limace.DiscretePart.__wiginit(100)
 
-@testset "lorentz" begin
+@testset "lorentz & induction pre vs AD" begin
 	N = 50
 	r,wr = rquad(N)
 	lmna = (1,1,1)
@@ -47,33 +48,69 @@ const DP = Limace.DiscretePart
 		l1 = DP._induction_tSS_pre(lmna, lmnb, lmnc, r,wr, tu, Smf,Smf, dtu, dSmf, dSmf, t_in, s_mf, s_mf)
 		l2 = DP._induction_tSS(lmna, lmnb, lmnc, r,wr, t_in,s_mf,s_mf)
 		@test l1 ≈ l2 atol=1e-14
+
+		l1 = DP._induction_sST_pre(lmna, lmnb, lmnc, r,wr, su,Smf,Tmf,dsu,dSmf,d2su,d2Smf)
+		l2 = DP._induction_sST(lmna, lmnb, lmnc, r,wr, s_in,s_mf,t_mf)
+		@test l1 ≈ l2 atol=1e-14
+
+		l1 = DP._induction_sTT_pre(lmna, lmnb, lmnc, r,wr, su, Tmf, Tmf, dsu, dTmf)
+		l2 = DP._induction_sTT(lmna, lmnb, lmnc, r,wr, s_in, t_mf, t_mf)
+		@test l1 ≈ l2 atol=1e-14
+
+		l1 = DP._induction_tST_pre(lmna, lmnb, lmnc, r,wr,tu,Smf,Tmf, dtu, dSmf) 
+		l2 = DP._induction_tST(lmna, lmnb, lmnc, r,wr,t_in, s_mf, t_mf)
+		@test l1 ≈ l2 atol=1e-14
 		
+		l1 = DP._induction_tTT_pre(lmna, lmnb, lmnc, r,wr, tu, Tmf, Tmf)
+		l2 = DP._induction_tTT(lmna, lmnb, lmnc, r,wr, t_in, t_mf, t_mf) 
+		@test l1 ≈ l2 atol=1e-14
+
+		l1 = DP._lorentz_SSs_pre(lmna, lmnb, lmnc, r,wr, Smf,Smf,su, dSmf, d2Smf, d3Smf, dSmf )
+		l2 = DP._lorentz_SSs(lmna, lmnb, lmnc, r,wr, s_mf, s_mf, s_in)
+		@test l1 ≈ l2 atol=1e-14
+		
+		l1 = DP._lorentz_STs_pre(lmna, lmnb, lmnc, r,wr, Smf,Tmf,su, dSmf, d2Smf, dTmf, d2Tmf)
+		l2 = DP._lorentz_STs(lmna, lmnb, lmnc, r,wr, s_mf, t_mf, s_in)
+		@test l1 ≈ l2 atol=1e-14
+
+		l1 = DP._lorentz_TTs_pre(lmna, lmnb, lmnc, r,wr, Tmf,Tmf,su, dTmf, dTmf)	
+		l2 = DP._lorentz_TTs(lmna, lmnb, lmnc, r,wr, t_mf,t_mf,s_in)	
+		@test l1 ≈ l2 atol=1e-14
+
+		l1 = DP._lorentz_STt_pre(lmna, lmnb, lmnc, r,wr, Smf,Tmf,tu, dSmf, dTmf)
+		l2 = DP._lorentz_STt(lmna, lmnb, lmnc, r,wr, s_mf,t_mf,t_in)
+		@test l1 ≈ l2 atol=1e-14
+
+		l1 = DP._lorentz_TTt_pre(lmna, lmnb, lmnc, r,wr, Tmf, Tmf, tu)
+		l2 = DP._lorentz_TTt(lmna, lmnb, lmnc, r,wr, t_mf, t_mf, t_in)
+		@test l1 ≈ l2 atol=1e-14
 	end
-	# for lmna in lmns, lmnc in lmns
-	# 	l1 = DP._lorentz_SSs_pre(lmna, lmnb, lmnc, r,wr, Smf,Smf,su, dSmf, d2Smf, d3Smf, dSmf )
-	# 	l2 = DP._lorentz_SSs(lmna, lmnb, lmnc, r,wr, s_mf, s_mf, s_in)
-	# 	@test l1 ≈ l2 atol=1e-14
-		
-	# 	l1 = DP._lorentz_STs_pre(lmna, lmnb, lmnc, r,wr, Smf,Tmf,su, dSmf, d2Smf, dTmf, d2Tmf)
-	# 	l2 = DP._lorentz_STs(lmna, lmnb, lmnc, r,wr, s_mf, t_mf, s_in)
-	# 	@test l1 ≈ l2 atol=1e-14
+	N = 10
+	r,wr = rquad(2N)
+	js_a1 = [jacobis(N,1.0,l+1/2,r) for l in 1:N]
+	js_a0 = [jacobis(N,0.0,l+1/2,r) for l in 1:N]
 
-	# 	l1 = DP._lorentz_TTs_pre(lmna, lmnb, lmnc, r,wr, Tmf,Tmf,su, dTmf, dTmf)	
-	# 	l2 = DP._lorentz_TTs(lmna, lmnb, lmnc, r,wr, t_mf,t_mf,s_in)	
-	# 	@test l1 ≈ l2 atol=1e-14
+	@test DP.rhs_lorentz_bpol_pre(N,-N:N, lmnb, r, wr, js_a1, js_a0) ≈ DP.rhs_lorentz_bpol(N,-N:N, lmnb)
+	@test DP.rhs_lorentz_btor_pre(N,-N:N, lmnb, r, wr, js_a1, js_a0) ≈ DP.rhs_lorentz_btor(N,-N:N, lmnb)
+	@test DP.rhs_induction_bpol_pre(N,-N:N, lmnb, r, wr, js_a1, js_a0) ≈ DP.rhs_induction_bpol(N,-N:N, lmnb)
+	@test DP.rhs_induction_btor_pre(N,-N:N, lmnb, r, wr, js_a1, js_a0) ≈ DP.rhs_induction_btor(N,-N:N, lmnb)
+end
 
-	# 	l1 = DP._lorentz_STt_pre(lmna, lmnb, lmnc, r,wr, Smf,Tmf,tu, dSmf, dTmf)
-	# 	l2 = DP._lorentz_STt(lmna, lmnb, lmnc, r,wr, s_mf,t_mf,t_in)
-	# 	@test l1 ≈ l2 atol=1e-14
 
-	# 	l1 = DP._lorentz_TTt_pre(lmna, lmnb, lmnc, r,wr, Tmf, Tmf, tu)
-	# 	l2 = DP._lorentz_TTt(lmna, lmnb, lmnc, r,wr, t_mf, t_mf, t_in)
-	# 	@test l1 ≈ l2 atol=1e-14
-	# end
-	# N = 10
-	# r,wr = rquad(2N)
-	# js_a1 = [jacobis(N,1.0,l+1/2,r) for l in 1:N]
-	# js_a0 = [jacobis(N,0.0,l+1/2,r) for l in 1:N]
+@testset "RHS assembly" begin
+	N = 10
+	m = -N:N
+	for lb0 in 1:3, mb0 in 0:lb0, nb0 in 1:2
+		lmnb0 = (lb0,mb0, nb0)
 
-	# @test DP.rhs_lorentz_bpol_pre(N,-N:N, lmnb, r, wr, js_a1, js_a0) ≈ DP.rhs_lorentz_bpol(N,-N:N, lmnb)
+		RHS1 = Limace.MHDProblem.rhs(N,m; lmnb0)
+		RHS2 = Limace.MHDProblem.rhs_pre(N,m; lmnb0)
+			
+		@test RHS1 ≈ RHS2
+
+		RHS1 = Limace.MHDProblem.rhs(N,m; lmnb0, B0poloidal=false)
+		RHS2 = Limace.MHDProblem.rhs_pre(N,m; lmnb0, B0poloidal=false)
+			
+		@test RHS1 ≈ RHS2
+	end
 end

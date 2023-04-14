@@ -1,4 +1,5 @@
 
+DP.__wiginit(100)
 @testset "Inviscid inertial modes" begin
 
     zhang(m, N) = -2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
@@ -84,13 +85,13 @@ end
 
     using Limace.DiscretePart: s_mf, t_mf, s_in, t_in
 
-    DP = Limace.DiscretePart
+    # DP = Limace.DiscretePart
     N = 12
     m = 2
 
     LHS = Limace.InsulatingMFBasis.lhs(N, m)
     RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N, m)
-    # DP.__wiginit(N)
+    # DP.__wiginit(2N)
     ind_utor = DP.rhs_induction_utor(
         N,
         m,
@@ -117,7 +118,7 @@ end
 
 @testset "t₀¹s₀² kinematic dynamo" begin
 
-    using Limace.DiscretePart: s_mf, t_mf, s_chen, t_chen, t_mf1, s_mf1
+    using Limace.DiscretePart: s_mf, t_mf, s_chen, t_chen
 
     # Li et al. (2010) eq. (24) fixed:
     @inline t_10(l, m, n, r) = 8.107929179422066 * r * (1 - r^2)
@@ -334,6 +335,49 @@ end
 
 end
 
+@testset "Luo & Jackson 2022 mode pre" begin
+
+    function eigstarget(A, B, target; kwargs...)
+        P = lu(A - target * B)
+        LO = LinearMap{ComplexF64}((y, x) -> ldiv!(y, P, B * x), size(A, 2))
+        pschur, history = partialschur(LO; kwargs...)
+        evals, u = partialeigen(pschur)
+        λ = 1 ./ evals .+ target
+        return λ, u
+    end
+
+    using Limace.MHDProblem: rhs_pre, lhs
+	DP = Limace.DiscretePart
+    N = 50
+    m = 0
+    Le = 1e-4
+    Lu = 2 / Le
+
+    lmnb0 = (2, 0, 3)
+    lj22(l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
+	lj22(js0,rls,l,m,n,r,i) = lj22(l,m,n,r[i])
+	d_lj22 = (js0, rls, l,m,n,r,i)->DP.∂(r->lj22(l,m,n,r),r[i])
+	d2_lj22 = (js0,rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r[i])
+	d3_lj22 = (js0, rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r),r[i])
+
+    # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)*5/14*sqrt(3/182)
+
+    # lmnb0 = (1,0,1)
+    # lj22(l,m,n,r) = r*(5-3r^2)*sqrt(7/46)/2
+
+    LHS = lhs(N, m)
+    RHS = rhs_pre(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22, d_smfb0 = d_lj22, d2_smfb0 = d2_lj22, d3_smfb0 = d3_lj22, s_mf_b0 = lj22)
+
+    target = -0.0066 - 1.033im
+    # target = -0.042+0.66im
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 4)
+
+    lj22_n350 = -0.0065952461 - 1.0335959942im
+
+    @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
+
+
+end
 @testset "Distributed vs serial" begin
     addprocs(4; exeflags=`--project=$(Base.active_project())`)
     @everywhere begin

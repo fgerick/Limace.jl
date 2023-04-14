@@ -76,6 +76,9 @@ function jacobis(N,a,b,rgrid)
     return js   
 end
 
+function jacobis_l(N,r,a=0.0)
+    return [jacobis(N,a,l+1/2,r) for l in 1:N] 
+end
 
 # radial derivative ∂/∂r(r^l J) with J a jacobi polynomial
 @inline function d_rlJ(l, r, rl, J, dJ)
