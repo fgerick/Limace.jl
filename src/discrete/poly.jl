@@ -63,14 +63,27 @@ const ∂ =  ForwardDiff.derivative
     exp(loggamma(a+b+n+1+k)-loggamma(a+b+n+1))/2^k*jacobi(n-k,a+k,b+k,x)
 end
 
-function jacobis(N,a,b,r,kmax)
-    nr = length(r)
-    js = zeros(eltype(r),nr,N,kmax+1)
-    # for n in 1:N
-    #     js[:,n,1] .= jacobi.(n,a,b,r)
-    # end
-    for k in 0:kmax, n in 1:N
-        js[:,n, k+1] .= djacobi.(n,a,b,r,k)
+function jacobis(N,a,b,rgrid)
+    nr = length(rgrid)
+    js = zeros(eltype(rgrid),4,N,nr) 
+    for n in 1:N, i=1:nr
+        r = rgrid[i]
+        js[1,n,i] = jacobi(n,a,b, 2r^2-1)
+        js[2,n,i] = djacobidr(n,a,b,r)
+        js[3,n,i] = djacobid2r(n,a,b,r)
+        js[4,n,i] = djacobid3r(n,a,b,r)
     end
-    return js
+    return js   
 end
+# function jacobis(N,a,b,r,kmax)
+#     nr = length(r)
+#     js = zeros(eltype(r),nr,N,kmax+1)
+#     x = @. 2r^2-1
+#     # for n in 1:N
+#     #     js[:,n,1] .= jacobi.(n,a,b,r)
+#     # end
+#     for k in 0:kmax, n in 1:N
+#         js[:,n, k+1] .= djacobi.(n,a,b,x,k)
+#     end
+#     return js
+# end

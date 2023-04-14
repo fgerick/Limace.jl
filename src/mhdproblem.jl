@@ -68,23 +68,23 @@ function rhs(N, m;
         end
     end
 
-    # if u0fac != 0.0
-    #     lu0, mu0, nu0 = lmnu0
-    #     if u0poloidal
-    #         RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, η, thresh, su = ufunc, kwargs...)
-    #         if mu0 != 0
-    #             RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, η, thresh, su = ufunc, kwargs...)
-    #             RHSbbt/=2
-    #         end
-    #     else
-    #         RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, η, thresh, tu = ufunc, kwargs...)
-    #         if mu0 != 0
-    #             RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, η, thresh, tu = ufunc, kwargs...)
-    #             RHSbbt/=2
-    #         end
-    #     end
-    #     RHSbb += u0fac*RHSbbt
-    # end
+    if u0fac != 0.0
+        lu0, mu0, nu0 = lmnu0
+        if u0poloidal
+            RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, η, thresh, su = ufunc, kwargs...)
+            if mu0 != 0
+                RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, η, thresh, su = ufunc, kwargs...)
+                RHSbbt/=2
+            end
+        else
+            RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, η, thresh, tu = ufunc, kwargs...)
+            if mu0 != 0
+                RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, η, thresh, tu = ufunc, kwargs...)
+                RHSbbt/=2
+            end
+        end
+        RHSbb += u0fac*RHSbbt
+    end
 
 
 
@@ -101,7 +101,9 @@ end
 function rhs_dist(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal = true, lmnb0::NTuple{3,Int} = (1,0,1), thresh = 1000eps(), kwargs...) where T
     
     lb0,mb0,nb0 = lmnb0
-    @time "Coriolis" RHSc = VB.rhs_coriolis(N,m; ns, Ω)
+    RHSc = VB.rhs_coriolis(N,m; ns, Ω)
+    RHSbb = BB.rhs_diffusion(N,m; ns, η)
+    
     # nu = size(RHSc,1)
     # @time "Viscous" if ν != 0
     #     RHSv = VB.rhs_viscosity(N,m; ns, ν)
@@ -119,20 +121,20 @@ function rhs_dist(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0polo
     end
 
     if B0poloidal
-        @time "Lorentz" RHSub = DP.rhs_lorentz_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-        @time "Induction" RHSbu = DP.rhs_induction_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
         if mb0 != 0
-            @time "Lorentz" RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-            @time "Induction" RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
     else
-        @time "Lorentz" RHSub = DP.rhs_lorentz_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-        @time "Induction" RHSbu = DP.rhs_induction_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
         if mb0 != 0
-            @time "Lorentz" RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-            @time "Induction" RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
@@ -141,7 +143,6 @@ function rhs_dist(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0polo
     #wigner symbol temporary arrays dealloc
     @everywhere Limace.DiscretePart.wig_temp_free()
 
-    @time "Magnetic diffusion" RHSbb = BB.rhs_diffusion(N,m; ns, η)
 
     RHS = [RHSuu RHSub
            RHSbu RHSbb]

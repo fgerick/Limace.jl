@@ -5,9 +5,11 @@ using LinearAlgebra
 using FunctionZeros
 using LinearMaps
 using ArnoldiMethod
-
+using Distributed
 
 Limace.DiscretePart.__wiginit(100)
+
+
 
 @testset "Inviscid inertial modes" begin
 
@@ -323,7 +325,7 @@ end
     Le = 1e-4
     Lu = 2 / Le
 
-    lmnb0 = (2, 0, 2)
+    lmnb0 = (2, 0, 3)
     lj22(l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
     # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)*5/14*sqrt(3/182)
 
@@ -342,6 +344,18 @@ end
     @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
 
 
+end
+
+@testset "Distributed vs serial" begin
+    addprocs(4; exeflags=`--project=$(Base.active_project())`)
+    @everywhere begin
+        using Limace
+        using Limace.MHDProblem: rhs, rhs_dist
+        N = 10
+        m = -N:N
+    end
+    @test rhs_dist(N,m) ≈ rhs(N,m)
+    rmprocs(workers())
 end
 
 Limace.DiscretePart.wig_temp_free()

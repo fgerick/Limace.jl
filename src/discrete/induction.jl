@@ -275,7 +275,7 @@ end
 
 
 function ncondition(lb,na,nb,nc)
-    nc <= na+nb+lb
+    na-nb-lb <= nc <= na+nb+lb
 end
 
 function _dummy!(is,js,aijs,i,j)
@@ -301,14 +301,15 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
 
     is,js,aijs = Int[],Int[],Complex{T}[]
 
-    r, wr = rquad(N+lb0+nb0+5)
-
+    # r, wr = rquad(N+lb0+nb0+5)
+    rwrs = [rquad(n+lb0+nb0+1) for n in 1:N]
     @inbounds for (i,lmni) in enumerate(lmn_bp)
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_p)
             lj,mj,nj = lmnj
             conditions && !ncondition(lb0,ni,nb0,nj) && continue
             conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             # _dummy!(is,js,aijs,i,j)
             _induction_sSS!(is,js,aijs,i,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, su, smfb0, s_mf; thresh)
         end
@@ -316,6 +317,7 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             conditions && !ncondition(lb0,ni,nb0,nj) && continue
             conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             # _dummy!(is,js,aijs,i,j+np)
             _induction_tSS!(is,js,aijs,i,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, s_mf; thresh)
         end
@@ -327,6 +329,7 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             conditions && !ncondition(lb0,ni,nb0,nj) && continue
             conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sST!(is,js,aijs,i+npb,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, su, smfb0, t_mf; thresh)
             # _dummy!(is,js,aijs,i+npb,j)
         end
@@ -334,6 +337,7 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             conditions && !ncondition(lb0,ni,nb0,nj) && continue
             conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tST!(is,js,aijs,i+npb,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, t_mf; thresh)
             # _dummy!(is,js,aijs,i+npb,j+np)
         end
@@ -360,7 +364,8 @@ function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
 
     is,js,aijs = Int[],Int[],Complex{T}[]
 
-    r, wr = rquad(N+lb0+nb0+5)
+    # r, wr = rquad(N+lb0+nb0+5)
+    rwrs = [rquad(n+lb0+nb0+1) for n in 1:N]
 
     for (i,lmni) in enumerate(lmn_bp)
         li,mi,ni = lmni
@@ -368,6 +373,7 @@ function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTS!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, s_mf; thresh)
         end
     end
@@ -378,12 +384,14 @@ function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTT!(is,js,aijs,i+npb,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, t_mf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_t)
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tTT!(is,js,aijs,i+npb,j+np,lmnj,lmnb0,lmni, r, wr, tu, t_mf, t_mf; thresh)
         end
     end
@@ -403,7 +411,8 @@ function rhs_induction_upol(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
 
     is,js,aijs = Int[],Int[],Complex{T}[]
 
-    r, wr = rquad(N+lu0+nu0+5)
+    # r, wr = rquad(N+lu0+nu0+5)
+    rwrs = [rquad(n+lu0+nu0+1) for n in 1:N]
 
     for (i,lmni) in enumerate(lmn_bp)
         li,mi,ni = lmni
@@ -411,12 +420,14 @@ function rhs_induction_upol(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sSS!(is,js,aijs,i,j,lmnu0,lmnj,lmni, r, wr, su, smf, smf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             !condition2u(lu0,li,lj,mu0,mi,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTS!(is,js,aijs,i,j+np,lmnu0,lmnj,lmni, r, wr, su, tmf, smf; thresh)
         end
     end
@@ -427,12 +438,14 @@ function rhs_induction_upol(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sST!(is,js,aijs,i+np,j,lmnu0,lmnj,lmni, r, wr, su, smf, tmf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTT!(is,js,aijs,i+np,j+np,lmnu0,lmnj,lmni, r, wr, su, tmf, tmf; thresh)
         end
     end
@@ -451,7 +464,8 @@ function rhs_induction_utor(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
 
     is,js,aijs = Int[],Int[],Complex{T}[]
 
-    r, wr = rquad(N+lu0+nu0+5)
+    # r, wr = rquad(N+lu0+nu0+5)
+    rwrs = [rquad(n+lu0+nu0+1) for n in 1:N]
 
     for (i,lmni) in enumerate(lmn_bp)
         li,mi,ni = lmni
@@ -459,6 +473,7 @@ function rhs_induction_utor(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tSS!(is,js,aijs,i,j,lmnu0,lmnj,lmni, r, wr, tu, smf, smf; thresh)
         end
     end
@@ -469,12 +484,14 @@ function rhs_induction_utor(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tST!(is,js,aijs,i+np,j,lmnu0,lmnj,lmni, r, wr, tu, smf, tmf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tTT!(is,js,aijs,i+np,j+np,lmnu0,lmnj,lmni, r, wr, tu, tmf, tmf; thresh)
         end
     end
@@ -554,8 +571,8 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
     nt = nprocs()
     is,js,aijs = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
 
-    r, wr = rquad(N+lb0+nb0+5)
-
+    # r, wr = rquad(N+lb0+nb0+5)
+    rwrs = [rquad(n+lb0+nb0+1) for n in 1:N]
     @sync @distributed for i in shuffle(eachindex(lmn_bp))
         lmni = lmn_bp[i]
         li,mi,ni = lmni
@@ -564,6 +581,7 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sSS!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, su, smfb0, s_mf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_t)
@@ -571,6 +589,7 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j+np)
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tSS!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, s_mf; thresh)
         end
     end
@@ -582,6 +601,7 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sST!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, su, smfb0, t_mf; thresh)
             # _dummy!(is,js,aijs,i+npb,j)
         end
@@ -589,6 +609,7 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tST!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, t_mf; thresh)
             # _dummy!(is,js,aijs,i+npb,j+np)
         end
@@ -617,7 +638,8 @@ function rhs_induction_btor_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
     is,js,aijs = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
 
 
-    r, wr = rquad(N+lb0+nb0+5)
+    # r, wr = rquad(N+lb0+nb0+5)
+    rwrs = [rquad(n+lb0+nb0+1) for n in 1:N]
 
     @sync @distributed for i in shuffle(eachindex(lmn_bp))
         lmni = lmn_bp[i]
@@ -626,6 +648,7 @@ function rhs_induction_btor_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTS!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, s_mf; thresh)
         end
     end
@@ -637,12 +660,14 @@ function rhs_induction_btor_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTT!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, t_mf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_t)
             lj,mj,nj = lmnj
             !ncondition(lb0,ni,nb0,nj) && continue
             !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tTT!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+npb,j+np,lmnj,lmnb0,lmni, r, wr, tu, t_mf, t_mf; thresh)
         end
     end
