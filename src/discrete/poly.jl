@@ -54,7 +54,7 @@ end
 
 const ∂ =  ForwardDiff.derivative
 
-
+#derivatives of Jacobi polynomials ∂/∂r(jacobi(n,a,b, x = 2r^2-1)).
 @inline djacobidr(n,a,b,r) = 2(1+a+b+n)*r*jacobi(n-1,1+a,1+b,2r^2-1)
 @inline djacobid2r(n,a,b,r) = 2(1+a+b+n)*jacobi(n-1,1+a,1+b,2r^2-1) + 2*(1+a+b+n)*r*djacobidr(n-1,a+1,b+1,r) 
 @inline djacobid3r(n,a,b,r) = 2(1+a+b+n)*djacobidr(n-1,1+a,1+b,r) + 2*(1+a+b+n)*djacobidr(n-1,a+1,b+1,r) + 2*(1+a+b+n)*r*djacobid2r(n-1,a+1,b+1,r)
@@ -65,25 +65,30 @@ end
 
 function jacobis(N,a,b,rgrid)
     nr = length(rgrid)
-    js = zeros(eltype(rgrid),4,N,nr) 
-    for n in 1:N, i=1:nr
+    js = zeros(eltype(rgrid),4,N+1,nr) 
+    @inbounds for n in 0:N, i=1:nr
         r = rgrid[i]
-        js[1,n,i] = jacobi(n,a,b, 2r^2-1)
-        js[2,n,i] = djacobidr(n,a,b,r)
-        js[3,n,i] = djacobid2r(n,a,b,r)
-        js[4,n,i] = djacobid3r(n,a,b,r)
+        js[1,n+1,i] = jacobi(n,a,b, 2r^2-1)
+        js[2,n+1,i] = djacobidr(n,a,b,r)
+        js[3,n+1,i] = djacobid2r(n,a,b,r)
+        js[4,n+1,i] = djacobid3r(n,a,b,r)
     end
     return js   
 end
-# function jacobis(N,a,b,r,kmax)
-#     nr = length(r)
-#     js = zeros(eltype(r),nr,N,kmax+1)
-#     x = @. 2r^2-1
-#     # for n in 1:N
-#     #     js[:,n,1] .= jacobi.(n,a,b,r)
-#     # end
-#     for k in 0:kmax, n in 1:N
-#         js[:,n, k+1] .= djacobi.(n,a,b,x,k)
-#     end
-#     return js
-# end
+
+
+# radial derivative ∂/∂r(r^l J) with J a jacobi polynomial
+@inline function d_rlJ(l, r, rl, J, dJ)
+    # rl = r^l
+	return rl*(l/r*J + dJ)
+end
+
+@inline function d2_rlJ(l, r, rl, J, dJ, d2J)
+    # rl = r^l
+	return rl*(l*(l-1)/r^2*J + 2l/r*dJ + d2J)
+end
+
+@inline function d3_rlJ(l, r, rl, J, dJ, d2J, d3J)
+    # rl = r^l
+	return rl*(l*(l-1)*(l-2)/r^3*J + 3l*(l-1)/r^2*dJ + 3l/r*d2J + d3J)
+end

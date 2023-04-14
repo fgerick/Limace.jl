@@ -19,9 +19,12 @@ end
 include("poly.jl")
 include("quad.jl")
 include("pt_scalars.jl")
+include("pt_scalars_pre.jl")
 
 include("induction.jl")
 include("lorentz.jl")
+include("lorentz_pre.jl")
+include("induction_pre.jl")
 
 
 end

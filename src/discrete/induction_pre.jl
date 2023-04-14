@@ -1,66 +1,102 @@
-@inline p(l) = l*(l+1.0)
+# @inline p(l) = l*(l+1.0)
+
+# _D(S,dS,d2S,l,rgrid::Vector{T},i)
 
 ##
 ## poloidal induction equation
 ##
 
-@inline dr(f::T,l,m,n,r) where T = ∂(r->r*f(l,m,n,r),r)
+# @inline function _inners(s,s2, l, r) 
+#     return l*(l+1)*(s(r)*s2(r)*l*(l+1)+∂(r->r*s(r),r)*∂(r->r*s2(r),r))/r^2
+# end
 
-@inline function inners(s,s2, l, r) 
-    return l*(l+1)*(s(r)*s2(r)*l*(l+1)+∂(r->r*s(r),r)*∂(r->r*s2(r),r))/r^2
+@inline function _inners(s,s2, ds, ds2, l, r,i) 
+    return l*(l+1)*(s(i)*s2(i)*l*(l+1)+(s(i)+r[i]*ds(i))*(s2(i)+r[i]*ds2(i)))/r[i]^2
 end
 
+# @inline function _inners(s,s2, ds2, d2s2, l, rgrid,i) 
+#     return l*(l+1)*(s(i)*_D(s2,ds2,d2s2,l,rgrid, i))
+# end
 
 #poloidal flow, poloidal B0
-function _induction_sSS(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc)
+function _induction_sSS_pre(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc, dsa, dSb, dSc, d2sa, d2Sb)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
     Aabc = adamgaunt(la,lb,lc,ma,mb,mc)
+    Base.@propagate_inbounds _sa(i) = sa(la,ma,na,r,i)
+    Base.@propagate_inbounds _dsa(i) = dsa(la,ma,na,r,i)
+    Base.@propagate_inbounds _d2sa(i) = d2sa(la,ma,na,r,i)
+    Base.@propagate_inbounds _Sb(i) = Sb(lb,mb,nb,r,i)
+    Base.@propagate_inbounds _dSb(i) = dSb(lb,mb,nb,r,i)
+    Base.@propagate_inbounds _d2Sb(i) = d2Sb(lb,mb,nb,r,i)
+    Base.@propagate_inbounds _Sc(i) = Sc(lc,mc,nc,r,i)
+    Base.@propagate_inbounds _dSc(i) = dSc(lc,mc,nc,r,i)
 
-    @inline f1 = r -> (-p(la)*(-p(la)+p(lb)+p(lc))*sa(la,ma,na,r)*∂(r->r*Sb(lb,mb,nb,r),r) + 
-                      p(lb)*( p(la)-p(lb)+p(lc))*Sb(lb,mb,nb,r)*∂(r->r*sa(la,ma,na,r),r))/(2r^2*p(lc))
+    Base.@propagate_inbounds f1(i) = (-p(la)*(-p(la)+p(lb)+p(lc))*_sa(i)*(_Sb(i)+r[i]*_dSb(i)) + 
+                      p(lb)*( p(la)-p(lb)+p(lc))*_Sb(i)*(_sa(i)+r[i]*_dsa(i)))/(2r[i]^2*p(lc))
+    Base.@propagate_inbounds df1(i) = -2/r[i]*f1(i) + (-p(la)*(-p(la)+p(lb)+p(lc))*(_dsa(i)*(_Sb(i)+r[i]*_dSb(i)) + _sa(i)*(2*_dSb(i)+r[i]*_d2Sb(i))) + 
+        p(lb)*( p(la)-p(lb)+p(lc))*(_dSb(i)*(_sa(i)+r[i]*_dsa(i))+ _Sb(i)*(2*_dsa(i) + r[i]*_d2sa(i)) ) )/(2r[i]^2*p(lc))
+     
     
-    @inline f = r-> inners(f1,r->Sc(lc,mc,nc,r), lc, r)
+    Base.@propagate_inbounds f(i) = _inners(f1, _Sc, df1, _dSc, lc, r, i)
 
-    aij = ∫dr(f,r,wr)*Aabc
+    aij = ∫dr_pre(f,r,wr)*Aabc
     return aij
 end
 
 
 #poloidal flow, toroidal B0
-function _induction_sTS(lmna, lmnb, lmnc, r,wr, sa,Tb,Sc)
+function _induction_sTS_pre(lmna, lmnb, lmnc, r,wr, sa,Tb,Sc,dsa, dTb, dSc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
     Eabc = elsasser(la,lb,lc,ma,mb,mc)
 
-    @inline f1 = r -> p(la)*sa(la,ma,na,r)*Tb(lb,mb,nb,r)/(r*p(lc))
-    @inline f = r->inners(r->Sc(lc,mc,nc,r),f1,lc,r)
+    Base.@propagate_inbounds _sa(i) = sa(la,ma,na,r,i)
+    Base.@propagate_inbounds _dsa(i) = dsa(la,ma,na,r,i)
+    Base.@propagate_inbounds _Tb(i) = Tb(lb,mb,nb,r,i)
+    Base.@propagate_inbounds _dTb(i) = dTb(lb,mb,nb,r,i)
+    Base.@propagate_inbounds _Sc(i) = Sc(lc,mc,nc,r,i)
+    Base.@propagate_inbounds _dSc(i) = dSc(lc,mc,nc,r,i)
+
+    Base.@propagate_inbounds f1(i) = p(la)*_sa(i)*_Tb(i)/(r[i]*p(lc))
+    Base.@propagate_inbounds df1(i) = -f1(i)/r[i] + p(la)*(_dsa(i)*_Tb(i) + _sa(i)*_dTb(i) )/(r[i]*p(lc))
+
+    Base.@propagate_inbounds f(i) = _inners(f1,_Sc, df1, _dSc, lc, r, i)
     
-    aij = ∫dr(f,r,wr)*Eabc
+    aij = ∫dr_pre(f,r,wr)*Eabc
     return aij
 end
 
 
 #toroidal flow, poloidal B0
-function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc)
+function _induction_tSS_pre(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc, dta, dSb, dSc, __ta, __Sb, __Sc) #need to evaluate functions at r=1 (not in gauss grid)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
     Eabc = elsasser(la,lb,lc,ma,mb,mc)
 
-    @inline f1 = r -> p(lb)*ta(la,ma,na,r)*Sb(lb,mb,nb,r)/(r*p(lc))
-    @inline f = r->inners(r->Sc(lc,mc,nc,r),f1,lc,r)
-    
-    aij = ∫dr(f,r,wr)*Eabc
+    Base.@propagate_inbounds _ta(i) = ta(la,ma,na,r,i)
+    Base.@propagate_inbounds _dta(i) = dta(la,ma,na,r,i)
+    Base.@propagate_inbounds _Sb(i) = Sb(lb,mb,nb,r,i)
+    Base.@propagate_inbounds _dSb(i) = dSb(lb,mb,nb,r,i)
+    Base.@propagate_inbounds _Sc(i) = Sc(lc,mc,nc,r,i)
+    Base.@propagate_inbounds _dSc(i) = dSc(lc,mc,nc,r,i)
 
+
+    Base.@propagate_inbounds f1(i) = p(lb)*_ta(i)*_Sb(i)/(r[i]*p(lc))
+    Base.@propagate_inbounds df1(i) = -f1(i)/r[i] + p(lb)*(_dta(i)*_Sb(i) + _ta(i)*_dSb(i) )/(r[i]*p(lc))
+
+    Base.@propagate_inbounds f(i) = _inners(f1,_Sc, df1, _dSc, lc, r, i)
+    
+    aij = ∫dr_pre(f,r,wr)*Eabc
     #add contribution from external ∫dV (1<r<∞), 
     #if toroidal velocity is not 0 at r=11 
-    aij += lc*p(lb)*ta(la,ma,na,1.0)*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+    aij += lc*p(lb)*__ta(la,ma,na,1.0)*__Sb(lb,mb,nb,1.0)*__Sc(lc,mc,nc,1.0)*Eabc
 
     return aij
 end
@@ -74,27 +110,27 @@ end
 ## toroidal induction equation
 ##
 
-@inline function innert(t,t2, l, r) 
-    return l*(l+1)*t(r)*t2(r)
-end
+# @inline function innert(t,t2, l, r) 
+#     return l*(l+1)*t(r)*t2(r)
+# end
 
 
 #poloidal flow, poloidal B0
-function _induction_sST(lmna, lmnb, lmnc, r,wr, sa,Sb,Tc)
+function _induction_sST_pre(lmna, lmnb, lmnc, r,wr, sa,Sb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
     Eabc = elsasser(la,lb,lc,ma,mb,mc)
-    @inline _sa = r->sa(la,ma,na,r)
-    @inline _Sb = r->Sb(lb,mb,nb,r)
-    @inline _Tc = r->Tc(lc,mc,nc,r)
+    @inline _sa(i) = sa(la,ma,na,r)
+    @inline _Sb(i) = Sb(lb,mb,nb,r)
+    @inline _Tc(i) = Tc(lc,mc,nc,r)
 
 
-    @inline f1 = r -> ((p(la)+p(lb)+p(lc))*_sa(r)*_Sb(r) - 
+    @inline f1(i) = ((p(la)+p(lb)+p(lc))*_sa(r)*_Sb(r) - 
                        (p(la)+p(lb)-p(lc))*(r*∂(_sa,r)*_Sb(r) + r*_sa(r)*∂(_Sb,r) + r^2*∂(_sa,r)*∂(_Sb,r)) - p(la)*r^2*_sa(r)*∂(r->∂(_Sb,r),r) - p(lb)*r^2*_Sb(r)*∂(r->∂(_sa,r),r))/(r^3*p(lc))
     
-    @inline f = r-> innert(_Tc,f1, lc, r)
+    @inline f(i) =  innert(_Tc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)*Eabc
     return aij
@@ -102,42 +138,42 @@ end
 
 
 #poloidal flow, toroidal B0
-function _induction_sTT(lmna, lmnb, lmnc, r,wr, sa,Tb,Tc)
+function _induction_sTT_pre(lmna, lmnb, lmnc, r,wr, sa,Tb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
     Aabc = adamgaunt(la,lb,lc,ma,mb,mc)
-    @inline _sa = r->sa(la,ma,na,r)
-    @inline _Tb = r->Tb(lb,mb,nb,r)
-    @inline _Tc = r->Tc(lc,mc,nc,r)
+    @inline _sa(i) = sa(la,ma,na,r)
+    @inline _Tb(i) = Tb(lb,mb,nb,r)
+    @inline _Tc(i) = Tc(lc,mc,nc,r)
 
 
-    @inline f1 = r -> (-p(lc)*(p(la)+p(lb)-p(lc))*(_sa(r)*_Tb(r) + r*∂(_sa,r)*_Tb(r)) +
+    @inline f1(i) = (-p(lc)*(p(la)+p(lb)-p(lc))*(_sa(r)*_Tb(r) + r*∂(_sa,r)*_Tb(r)) +
                         p(la)*(p(la)-p(lb)-p(lc))*(r*∂(_sa,r)*_Tb(r) + r*_sa(r)*∂(_Tb,r)))/(2r^2*p(lc))
 
-    @inline f = r-> innert(_Tc,f1, lc, r)
+    @inline f(i) =  innert(_Tc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)*Aabc
     return aij
 end 
 
 #toroidal flow, poloidal B0
-function _induction_tST(lmna, lmnb, lmnc, r,wr, ta,Sb,Tc)
+function _induction_tST_pre(lmna, lmnb, lmnc, r,wr, ta,Sb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
     Aabc = adamgaunt(la,lb,lc,ma,mb,mc)
-    @inline _ta = r->ta(la,ma,na,r)
-    @inline _Sb = r->Sb(lb,mb,nb,r)
-    @inline _Tc = r->Tc(lc,mc,nc,r)
+    @inline _ta(i) = ta(la,ma,na,r)
+    @inline _Sb(i) = Sb(lb,mb,nb,r)
+    @inline _Tc(i) = Tc(lc,mc,nc,r)
 
 
-    @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*(_ta(r)*_Sb(r) + r*_ta(r)*∂(_Sb,r)) -
+    @inline f1(i) = (p(lc)*(p(la)+p(lb)-p(lc))*(_ta(r)*_Sb(r) + r*_ta(r)*∂(_Sb,r)) -
                        p(lb)*(p(lb)-p(la)-p(lc))*(r*∂(_ta,r)*_Sb(r) + r*_ta(r)*∂(_Sb,r)))/(2r^2*p(lc))
 
-    @inline f = r-> innert(_Tc,f1, lc, r)
+    @inline f(i) =  innert(_Tc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)*Aabc
 
@@ -146,20 +182,20 @@ function _induction_tST(lmna, lmnb, lmnc, r,wr, ta,Sb,Tc)
 end 
 
 #toroidal flow, toroidal B0
-function _induction_tTT(lmna, lmnb, lmnc, r,wr, ta,Tb,Tc)
+function _induction_tTT_pre(lmna, lmnb, lmnc, r,wr, ta,Tb,Tc)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
     Eabc = elsasser(la,lb,lc,ma,mb,mc)
-    @inline _ta = r->ta(la,ma,na,r)
-    @inline _Tb = r->Tb(lb,mb,nb,r)
-    @inline _Tc = r->Tc(lc,mc,nc,r)
+    @inline _ta(i) = ta(la,ma,na,r)
+    @inline _Tb(i) = Tb(lb,mb,nb,r)
+    @inline _Tc(i) = Tc(lc,mc,nc,r)
 
 
-    @inline f1 = r -> _ta(r)*_Tb(r)/r
+    @inline f1(i) = _ta(r)*_Tb(r)/r
 
-    @inline f = r-> innert(_Tc,f1, lc, r)
+    @inline f(i) =  innert(_Tc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)*Eabc
 
@@ -168,22 +204,22 @@ function _induction_tTT(lmna, lmnb, lmnc, r,wr, ta,Tb,Tc)
 end 
 
 #create mutating functions for easier sparse matrices assembly
-flist = [:_induction_sSS, :_induction_tSS, :_induction_sTS,
-         :_induction_sST, :_induction_sTT, :_induction_tST, :_induction_tTT]
+# flist = [:_induction_sSS, :_induction_tSS, :_induction_sTS,
+#          :_induction_sST, :_induction_sTT, :_induction_tST, :_induction_tTT]
 
-for f in flist
-    @eval begin
-        function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna, lmnb, lmnc, r,wr, fa,fb,fc; thresh=sqrt(eps()))
-            aij = $(f)(lmna, lmnb, lmnc, r,wr, fa,fb,fc)
-            if abs(aij) > thresh
-                push!(is,i)
-                push!(js,j)
-                push!(aijs,aij) 
-            end
-            return nothing
-        end
-    end
-end
+# for f in flist
+#     @eval begin
+#         function $(Symbol(string(f)*"!"))(is,js,aijs,i,j, lmna, lmnb, lmnc, r,wr, fa,fb,fc; thresh=sqrt(eps()))
+#             aij = $(f)_pre(lmna, lmnb, lmnc, r,wr, fa,fb,fc)
+#             if abs(aij) > thresh
+#                 push!(is,i)
+#                 push!(js,j)
+#                 push!(aijs,aij) 
+#             end
+#             return nothing
+#         end
+#     end
+# end
 
 
 
@@ -239,53 +275,53 @@ end
 #     return sparse(is,js,aijs,nmatb, nmatu)
 # end
 
-@inline function istriangle(la,lb,lc)
-    (abs(lb-lc)<=la<=lb+lc) && return true
-    return false
-end
+# @inline function istriangle(la,lb,lc)
+#     (abs(lb-lc)<=la<=lb+lc) && return true
+#     return false
+# end
 
-@inline function condition1(la,lb,lc,ma,mb,mc)
-    (mc+mb-ma != 0) && return false
-    isodd(la+lb+lc) && return false
-    !istriangle(la,lb,lc) && return false
-    return true
-end
+# @inline function condition1(la,lb,lc,ma,mb,mc)
+#     (mc+mb-ma != 0) && return false
+#     isodd(la+lb+lc) && return false
+#     !istriangle(la,lb,lc) && return false
+#     return true
+# end
 
-@inline function condition1u(la,lb,lc,ma,mb,mc)
-    (mc+ma-mb != 0) && return false
-    isodd(la+lb+lc) && return false
-    !istriangle(la,lb,lc) && return false
-    return true
-end
-
-
-@inline function condition2(la,lb,lc,ma,mb,mc)
-    (mc+mb-ma != 0) && return false
-    iseven(la+lb+lc) && return false
-    !istriangle(la,lb,lc) && return false
-    return true
-end
-
-@inline function condition2u(la,lb,lc,ma,mb,mc)
-    (mc+ma-mb != 0) && return false
-    iseven(la+lb+lc) && return false
-    !istriangle(la,lb,lc) && return false
-    return true
-end
+# @inline function condition1u(la,lb,lc,ma,mb,mc)
+#     (mc+ma-mb != 0) && return false
+#     isodd(la+lb+lc) && return false
+#     !istriangle(la,lb,lc) && return false
+#     return true
+# end
 
 
-function ncondition(lb,na,nb,nc)
-    na-nb-lb <= nc <= na+nb+lb
-end
+# @inline function condition2(la,lb,lc,ma,mb,mc)
+#     (mc+mb-ma != 0) && return false
+#     iseven(la+lb+lc) && return false
+#     !istriangle(la,lb,lc) && return false
+#     return true
+# end
 
-function _dummy!(is,js,aijs,i,j)
-    push!(is,i)
-    push!(js,j)
-    push!(aijs,1.0)
-    return nothing
-end
+# @inline function condition2u(la,lb,lc,ma,mb,mc)
+#     (mc+ma-mb != 0) && return false
+#     iseven(la+lb+lc) && return false
+#     !istriangle(la,lb,lc) && return false
+#     return true
+# end
 
-function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf, conditions=true) where {T,Sf}
+
+# function ncondition(lb,na,nb,nc)
+#     na-nb-lb <= nc <= na+nb+lb
+# end
+
+# function _dummy!(is,js,aijs,i,j)
+#     push!(is,i)
+#     push!(js,j)
+#     push!(aijs,1.0)
+#     return nothing
+# end
+
+function rhs_induction_bpol_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf, conditions=true) where {T,Sf}
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
@@ -348,7 +384,7 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
     return sparse(is,js,aijs,nmatb, nmatu)
 end
 
-function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_induction_btor_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
@@ -401,7 +437,7 @@ function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
     return sparse(is,js,aijs,nmatb, nmatu)
 end
 
-function rhs_induction_upol(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps()), su = s_chen, smf = s_mf, tmf = t_mf, condition = true) where T
+function rhs_induction_upol_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps()), su = s_chen, smf = s_mf, tmf = t_mf, condition = true) where T
     lu0,mu0,nu0 = lmnu0
 
     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
@@ -454,7 +490,7 @@ function rhs_induction_upol(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
     return sparse(is,js,aijs,nmatb, nmatb)
 end
 
-function rhs_induction_utor(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps()), tu = t_chen, smf = s_mf, tmf = t_mf, condition=true) where T
+function rhs_induction_utor_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps()), tu = t_chen, smf = s_mf, tmf = t_mf, condition=true) where T
     lu0,mu0,nu0 = lmnu0
 
     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
@@ -501,7 +537,7 @@ function rhs_induction_utor(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps
 end
 
 
-function rhs_induction_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_induction_btor_cond_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
@@ -553,7 +589,7 @@ function rhs_induction_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
 end
 
 
-function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf) where {T,Sf}
+function rhs_induction_bpol_dist_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf) where {T,Sf}
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
@@ -620,7 +656,7 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
     return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatb, nmatu)
 end
 
-function rhs_induction_btor_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_induction_btor_dist_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
