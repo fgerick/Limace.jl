@@ -462,81 +462,219 @@ end
 #     return sparse(is,js,aijs,nmatu, nmatb)
 # end
 
+function rhs_lorentz_bpol_dist_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
+    ns=false,
+    η::T=1.0,
+    thresh=sqrt(eps()),
+    smfb0::Sf=s_mf_pre,
+    d_smfb0::dSf=d_s_mf_pre,
+    d2_smfb0::d2Sf=d2_s_mf_pre,
+    d3_smfb0::d3Sf=d3_s_mf_pre,
+    s_mf_b0::Sf2 = s_mf,
+    conditions=true) where {T,Sf,dSf,d2Sf,d3Sf,Sf2}
 
-# function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf) where {T,Sf}
-#     su = s_in 
-#     tu = t_in
-#     smf = s_mf 
-#     tmf = t_mf 
+    lb0, mb0, nb0 = lmnb0
+    # r, wr = rquad(N+lb0+nb0+5)
+    rls = [r .^ l for l in 1:N]
+    # js_a1 = [jacobis(N,1.0,l+1/2,r) for l in 1:N]
+    # js_a0 = [jacobis(N,0.0,l+1/2,r) for l in 1:N]
 
-#     lb0,mb0,nb0 = lmnb0
-#     lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-#     lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    Base.@propagate_inbounds Smfb0(l, m, n, r, i) = smfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dSmfb0(l, m, n, r, i) = d_smfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Smfb0(l, m, n, r, i) = d2_smfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Smfb0(l, m, n, r, i) = d3_smfb0(js_a0, rls, l, m, n, r, i)
 
-#     np = length(lmn_p)
+    Base.@propagate_inbounds Smf(l, m, n, r, i) = s_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dSmf(l, m, n, r, i) = d_s_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Smf(l, m, n, r, i) = d2_s_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Smf(l, m, n, r, i) = d3_s_mf_pre(js_a0, rls, l, m, n, r, i)
 
-#     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-#     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+    Base.@propagate_inbounds Tmf(l, m, n, r, i) = t_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dTmf(l, m, n, r, i) = d_t_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Tmf(l, m, n, r, i) = d2_t_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Tmf(l, m, n, r, i) = d3_t_mf_pre(js_a0, rls, l, m, n, r, i)
 
-#     npb = length(lmn_bp)
+    Base.@propagate_inbounds tu(l, m, n, r, i) = t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dtu(l, m, n, r, i) = d_t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2tu(l, m, n, r, i) = d2_t_in_pre(js_a0, rls, l, m, n, r, i)
 
-#     nt = nprocs()
-#     is,js,aijs = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
+    Base.@propagate_inbounds su(l, m, n, r, i) = s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-#     # r, wr = rquad(N+lb0+nb0+5)
-#     rwrs = [rquad(n+lb0+nb0+1) for n in 1:N]
+    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
 
-#     @sync @distributed for i in shuffle(eachindex(lmn_p))
-#         lmni = lmn_p[i]
-#         it = Threads.threadid()
-#         li,mi,ni = lmni
-#         for (j, lmnj) in enumerate(lmn_bp)
-#             lj,mj,nj = lmnj
-#             !ncondition(lb0,ni,nb0+1,nj) && continue
-#             !condition1(li,lb0,lj,mi,mb0,mj) && continue
-#             # _dummy!(is,js,aijs,i,j)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-#             _lorentz_SSs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,lmnj,lmnb0,lmni, r, wr, smf, smfb0, su; thresh)
-#             _lorentz_SSs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j,lmnb0,lmnj,lmni, r, wr, smfb0, smf, su; thresh)
-#             #using i,j indices twice for sparse matrix means values are added!
-#         end
-#         for (j, lmnj) in enumerate(lmn_bt)
-#             lj,mj,nj = lmnj
-#             !ncondition(lb0,ni,nb0,nj) && continue
-#             !condition2(li,lb0,lj,mi,mb0,mj) && continue
-#             # _dummy!(is,js,aijs,i,j)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-#             _lorentz_STs!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0, tmf, su; thresh)
-#         end
-#     end
+    np = length(lmn_p)
 
-#     @sync @distributed for i in shuffle(eachindex(lmn_t))
-#         lmni = lmn_t[i]
-#         li,mi,ni = lmni
-#         for (j, lmnj) in enumerate(lmn_bp)
-#             lj,mj,nj = lmnj
-#             !ncondition(lb0,ni,nb0,nj) && continue
-#             !condition2(li,lb0,lj,mi,mb0,mj) && continue
-#             # _dummy!(is,js,aijs,i,j)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-#             _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnj,lmnb0,lmni, r, wr, smf,smfb0,tu; thresh)
-#             _lorentz_SSt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j,lmnb0,lmnj,lmni, r, wr, smfb0,smf,tu; thresh)
-#         end
-#         for (j, lmnj) in enumerate(lmn_bt)
-#             lj,mj,nj = lmnj
-#             !ncondition(lb0,ni,nb0,nj) && continue
-#             !condition1(li,lb0,lj,mi,mb0,mj) && continue
-#             # _dummy!(is,js,aijs,i,j)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-#             _lorentz_STt!(first(localpart(is)),first(localpart(js)),first(localpart(aijs)),i+np,j+npb,lmnb0,lmnj,lmni, r, wr, smfb0,tmf,tu; thresh)
-#         end
-#     end
-#     nmatb = length(lmn_bp)+length(lmn_bt)
-#     nmatu = length(lmn_p)+length(lmn_t)
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
 
-#     return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatu, nmatb)
-# end
+    npb = length(lmn_bp)
 
+    nt = nprocs()
+    isd,jsd,aijsd = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
+
+
+    # rwrs = [rquad(n+lb0+nb0+1) for n in 1:N]
+    @sync @distributed for i in shuffle(eachindex(lmn_p))
+        lmni = lmn_p[i]
+        li,mi,ni = lmni
+        is,js, aijs = first(localpart(isd)),first(localpart(jsd)),first(localpart(aijsd))
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj, mj, nj = lmnj
+            conditions && !ncondition(lb0, ni, nb0 + 1, nj) && continue
+            conditions && !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
+            aij = _lorentz_SSs_pre(lmnj, lmnb0, lmni, r, wr, Smf, Smfb0, su, dSmf, d2Smf, d3Smf, dSmfb0)
+            aij += _lorentz_SSs_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Smf, su, dSmfb0, d2Smfb0, d3Smfb0, dSmf)
+            appendit!(is, js, aijs, i, j, aij; thresh)
+            #using i,j indices twice for sparse matrix means values are added!
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj, mj, nj = lmnj
+            conditions && !ncondition(lb0, ni, nb0, nj) && continue
+            conditions && !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
+            aij = _lorentz_STs_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Tmf, su, dSmfb0, d2Smfb0, dTmf, d2Tmf)
+            appendit!(is, js, aijs, i, j + npb, aij; thresh)
+
+        end
+    end
+
+    @sync @distributed for i in shuffle(eachindex(lmn_t))
+        lmni = lmn_t[i]
+        li,mi,ni = lmni
+        is,js, aijs = first(localpart(isd)),first(localpart(jsd)),first(localpart(aijsd))
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj, mj, nj = lmnj
+            conditions && !ncondition(lb0, ni, nb0, nj) && continue
+            conditions && !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
+            aij = _lorentz_SSt_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Smf, tu, dSmfb0, d2Smfb0)
+            aij += _lorentz_SSt_pre(lmnj, lmnb0, lmni, r, wr, Smf, Smfb0, tu, dSmf, d2Smf)
+            appendit!(is, js, aijs, i + np, j, aij; thresh)
+
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj, mj, nj = lmnj
+            conditions && !ncondition(lb0, ni, nb0, nj) && continue
+            conditions && !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            # _dummy!(is,js,aijs,i,j)
+            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
+            aij = _lorentz_STt_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Tmf, tu, dSmfb0, dTmf)
+            appendit!(is, js, aijs, i + np, j + npb, aij; thresh)
+
+        end
+    end
+    nmatb = length(lmn_bp) + length(lmn_bt)
+    nmatu = length(lmn_p) + length(lmn_t)
+
+    return sparse(vcat(isd...),vcat(jsd...),vcat(aijsd...), nmatu, nmatb)
+end
+
+function rhs_lorentz_btor_dist_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
+    ns=false,
+    η::T=1.0,
+    thresh=sqrt(eps()),
+    tmfb0::Tf=t_mf_pre,
+    d_tmfb0::dTf=d_t_mf_pre,
+    d2_tmfb0::d2Tf=d2_t_mf_pre,
+    d3_tmfb0::d3Tf=d3_t_mf_pre,
+    conditions=true) where {T,Tf,dTf,d2Tf,d3Tf}
+
+    lb0, mb0, nb0 = lmnb0
+    # r, wr = rquad(N+lb0+nb0+5)
+    rls = [r .^ l for l in 1:N]
+    # js_a1 = [jacobis(N,1.0,l+1/2,r) for l in 1:N]
+    # js_a0 = [jacobis(N,0.0,l+1/2,r) for l in 1:N]
+
+    Base.@propagate_inbounds Tmfb0(l, m, n, r, i) = tmfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dTmfb0(l, m, n, r, i) = d_tmfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Tmfb0(l, m, n, r, i) = d2_tmfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Tmfb0(l, m, n, r, i) = d3_tmfb0(js_a0, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds Smf(l, m, n, r, i) = s_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dSmf(l, m, n, r, i) = d_s_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Smf(l, m, n, r, i) = d2_s_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Smf(l, m, n, r, i) = d3_s_mf_pre(js_a0, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds Tmf(l, m, n, r, i) = t_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dTmf(l, m, n, r, i) = d_t_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Tmf(l, m, n, r, i) = d2_t_mf_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Tmf(l, m, n, r, i) = d3_t_mf_pre(js_a0, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds tu(l, m, n, r, i) = t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dtu(l, m, n, r, i) = d_t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2tu(l, m, n, r, i) = d2_t_in_pre(js_a0, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds su(l, m, n, r, i) = s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
+
+    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+
+    np = length(lmn_p)
+
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
+
+    npb = length(lmn_bp)
+
+    nt = nprocs()
+    isd,jsd,aijsd = distribute([Int[] for _ in 1:nt]),distribute([Int[] for _ in 1:nt]),distribute([Complex{T}[] for _ in 1:nt])
+
+
+    @sync @distributed for i in shuffle(eachindex(lmn_p))
+        lmni = lmn_p[i]
+        li,mi,ni = lmni
+        is,js, aijs = first(localpart(isd)),first(localpart(jsd)),first(localpart(aijsd))
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_STs_pre(lmnj, lmnb0, lmni, r, wr, Smf, Tmfb0, su, dSmf, d2Smf, dTmfb0, d2Tmfb0)
+            appendit!(is, js, aijs, i, j, aij; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_TTs_pre(lmnj, lmnb0, lmni, r, wr, Tmf, Tmfb0, su, dTmf, dTmfb0)
+            aij += _lorentz_TTs_pre(lmnb0, lmnj, lmni, r, wr, Tmfb0, Tmf, su, dTmfb0, dTmf)
+            appendit!(is, js, aijs, i, j + npb, aij; thresh)
+        end
+    end
+
+    @sync @distributed for i in shuffle(eachindex(lmn_t))
+        lmni = lmn_t[i]
+        li,mi,ni = lmni
+        is,js, aijs = first(localpart(isd)),first(localpart(jsd)),first(localpart(aijsd))
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_STt_pre(lmnj, lmnb0, lmni, r, wr, Smf, Tmfb0, tu, dSmf, dTmfb0)
+            appendit!(is, js, aijs, i + np, j, aij; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_TTt_pre(lmnj, lmnb0, lmni, r, wr, Tmf, Tmfb0, tu)
+            aij += _lorentz_TTt_pre(lmnb0, lmnj, lmni, r, wr, Tmfb0, Tmf, tu)
+            appendit!(is, js, aijs, i + np, j + npb, aij; thresh)
+        end
+    end
+    nmatb = length(lmn_bp) + length(lmn_bt)
+    nmatu = length(lmn_p) + length(lmn_t)
+
+    return sparse(vcat(isd...),vcat(jsd...),vcat(aijsd...), nmatu, nmatb)
+end
 # function rhs_lorentz_btor_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
 #     su=s_in 
 #     tu = t_in

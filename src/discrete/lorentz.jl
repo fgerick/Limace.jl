@@ -309,92 +309,92 @@ end
 #     return sparse(is,js,aijs,nmatu, nmatb)
 # end
 
-# function mnumber(mi,mb0,lj)
-#     mj = mi-mb0
-#     return abs(mj)>lj ? () : (mj,)
-# end
+function mnumber(mi,mb0,lj)
+    mj = mi-mb0
+    return abs(mj)>lj ? () : (mj,)
+end
 
-# function triangles(li,lb0,Nmax)
-#     l_low = max(1,li-lb0)
-#     l_high = min(Nmax,li+lb0)
-#     isodd(l_low+li+lb0) && (l_low += 1 )
-#     ls = l_low:2:l_high
-#     return ls
-# end
+function triangles(li,lb0,Nmax)
+    l_low = max(1,li-lb0)
+    l_high = min(Nmax,li+lb0)
+    isodd(l_low+li+lb0) && (l_low += 1 )
+    ls = l_low:2:l_high
+    return ls
+end
 
-# function triangles_odd(li,lb0,Nmax)
-#     l_low = max(1,li-lb0)
-#     l_high = min(Nmax,li+lb0)
-#     iseven(l_low+li+lb0) && (l_low += 1 )
-#     ls = l_low:2:l_high
-#     return ls
-# end
+function triangles_odd(li,lb0,Nmax)
+    l_low = max(1,li-lb0)
+    l_high = min(Nmax,li+lb0)
+    iseven(l_low+li+lb0) && (l_low += 1 )
+    ls = l_low:2:l_high
+    return ls
+end
 
-# function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf, conditions=true) where {T,Sf}
-#     su = s_in 
-#     tu = t_in
-#     smf = s_mf 
-#     tmf = t_mf 
+function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf, conditions=true) where {T,Sf}
+    su = s_in 
+    tu = t_in
+    smf = s_mf 
+    tmf = t_mf 
     
-#     lb0,mb0,nb0 = lmnb0
-#     lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-#     lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    lb0,mb0,nb0 = lmnb0
+    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
 
-#     np = length(lmn_p)
+    np = length(lmn_p)
 
-#     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-#     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
 
-#     npb = length(lmn_bp)
+    npb = length(lmn_bp)
 
-#     is,js,aijs = Int[],Int[],Complex{T}[]
+    is,js,aijs = Int[],Int[],Complex{T}[]
 
-#     # r, wr = rquad(N+lb0+nb0+5)
-#     rwrs = [rquad(n+lb0+nb0) for n in 1:N]
-#     @inbounds for (i,lmni) in enumerate(lmn_p)
-#         li,mi,ni = lmni
-#         for lj in triangles(li,lb0,N-1), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj+1)÷2) #nc <= na+nb+lb
+    # r, wr = rquad(N+lb0+nb0+5)
+    rwrs = [rquad(n+lb0+nb0) for n in 1:N]
+    @inbounds for (i,lmni) in enumerate(lmn_p)
+        li,mi,ni = lmni
+        for lj in triangles(li,lb0,N-1), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj+1)÷2) #nc <= na+nb+lb
 
-#             j = Limace.InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
-#             lmnj = (lj,mj,nj)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-#             # _dummy!(is,js,aijs,i,j)
-#             _lorentz_SSs!(is,js,aijs,i,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf, smfb0, su; thresh)
-#             _lorentz_SSs!(is,js,aijs,i,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, smf, su; thresh)
-#             #using i,j indices twice for sparse matrix means values are added!
-#             # end
-#         end
-#         for lj in triangles_odd(li,lb0,N), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj)÷2)
-#             j = Limace.InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
-#             # conditions && !ncondition(lb0,ni,nb0,nj) && continue
-#             # _dummy!(is,js,aijs,i,j+npb)
-#             lmnj = (lj,mj,nj)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-#             _lorentz_STs!(is,js,aijs,i,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, tmf, su; thresh) 
-#         end
-#     end
+            j = Limace.InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
+            lmnj = (lj,mj,nj)
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
+            # _dummy!(is,js,aijs,i,j)
+            _lorentz_SSs!(is,js,aijs,i,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf, smfb0, su; thresh)
+            _lorentz_SSs!(is,js,aijs,i,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, smf, su; thresh)
+            #using i,j indices twice for sparse matrix means values are added!
+            # end
+        end
+        for lj in triangles_odd(li,lb0,N), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj)÷2)
+            j = Limace.InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
+            # conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            # _dummy!(is,js,aijs,i,j+npb)
+            lmnj = (lj,mj,nj)
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
+            _lorentz_STs!(is,js,aijs,i,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0, tmf, su; thresh) 
+        end
+    end
 
-#     @inbounds for (i,lmni) in enumerate(lmn_t)
-#         li,mi,ni = lmni
-#         for lj in triangles_odd(li,lb0,N-1), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj+1)÷2)
-#             j = Limace.InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
-#             lmnj = (lj,mj,nj)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)] 
-#             _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,smf,tu; thresh)
-#             _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf,smfb0,tu; thresh)
-#         end
-#         for lj in triangles(li,lb0,N), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj)÷2)
-#             j = Limace.InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
-#             lmnj = (lj,mj,nj)
-#             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-#             _lorentz_STt!(is,js,aijs,i+np,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,tmf,tu; thresh)
-#         end
-#     end
-#     nmatb = length(lmn_bp)+length(lmn_bt)
-#     nmatu = length(lmn_p)+length(lmn_t)
+    @inbounds for (i,lmni) in enumerate(lmn_t)
+        li,mi,ni = lmni
+        for lj in triangles_odd(li,lb0,N-1), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj+1)÷2)
+            j = Limace.InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
+            lmnj = (lj,mj,nj)
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)] 
+            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,smf,tu; thresh)
+            _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf,smfb0,tu; thresh)
+        end
+        for lj in triangles(li,lb0,N), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj)÷2)
+            j = Limace.InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
+            lmnj = (lj,mj,nj)
+            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
+            _lorentz_STt!(is,js,aijs,i+np,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,tmf,tu; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+    nmatu = length(lmn_p)+length(lmn_t)
 
-#     return sparse(is,js,aijs,nmatu, nmatb)
-# end
+    return sparse(is,js,aijs,nmatu, nmatb)
+end
 
 
 function rhs_lorentz_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T

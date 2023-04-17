@@ -186,6 +186,95 @@ function rhs_pre(N, m;
     return RHS
 end
 
+function rhs_pre_dist(N, m; 
+    ns = false, 
+    Ω::T = 2.0, 
+    ν::T = 1.0, 
+    η::T = 1.0, 
+    B0poloidal = true, 
+    lmnb0::NTuple{3,Int} = (1,0,1), 
+    thresh = 1000eps(), 
+    u0poloidal = true,
+    u0fac = 0.0,
+    ufunc = DP.t_in,
+    lmnu0::NTuple{3,Int} = (1,0,1),
+    kwargs...) where T
+
+    lb0,mb0,nb0 = lmnb0
+    r,wr = DP.rquad(N+lb0+nb0+5)
+
+	@time js_a1 = pmap(l->DP.jacobis(N,1.0,l+1/2,r),1:N)
+	@time js_a0 = pmap(l->DP.jacobis(N,0.0,l+1/2,r), 1:N)
+
+
+    @time RHSc = VB.rhs_coriolis(N,m; ns, Ω)
+    @time RHSbb = BB.rhs_diffusion(N,m; ns, η)
+    # nu = size(RHSc,1)
+    # @time "Viscous" if ν != 0
+    #     RHSv = VB.rhs_viscosity(N,m; ns, ν)
+    # else
+    #     RHSv = spzeros(Complex{T}, nu, nu)
+    # end
+
+    RHSuu = RHSc #+ RHSv
+
+
+    #wigner symbol temporary arrays alloc
+    @everywhere begin
+        Limace.DiscretePart.wig_table_init($(2N), 9)
+        Limace.DiscretePart.wig_temp_init($(2N))
+    end
+
+    if B0poloidal
+        @time RHSub = DP.rhs_lorentz_bpol_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        @time RHSbu = DP.rhs_induction_bpol_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        if mb0 != 0
+            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSub/=2
+            RHSbu/=2
+        end
+    else
+        RHSub = DP.rhs_lorentz_btor_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_btor_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        if mb0 != 0
+            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSub/=2
+            RHSbu/=2
+        end
+    end
+
+    # if u0fac != 0.0
+    #     lu0, mu0, nu0 = lmnu0
+    #     if u0poloidal
+    #         RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, η, thresh, su = ufunc, kwargs...)
+    #         if mu0 != 0
+    #             RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, η, thresh, su = ufunc, kwargs...)
+    #             RHSbbt/=2
+    #         end
+    #     else
+    #         RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, η, thresh, tu = ufunc, kwargs...)
+    #         if mu0 != 0
+    #             RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, η, thresh, tu = ufunc, kwargs...)
+    #             RHSbbt/=2
+    #         end
+    #     end
+    #     RHSbb += u0fac*RHSbbt
+    # end
+
+
+
+    #wigner symbol temporary arrays dealloc
+    Limace.DiscretePart.wig_temp_free()
+
+
+    RHS = [RHSuu RHSub
+           RHSbu RHSbb]
+
+    return RHS
+end
+
 
 function rhs_dist(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0poloidal = true, lmnb0::NTuple{3,Int} = (1,0,1), thresh = 1000eps(), kwargs...) where T
     
