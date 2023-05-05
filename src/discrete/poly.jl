@@ -95,3 +95,41 @@ end
     # rl = r^l
 	return rl*(l*(l-1)*(l-2)/r^3*J + 3l*(l-1)/r^2*dJ + 3l/r*d2J + d3J)
 end
+
+function ylm(ℓ::Int, m::Int, θ, φ) #norm -> ∫YₗᵐYᵢʲsin(θ)dθdϕ = δₗᵢδₘⱼ
+    if ℓ<abs(m)
+        return zero(complex(typeof(θ)))
+    else
+        m̃ = abs(m)
+        a =  exp((loggamma(ℓ+m̃+1)+loggamma(ℓ-m̃+1)-2loggamma(ℓ+1))/2) *sqrt(2ℓ+1)/sqrt(4π)
+        if m<0
+            a*=(-1)^m
+        end
+        return a * exp(im*m*φ) * (-sin(θ/2) * cos(θ/2))^m̃ * jacobi(ℓ-m̃,m̃,m̃,cos(θ))
+    end
+end
+
+function dylmdθ(l,m,θ,ϕ)
+    # return m*cot(θ)*ylm(l,m,θ,ϕ) + sqrt(exp(loggamma(1+l-m)+loggamma(2+l+m)-loggamma(l-m)-loggamma(1+l+m)))*exp(-im*ϕ)*ylm(l,m+1,θ,ϕ) 
+    return m*cot(θ)*ylm(l,m,θ,ϕ) + sqrt((l-m)*(l+m+1))*exp(-im*ϕ)*ylm(l,m+1,θ,ϕ)  
+end
+
+function dylmdϕ(l,m,θ,ϕ)
+    return im*m*ylm(l,m,θ,ϕ) #∂(ϕ->real(ylm(l,m,θ,ϕ)),ϕ) + im*∂(ϕ->imag(ylm(l,m,θ,ϕ)),ϕ)
+end
+
+
+function poloidal_discretize(s,l,m,n,r,θ,ϕ)
+    ur = l*(l+1)*s(l,m,n,r)*ylm(l,m,θ,ϕ)/r
+    uθ = 1/r*∂(r->s(l,m,n,r)*r,r)*dylmdθ(l,m,θ,ϕ)
+    uϕ = 1/(r*sin(θ))*∂(r->s(l,m,n,r)*r,r)*dylmdϕ(l,m,θ,ϕ)
+    return (ur,uθ,uϕ)
+end
+
+function toroidal_discretize(t,l,m,n,r,θ,ϕ)
+    ur = 0.0
+    uθ = 1/sin(θ)*t(l,m,n,r)*dylmdϕ(l,m,θ,ϕ)
+    uϕ = -t(l,m,n,r)*dylmdθ(l,m,θ,ϕ)
+
+    return (ur,uθ,uϕ)
+end

@@ -392,8 +392,32 @@ function rhs_induction_btor_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     return sparse(is,js,aijs,nmatb, nmatu)
 end
 
-function rhs_induction_upol_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps()), su = s_chen, smf = s_mf, tmf = t_mf, condition = true) where T
+function rhs_induction_upol_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T=1.0, thresh = sqrt(eps()), condition = true) where T
+    # su::Sf = s_in_pre,
+    # d_su::dSf = d_s_in_pre, 
+    # d2_su::d2Sf = d2_s_in_pre, 
+    # d3_su::d3Sf = d3_s_in_pre,
+    # s_mf_u::Sf2 = s_in, condition = true
+    # ) where T
+
     lu0,mu0,nu0 = lmnu0
+
+    rls = [r .^ l for l in 1:N]
+
+
+	Base.@propagate_inbounds  Smf(l,m,n,r,i) = s_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dSmf(l,m,n,r,i) = d_s_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2Smf(l,m,n,r,i) = d2_s_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d3Smf(l,m,n,r,i) = d3_s_mf_pre(js_a0,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  Tmf(l,m,n,r,i) = t_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dTmf(l,m,n,r,i) = d_t_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2Tmf(l,m,n,r,i) = d2_t_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d3Tmf(l,m,n,r,i) = d3_t_mf_pre(js_a0,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  su(l,m,n,r,i) = s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dsu(l,m,n,r,i) = d_s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2su(l,m,n,r,i) = d2_s_in_pre(js_a1,rls,l,m,n,r,i)
 
     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
@@ -403,7 +427,7 @@ function rhs_induction_upol_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt
     is,js,aijs = Int[],Int[],Complex{T}[]
 
     # r, wr = rquad(N+lu0+nu0+5)
-    rwrs = [rquad(n+lu0+nu0+1) for n in 1:N]
+    # rwrs = [rquad(n+lu0+nu0+1) for n in 1:N]
 
     for (i,lmni) in enumerate(lmn_bp)
         li,mi,ni = lmni
@@ -411,15 +435,15 @@ function rhs_induction_upol_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
-            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-            _induction_sSS!(is,js,aijs,i,j,lmnu0,lmnj,lmni, r, wr, su, smf, smf; thresh)
+            aij = _induction_sSS_pre(lmnu0,lmnj,lmni, r, wr, su, Smf, Smf, dsu, dSmf, dSmf, d2su, d2Smf)
+            appendit!(is,js,aijs,i,j,aij; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             !condition2u(lu0,li,lj,mu0,mi,mj) && continue
-            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-            _induction_sTS!(is,js,aijs,i,j+np,lmnu0,lmnj,lmni, r, wr, su, tmf, smf; thresh)
+            aij = _induction_sTS_pre(lmnu0,lmnj,lmni, r, wr, su, Tmf, Smf, dsu, dTmf, dSmf)
+            appendit!(is,js,aijs,i,j+np,aij; thresh)
         end
     end
 
@@ -429,15 +453,15 @@ function rhs_induction_upol_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
-            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-            _induction_sST!(is,js,aijs,i+np,j,lmnu0,lmnj,lmni, r, wr, su, smf, tmf; thresh)
+            aij = _induction_sST_pre(lmnu0,lmnj,lmni, r, wr, su, Smf, Tmf, dsu, dSmf, d2su, d2Smf)
+            appendit!(is,js,aijs,i+np,j,aij; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
-            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-            _induction_sTT!(is,js,aijs,i+np,j+np,lmnu0,lmnj,lmni, r, wr, su, tmf, tmf; thresh)
+            aij = _induction_sTT_pre(lmnu0,lmnj,lmni, r, wr, su, Tmf, Tmf, dsu, dTmf)
+            appendit!(is,js,aijs,i+np,j+np,aij; thresh)
         end
     end
     nmatb = length(lmn_bp)+length(lmn_bt)
@@ -445,8 +469,29 @@ function rhs_induction_upol_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt
     return sparse(is,js,aijs,nmatb, nmatb)
 end
 
-function rhs_induction_utor_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt(eps()), tu = t_chen, smf = s_mf, tmf = t_mf, condition=true) where T
+function rhs_induction_utor_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T=1.0, thresh = sqrt(eps()), condition=true) where T
+
     lu0,mu0,nu0 = lmnu0
+
+    rls = [r .^ l for l in 1:N]
+
+	Base.@propagate_inbounds  Smf(l,m,n,r,i) = s_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dSmf(l,m,n,r,i) = d_s_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2Smf(l,m,n,r,i) = d2_s_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d3Smf(l,m,n,r,i) = d3_s_mf_pre(js_a0,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  Tmf(l,m,n,r,i) = t_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dTmf(l,m,n,r,i) = d_t_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2Tmf(l,m,n,r,i) = d2_t_mf_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d3Tmf(l,m,n,r,i) = d3_t_mf_pre(js_a0,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  tu(l,m,n,r,i) = t_in_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dtu(l,m,n,r,i) = d_t_in_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2tu(l,m,n,r,i) = d2_t_in_pre(js_a0,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  su(l,m,n,r,i) = s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dsu(l,m,n,r,i) = d_s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2su(l,m,n,r,i) = d2_s_in_pre(js_a1,rls,l,m,n,r,i)
 
     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
@@ -455,8 +500,6 @@ function rhs_induction_utor_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt
 
     is,js,aijs = Int[],Int[],Complex{T}[]
 
-    # r, wr = rquad(N+lu0+nu0+5)
-    rwrs = [rquad(n+lu0+nu0+1) for n in 1:N]
 
     for (i,lmni) in enumerate(lmn_bp)
         li,mi,ni = lmni
@@ -464,8 +507,8 @@ function rhs_induction_utor_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
-            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-            _induction_tSS!(is,js,aijs,i,j,lmnu0,lmnj,lmni, r, wr, tu, smf, smf; thresh)
+            aij = _induction_tSS_pre(lmnu0,lmnj,lmni, r, wr, tu, Smf, Smf, dtu, dSmf, dSmf, t_in, s_mf, s_mf)
+            appendit!(is,js,aijs,i,j,aij; thresh)
         end
     end
 
@@ -475,15 +518,15 @@ function rhs_induction_utor_pre(N,m, lmnu0; ns = false, η::T=1.0, thresh = sqrt
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
-            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-            _induction_tST!(is,js,aijs,i+np,j,lmnu0,lmnj,lmni, r, wr, tu, smf, tmf; thresh)
+            aij = _induction_tST_pre(lmnu0,lmnj,lmni, r, wr, tu, Smf, Tmf, dtu, dSmf)
+            appendit!(is,js,aijs,i+np,j,aij; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
             # !ncondition(lu0,ni,nu0,nj) && continue
             condition && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
-            r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
-            _induction_tTT!(is,js,aijs,i+np,j+np,lmnu0,lmnj,lmni, r, wr, tu, tmf, tmf; thresh)
+            aij = _induction_tTT_pre(lmnu0,lmnj,lmni, r, wr, tu, Tmf, Tmf)
+            appendit!(is,js,aijs,i+np,j+np,aij; thresh)
         end
     end
     nmatb = length(lmn_bp)+length(lmn_bt)
