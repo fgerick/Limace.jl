@@ -37,7 +37,7 @@ Limace.DiscretePart.__wiginit(100)
 	Base.@propagate_inbounds d2su(l,m,n,r,i) = d2_s_in_pre(js_a1,rls,l,m,n,r,i)
 
 	for lmna in lmns, lmnc in lmns
-		l1 = DP._induction_sSS_pre(lmna, lmnb, lmnc, r,wr, su,Smf,Smf,  dsu, dSmf, dSmf, d2su, d2Smf)
+		l1 = DP._induction_sSS_pre(lmna, lmnb, lmnc, r,wr, su,Smf,Smf,  dsu, dSmf, dSmf, d2su, d2Smf, s_in, s_mf, s_mf)
 		l2 = DP._induction_sSS(lmna, lmnb, lmnc, r,wr, s_in, s_mf, s_mf)
 		@test l1 ≈ l2 atol=1e-14
 
@@ -110,6 +110,11 @@ end
 
 		RHS1 = Limace.MHDProblem.rhs(N,m; lmnb0, B0poloidal=false)
 		RHS2 = Limace.MHDProblem.rhs_pre(N,m; lmnb0, B0poloidal=false)
+			
+		@test RHS1 ≈ RHS2
+
+		RHS1 = Limace.MHDProblem.rhs_cond(N,m; lmnb0, B0poloidal=false)
+		RHS2 = Limace.MHDProblem.rhs_cond_pre(N,m; lmnb0, B0poloidal=false)
 			
 		@test RHS1 ≈ RHS2
 	end

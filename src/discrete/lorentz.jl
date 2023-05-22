@@ -46,7 +46,7 @@ function _lorentz_STs(lmna, lmnb, lmnc, r,wr, Sa,Tb,sc)
     @inline f1 = r -> (p(lc)*r^2*D(_Sa,la,r)*_Tb(r) + 
                         (p(la)+p(lb)+p(lc))*_Sa(r)*_Tb(r) - 
                         (p(la)+p(lb)-p(lc))*(r*_Sa(r)*∂(_Tb,r) + 
-                                            r*∂(_Sa,r)*_Tb(r) + 
+                                            r*∂(_Sa,r)*_Tb(r) +
                                             r^2*∂(_Sa,r)*∂(_Tb,r)) - 
                         p(lb)*r^2*∂(r->∂(_Sa,r),r)*_Tb(r) - 
                         p(la)*r^2*∂(r->∂(_Tb,r),r)*_Sa(r)

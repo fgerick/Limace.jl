@@ -25,6 +25,8 @@ function _induction_sSS(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc)
     @inline f = r-> inners(f1,r->Sc(lc,mc,nc,r), lc, r)
 
     aij = ∫dr(f,r,wr)*Aabc
+
+    aij += lc*p(lb)*( p(la)-p(lb)+p(lc))*Sb(lb,mb,nb,1.0)*∂(r->sa(la,ma,na,r),1.0)*Sc(lc,mc,nc,1.0)/2*Aabc
     return aij
 end
 
@@ -46,7 +48,7 @@ end
 
 
 #toroidal flow, poloidal B0
-function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc)
+function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc; external=true)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -60,7 +62,10 @@ function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc)
 
     #add contribution from external ∫dV (1<r<∞), 
     #if toroidal velocity is not 0 at r=11 
-    aij += lc*p(lb)*ta(la,ma,na,1.0)*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+
+    if external
+        aij += lc*p(lb)*ta(la,ma,na,1.0)*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+    end
 
     return aij
 end
@@ -286,7 +291,7 @@ function _dummy!(is,js,aijs,i,j)
     return nothing
 end
 
-function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf, conditions=true) where {T,Sf}
+function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf, conditions=true, external=true) where {T,Sf}
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
@@ -308,7 +313,7 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_p)
             lj,mj,nj = lmnj
-            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && !ncondition(lb0,ni,nb0+1,nj) && continue
             conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             # _dummy!(is,js,aijs,i,j)
@@ -320,7 +325,9 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
             conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             # _dummy!(is,js,aijs,i,j+np)
-            _induction_tSS!(is,js,aijs,i,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, s_mf; thresh)
+            # _induction_tSS!(is,js,aijs,i,j+np,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, s_mf; thresh, external)
+            aij = _induction_tSS(T.(lmnj),T.(lmnb0),T.(lmni), r, wr, tu, smfb0, s_mf; external)
+            appendit!(is,js,aijs,i,j+np,aij; thresh)
         end
     end
 
@@ -579,7 +586,7 @@ function rhs_induction_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqr
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_p)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
+            !ncondition(lb0,ni,nb0+1,nj) && continue
             !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]

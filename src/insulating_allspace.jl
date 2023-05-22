@@ -109,7 +109,7 @@ end
 
 #inner products
 
-@inline function _inner_tt(is,js,aijs, i,j, l,n,n2)
+@inline function _inner_tt!(is,js,aijs, i,j, l,n,n2)
     if n==n2 
         aij = one(l)
         push!(is,i)
@@ -131,7 +131,7 @@ end
     return nothing
 end
 
-@inline function _inner_ss(is,js,aijs, i,j, l,n,n2)
+@inline function _inner_ss!(is,js,aijs, i,j, l,n,n2)
     
    
     if n==n2 
@@ -175,16 +175,16 @@ function lhs(N,m; ns = false, Ω::T = 1.0) where T
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
-        _inner_ss(is,js,aijs,i,i, T(l),T(n),T(n))
+        _inner_ss!(is,js,aijs,i,i, T(l),T(n),T(n))
         if n>1
-            _inner_ss(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
+            _inner_ss!(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
-        _inner_tt(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
+        _inner_tt!(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
         if n>1
-            _inner_tt(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
+            _inner_tt!(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
         end
     end
 
@@ -195,7 +195,7 @@ end
 
 #diffusion
 
-@inline function _diffusion_tt(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
+@inline function _diffusion_tt!(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
     
    
     if n==n2 
@@ -209,12 +209,12 @@ end
 end
 
 
-@inline function _diffusion_ss(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
+@inline function _diffusion_ss!(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
     
    
     if n==n2 
         # if n==1
-        #     aij = -(((1 + 2*l)^2*(3 + 2*l)*(5 + 2*l))/(6 + l*(11 + 6*l)))
+        #     aij = -(5+7l+2l^2)/2
         # else
             aij = -((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
         # end
@@ -239,12 +239,12 @@ function rhs_diffusion(N,m; ns = false, η::T = 1.0) where T
 
     for (i,(l,m,n)) in enumerate(lmn_p)
         l,m,n = T.((l,m,n))
-        _diffusion_ss( is,js,aijs,i,i, l,m,n,n; η)
+        _diffusion_ss!( is,js,aijs,i,i, l,m,n,n; η)
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
         l,m,n = T.((l,m,n))
-        _diffusion_tt( is,js,aijs, i+np,i+np, l,m,n,n; η)  
+        _diffusion_tt!( is,js,aijs, i+np,i+np, l,m,n,n; η)  
     end
 
     RHS = sparse(is,js,aijs, nu, nu)

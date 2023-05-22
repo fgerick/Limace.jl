@@ -1,5 +1,16 @@
 
 DP.__wiginit(100)
+
+function eigstarget(A, B, target; kwargs...)
+    P = lu(A - target * B)
+    LO = LinearMap{ComplexF64}((y, x) -> ldiv!(y, P, B * x), size(A, 2))
+    pschur, history = partialschur(LO; kwargs...)
+    evals, u = partialeigen(pschur)
+    λ = 1 ./ evals .+ target
+    return λ, u
+end
+
+
 @testset "Inviscid inertial modes" begin
 
     zhang(m, N) = -2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
@@ -18,15 +29,6 @@ end
 @testset "Free decay modes" begin
     #free decay modes damping
     λfd(l, k) = -besselj_zero(l - 1 / 2, k)[end]^2
-
-    function eigstarget(A, B, target; kwargs...)
-        P = lu(A - target * B)
-        LO = LinearMap{ComplexF64}((y, x) -> ldiv!(y, P, B * x), size(A, 2))
-        pschur, history = partialschur(LO; kwargs...)
-        evals, u = partialeigen(pschur)
-        λ = 1 ./ evals .+ target
-        return λ, u
-    end
 
     #get difference between λfd and targeted eigensolution
     function getlk1(Nmax, lmax)
@@ -52,7 +54,7 @@ end
 
 # @testset "t₀¹s₀¹ kinematic dynamo" begin
 
-#     using Limace.DiscretePart: s_mf, t_mf, s_chen, t_chen, t_mf1, s_mf1
+#     using Limace.DiscretePart: s_mf, t_mf, s_chen, t_chen
 
 #     # Li et al. (2010) eq. (23):
 #     @inline t_10(l,m,n,r) = r^2*sin(π*r)*√(4π/3)
@@ -178,7 +180,11 @@ end
 
 @testset "Malkus modes" begin
 
-    zhang(m, N) = -2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
+    function zhang(m, N) 
+        sm = sign(m)
+        m = abs(m)
+        return -sm*2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
+    end
 
     # Malkus J. Fluid Mech. (1967), vol. 28, pp. 793-802, eq. (2.28)
     slow(m, N, Le, λ = imag(zhang(m, N))) =
@@ -186,27 +192,27 @@ end
     fast(m, N, Le, λ = imag(zhang(m, N))) =
         im * λ / 2Le * (1 + √(1 + 4Le^2 * m * (m - λ) / λ^2))
 
-    using Limace.MHDProblem: rhs_cond, lhs_cond
+    using Limace.MHDProblem: rhs_cond_pre, lhs_cond
     N = 5
-    m = 0:5
-    Le = 1e-4
+    m = -5:5
+    Le = 1e-2
 
     lmnb0 = (1, 0, 0)
 
     LHS = lhs_cond(N, m)
-    RHS = rhs_cond(
+    RHS = rhs_cond_pre(
         N,
         m;
         Ω = 2 / Le,
         lmnb0,
         B0poloidal = false,
-        B0fac = sqrt(4pi) / (sqrt(3) * sqrt(5 / 2)),
+        B0fac = 2sqrt(2pi/15),
     )
 
     evals = eigvals(inv(Matrix(LHS)) * RHS)
 
     @test any(evals .≈ 1.0 * im / Le)
-    for m = 1:(N-1)
+    for m = vcat(-(N-1):-1, 1:(N-1))
         @test any(evals .≈ slow(m, 1, Le))
         @test any(evals .≈ fast(m, 1, Le))
     end
@@ -284,7 +290,7 @@ end
 
 
     LHS = lhs_cond(N, m)
-    RHS = rhs_cond(
+    RHS = rhs_cond_pre(
         N,
         m;
         Ω = 2 / Le,
@@ -297,16 +303,8 @@ end
 
     @test sort(imag.(λ)) ≈ sort(imag.(λ_mire))
 end
-@testset "Luo & Jackson 2022 mode" begin
 
-    function eigstarget(A, B, target; kwargs...)
-        P = lu(A - target * B)
-        LO = LinearMap{ComplexF64}((y, x) -> ldiv!(y, P, B * x), size(A, 2))
-        pschur, history = partialschur(LO; kwargs...)
-        evals, u = partialeigen(pschur)
-        λ = 1 ./ evals .+ target
-        return λ, u
-    end
+@testset "Luo & Jackson 2022 mode" begin
 
     using Limace.MHDProblem: rhs, lhs
     N = 50
@@ -326,10 +324,11 @@ end
 
     target = -0.0066 - 1.033im
     # target = -0.042+0.66im
-    evals, evecs = eigstarget(RHS, LHS, target; nev = 4)
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
 
     lj22_n350 = -0.0065952461 - 1.0335959942im
 
+    abs(lj22_n350-first(evals))
     @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
 
 
@@ -337,17 +336,8 @@ end
 
 @testset "Luo & Jackson 2022 mode pre" begin
 
-    function eigstarget(A, B, target; kwargs...)
-        P = lu(A - target * B)
-        LO = LinearMap{ComplexF64}((y, x) -> ldiv!(y, P, B * x), size(A, 2))
-        pschur, history = partialschur(LO; kwargs...)
-        evals, u = partialeigen(pschur)
-        λ = 1 ./ evals .+ target
-        return λ, u
-    end
-
     using Limace.MHDProblem: rhs_pre, lhs
-	DP = Limace.DiscretePart
+	# DP = Limace.DiscretePart
     N = 50
     m = 0
     Le = 1e-4
@@ -378,6 +368,106 @@ end
 
 
 end
+
+@testset "Luo & Jackson 2022 dipole mode" begin
+
+    using Limace.MHDProblem: rhs_pre, lhs
+
+    N = 130
+    m = 0
+	Le = 1e-3
+	Lu = 2 / Le
+
+	lmnb0 = (1,0,1)
+	B0fac = sqrt(30/23) #1/sqrt(2)
+
+	LHS = lhs(N, m)
+	RHS = rhs_pre(N, m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
+	target = -0.041950864156977755 - 0.6599458208985812im
+	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+	@test isapprox(target,evals[1], atol = 1e-6)
+
+end
+
+
+@testset "Luo, Marti & Jackson 2022 s₁⁰" begin
+
+
+    using Limace.MHDProblem: rhs, rhs_pre, lhs
+	DP = Limace.DiscretePart
+    N = 40
+    m = 1
+    Eη = 1e-9
+    Le = 2√(Eη)
+    Lu = 2 / Le
+
+    lmnb0 = (1, 0, 1)
+
+
+    B0fac = -4sqrt(pi/35)
+    
+    LHS = lhs(N, m)
+    nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
+    # LHS[1:nu,1:nu] .= 0
+    LHS[1:nu,1:nu] .*=Eη
+
+    # dropzeros!(LHS)
+    RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = true, B0fac)
+    # RHS = rhs_pre(N, m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
+
+
+    # target = (-19.3+0.149im)/Lu
+    # target = (-742.7652176+684.132152im)/Lu
+    target = (-287.9448432-115.2081087im) #/Lu
+    # target = -0.042+0.66im
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+
+    @test isapprox(evals[1], target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
+
+
+end
+
+# @testset "Luo, Marti & Jackson 2022 t₁⁰" begin
+
+
+#     using Limace.MHDProblem: rhs, rhs_pre, lhs
+# 	DP = Limace.DiscretePart
+#     N = 120
+#     m = 3
+#     Eη = 1e-9
+#     Le = 2√(Eη)
+#     Lu = 2 / Le
+
+#     lmnb0 = (1, 0, 1)
+
+
+#     B0fac = -4sqrt(pi/35)
+    
+#     LHS = lhs(N, m)
+#     nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
+#     # LHS[1:nu,1:nu] .= 0
+#     LHS[1:nu,1:nu] .*=Eη
+
+#     # dropzeros!(LHS)
+#     RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = false, B0fac)
+#     # RHS = rhs_pre(N, m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
+
+
+#     # target = (-19.3+0.149im)/Lu
+#     target = (-742.7652176+684.132152im)
+#     # target = -742.7652176-684.132152im
+#     # target = -140.3 + 93.6im
+#     # target = -47.7+29.6im
+#     # target = (-287.9448432-115.2081087im) #/Lu
+#     # target = -0.042+0.66im
+#     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+
+#     @test isapprox(evals[1], target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
+
+
+# end
+
+
 @testset "Distributed vs serial" begin
     addprocs(4; exeflags=`--project=$(Base.active_project())`)
     @everywhere begin

@@ -257,7 +257,6 @@ function rhs_lorentz_bpol_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
             conditions && !ncondition(lb0, ni, nb0 + 1, nj) && continue
             conditions && !condition1(li, lb0, lj, mi, mb0, mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             aij = _lorentz_SSs_pre(lmnj, lmnb0, lmni, r, wr, Smf, Smfb0, su, dSmf, d2Smf, d3Smf, dSmfb0)
             aij += _lorentz_SSs_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Smf, su, dSmfb0, d2Smfb0, d3Smfb0, dSmf)
             appendit!(is, js, aijs, i, j, aij; thresh)
@@ -268,7 +267,6 @@ function rhs_lorentz_bpol_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
             conditions && !ncondition(lb0, ni, nb0, nj) && continue
             conditions && !condition2(li, lb0, lj, mi, mb0, mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             aij = _lorentz_STs_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Tmf, su, dSmfb0, d2Smfb0, dTmf, d2Tmf)
             appendit!(is, js, aijs, i, j + npb, aij; thresh)
 
@@ -282,7 +280,6 @@ function rhs_lorentz_bpol_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
             conditions && !ncondition(lb0, ni, nb0, nj) && continue
             conditions && !condition2(li, lb0, lj, mi, mb0, mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             aij = _lorentz_SSt_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Smf, tu, dSmfb0, d2Smfb0)
             aij += _lorentz_SSt_pre(lmnj, lmnb0, lmni, r, wr, Smf, Smfb0, tu, dSmf, d2Smf)
             appendit!(is, js, aijs, i + np, j, aij; thresh)
@@ -293,7 +290,6 @@ function rhs_lorentz_bpol_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
             conditions && !ncondition(lb0, ni, nb0, nj) && continue
             conditions && !condition1(li, lb0, lj, mi, mb0, mj) && continue
             # _dummy!(is,js,aijs,i,j)
-            # r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             aij = _lorentz_STt_pre(lmnb0, lmnj, lmni, r, wr, Smfb0, Tmf, tu, dSmfb0, dTmf)
             appendit!(is, js, aijs, i + np, j + npb, aij; thresh)
 
@@ -351,6 +347,101 @@ function rhs_lorentz_btor_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
 
     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
+
+    npb = length(lmn_bp)
+
+    is, js, aijs = Int[], Int[], Complex{T}[]
+
+
+    for (i, lmni) in enumerate(lmn_p)
+        li, mi, ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_STs_pre(lmnj, lmnb0, lmni, r, wr, Smf, Tmfb0, su, dSmf, d2Smf, dTmfb0, d2Tmfb0)
+            appendit!(is, js, aijs, i, j, aij; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_TTs_pre(lmnj, lmnb0, lmni, r, wr, Tmf, Tmfb0, su, dTmf, dTmfb0)
+            aij += _lorentz_TTs_pre(lmnb0, lmnj, lmni, r, wr, Tmfb0, Tmf, su, dTmfb0, dTmf)
+            appendit!(is, js, aijs, i, j + npb, aij; thresh)
+        end
+    end
+
+    for (i, lmni) in enumerate(lmn_t)
+        li, mi, ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_STt_pre(lmnj, lmnb0, lmni, r, wr, Smf, Tmfb0, tu, dSmf, dTmfb0)
+            appendit!(is, js, aijs, i + np, j, aij; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj, mj, nj = lmnj
+            !ncondition(lb0, ni, nb0, nj) && continue
+            !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            aij = _lorentz_TTt_pre(lmnj, lmnb0, lmni, r, wr, Tmf, Tmfb0, tu)
+            aij += _lorentz_TTt_pre(lmnb0, lmnj, lmni, r, wr, Tmfb0, Tmf, tu)
+            appendit!(is, js, aijs, i + np, j + npb, aij; thresh)
+        end
+    end
+    nmatb = length(lmn_bp) + length(lmn_bt)
+    nmatu = length(lmn_p) + length(lmn_t)
+
+    return sparse(is, js, aijs, nmatu, nmatb)
+end
+
+function rhs_lorentz_btor_cond_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
+    ns=false,
+    η::T=1.0,
+    thresh=sqrt(eps()),
+    tmfb0::Tf=t_in_pre,
+    d_tmfb0::dTf=d_t_in_pre,
+    d2_tmfb0::d2Tf=d2_t_in_pre,
+    d3_tmfb0::d3Tf=d3_t_in_pre,
+    conditions=true) where {T,Tf,dTf,d2Tf,d3Tf}
+
+    lb0, mb0, nb0 = lmnb0
+    # r, wr = rquad(N+lb0+nb0+5)
+    rls = [r .^ l for l in 1:N]
+    # js_a1 = [jacobis(N,1.0,l+1/2,r) for l in 1:N]
+    # js_a0 = [jacobis(N,0.0,l+1/2,r) for l in 1:N]
+
+    Base.@propagate_inbounds Tmfb0(l, m, n, r, i) = tmfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dTmfb0(l, m, n, r, i) = d_tmfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Tmfb0(l, m, n, r, i) = d2_tmfb0(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Tmfb0(l, m, n, r, i) = d3_tmfb0(js_a0, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds Smf(l, m, n, r, i) = s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dSmf(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Smf(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Smf(l, m, n, r, i) = d3_s_in_pre(js_a1, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds Tmf(l, m, n, r, i) = t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dTmf(l, m, n, r, i) = d_t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2Tmf(l, m, n, r, i) = d2_t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d3Tmf(l, m, n, r, i) = d3_t_in_pre(js_a0, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds tu(l, m, n, r, i) = t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dtu(l, m, n, r, i) = d_t_in_pre(js_a0, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2tu(l, m, n, r, i) = d2_t_in_pre(js_a0, rls, l, m, n, r, i)
+
+    Base.@propagate_inbounds su(l, m, n, r, i) = s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
+    Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
+
+    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+
+    np = length(lmn_p)
+
+    lmn_bp = Limace.InviscidBasis.lmn_upol(N, m, ns)
+    lmn_bt = Limace.InviscidBasis.lmn_utor(N, m, ns)
 
     npb = length(lmn_bp)
 

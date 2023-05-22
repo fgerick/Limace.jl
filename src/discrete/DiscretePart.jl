@@ -25,6 +25,8 @@ include("induction.jl")
 include("lorentz.jl")
 include("lorentz_pre.jl")
 include("induction_pre.jl")
+include("diffusion.jl")
+include("inertial.jl")
 
 
 end

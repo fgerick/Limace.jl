@@ -9,9 +9,13 @@ VB = Limace.InviscidBasis
 BB = Limace.InsulatingMFBasis
 DP = Limace.DiscretePart 
 
-function lhs(N,m; ns = false, Ω::T = 1.0, η::T = 1.0) where T
+function lhs(N,m; ns = false, Ω::T = 1.0, η::T = 1.0, external=true) where T
     LHSu = VB.lhs(N,m; ns, Ω)
-    LHSb = BB.lhs(N,m; ns, Ω)
+    if external
+        LHSb = BB.lhs(N,m; ns, Ω)
+    else
+        LHSb = DP.lhs_inertial_b(N,m)
+    end
 
     LHS = blockdiag(LHSu,LHSb)
     return LHS
@@ -24,16 +28,22 @@ function rhs(N, m;
                 η::T = 1.0, 
                 B0poloidal = true, 
                 lmnb0::NTuple{3,Int} = (1,0,1), 
+                B0fac = 1.0,
                 thresh = 1000eps(), 
                 u0poloidal = true,
                 u0fac = 0.0,
                 ufunc = DP.t_in,
+                external = true,
                 lmnu0::NTuple{3,Int} = (1,0,1),
                 kwargs...) where T
     
     lb0,mb0,nb0 = lmnb0
     RHSc = VB.rhs_coriolis(N,m; ns, Ω)
-    RHSbb = BB.rhs_diffusion(N,m; ns, η)
+    if external
+        RHSbb = BB.rhs_diffusion(N,m; ns, η)
+    else
+        RHSbb = DP.rhs_diffusion(N,m; η)
+    end
     # nu = size(RHSc,1)
     # @time "Viscous" if ν != 0
     #     RHSv = VB.rhs_viscosity(N,m; ns, ν)
@@ -50,10 +60,10 @@ function rhs(N, m;
 
     if B0poloidal
         RHSub = DP.rhs_lorentz_bpol(N,m, lmnb0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_bpol(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_bpol(N,m, lmnb0; ns, η, thresh, external, kwargs...)
         if mb0 != 0
             RHSub += (-1)^mb0*DP.rhs_lorentz_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, external, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
@@ -68,6 +78,9 @@ function rhs(N, m;
         end
     end
 
+    RHSub*=B0fac
+    RHSbu*=B0fac
+    
     if u0fac != 0.0
         lu0, mu0, nu0 = lmnu0
         if u0poloidal
@@ -106,6 +119,7 @@ function rhs_pre(N, m;
     η::T = 1.0, 
     B0poloidal = true, 
     lmnb0::NTuple{3,Int} = (1,0,1), 
+    B0fac=1.0,
     thresh = 1000eps(), 
     u0poloidal = true,
     u0fac = 0.0,
@@ -155,6 +169,8 @@ function rhs_pre(N, m;
             RHSbu/=2
         end
     end
+    RHSbu*=B0fac
+    RHSub*=B0fac
 
     # if u0fac != 0.0
     #     lu0, mu0, nu0 = lmnu0
@@ -502,4 +518,52 @@ function rhs_cond(N,m; ns = false, Ω::T = 2.0, B0poloidal = false, B0fac=1.0, l
     return RHS
 end
 
+function rhs_cond_pre(N,m; ns = false, Ω::T = 2.0, B0poloidal = false, B0fac=1.0, lmnb0::NTuple{3,Int} = (1,0,1), thresh = sqrt(eps()), kwargs...) where T
+    
+
+    lb0,mb0,nb0 = lmnb0
+    r,wr = DP.rquad(N+lb0+nb0+5)
+
+	js_a1 = DP.jacobis_l(N,r,1.0)
+	js_a0 = DP.jacobis_l(N,r,0.0)
+
+
+    RHSc = VB.rhs_coriolis(N,m; ns, Ω)
+
+    RHSuu = RHSc #+ RHSv
+
+
+    #wigner symbol temporary arrays alloc
+    wig_table_init(2N, 9)
+    wig_temp_init(2N)
+
+    if B0poloidal
+        # RHSub = DP.rhs_lorentz_bpol_cond(N,m, lmnb0; ns, η=Ω, thresh, kwargs...)*B0fac
+        # RHSbu = DP.rhs_induction_bpol_cond(N,m, lmnb0; ns, η=Ω, thresh, kwargs...)*B0fac
+        # if mb0 != 0
+        #     RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_cond(N,m, (lb0,-mb0,nb0); ns, η=Ω, thresh, kwargs...)*B0fac
+        #     RHSbu += (-1)^mb0*DP.rhs_induction_bpol_cond(N,m, (lb0,-mb0,nb0); ns, η=Ω, thresh, kwargs...)*B0fac
+        # end
+        # RHSub/=2
+        # RHSbu/=2
+    else
+        RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, lmnb0, r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac
+        RHSbu = DP.rhs_induction_btor_cond_pre(N,m, lmnb0, r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac
+        if mb0 != 0
+            RHSub += DP.rhs_lorentz_btor_cond_pre(N,m, (lb0,-mb0,nb0), r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac*(-1)^mb0
+            RHSbu += DP.rhs_induction_btor_cond_pre(N,m, (lb0,-mb0,nb0), r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac*(-1)^mb0
+            RHSub/=2
+            RHSbu/=2
+        end
+
+    end
+
+    #wigner symbol temporary arrays dealloc
+    Limace.DiscretePart.wig_temp_free()
+
+    RHS = [RHSuu RHSub
+           RHSbu spzeros(size(RHSbu,1),size(RHSub,2))]
+    
+    return RHS
+end
 end
