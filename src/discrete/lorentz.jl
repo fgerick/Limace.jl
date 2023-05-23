@@ -463,7 +463,7 @@ function rhs_lorentz_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()
 end
 
 
-function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions = true) where T
     su=s_in 
     tu = t_in
     smf = s_in
@@ -489,14 +489,14 @@ function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
-            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_STs!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, su; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
-            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_TTs!(is,js,aijs,i,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, su; thresh)
             _lorentz_TTs!(is,js,aijs,i,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0, tmf, su; thresh)
         end
@@ -506,14 +506,14 @@ function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
-            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_STt!(is,js,aijs,i+np,j,lmnj,lmnb0,lmni, r, wr, smf, tmfb0, tu; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
-            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
             _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnj,lmnb0,lmni, r, wr, tmf, tmfb0, tu; thresh)
             _lorentz_TTt!(is,js,aijs,i+np,j+npb,lmnb0,lmnj,lmni, r, wr, tmfb0,  tmf, tu; thresh)
         end

@@ -119,3 +119,27 @@ end
 		@test RHS1 ≈ RHS2
 	end
 end
+
+
+@testset "RHS conditions" begin
+	N = 10
+	m = -N:N
+	for lb0 in 1:3, mb0 in -lb0:lb0, nb0 in 1:3
+		lmnb0 = (lb0,mb0, nb0)
+
+		RHS1 = Limace.MHDProblem.rhs_pre(N,m; lmnb0)
+		RHS2 = Limace.MHDProblem.rhs_pre(N,m; conditions = false, lmnb0)
+			
+		@test RHS1 ≈ RHS2
+
+		RHS1 = Limace.MHDProblem.rhs_pre(N,m; lmnb0, B0poloidal=false)
+		RHS2 = Limace.MHDProblem.rhs_pre(N,m; lmnb0, conditions = false, B0poloidal=false)
+			
+		@test RHS1 ≈ RHS2
+
+		RHS1 = Limace.MHDProblem.rhs_cond_pre(N,m; lmnb0, B0poloidal=false)
+		RHS2 = Limace.MHDProblem.rhs_cond_pre(N,m; lmnb0, conditions = false, B0poloidal=false)
+			
+		@test RHS1 ≈ RHS2
+	end
+end
