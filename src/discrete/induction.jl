@@ -356,7 +356,7 @@ function rhs_induction_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
     return sparse(is,js,aijs,nmatb, nmatu)
 end
 
-function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions = true) where T
     su = s_in
     tu = t_in
     lb0,mb0,nb0 = lmnb0
@@ -379,8 +379,8 @@ function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_p)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
-            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            conditions && !ncondition(lb0,ni,nb0+1,nj) && continue
+            conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTS!(is,js,aijs,i,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, s_mf; thresh)
         end
@@ -390,15 +390,15 @@ function rhs_induction_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_p)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
-            !condition1(li,lb0,lj,mi,mb0,mj) && continue
+            conditions && !ncondition(lb0,ni,nb0+1,nj) && continue
+            conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_sTT!(is,js,aijs,i+npb,j,lmnj,lmnb0,lmni, r, wr, su, t_mf, t_mf; thresh)
         end
         for (j, lmnj) in enumerate(lmn_t)
             lj,mj,nj = lmnj
-            !ncondition(lb0,ni,nb0,nj) && continue
-            !condition2(li,lb0,lj,mi,mb0,mj) && continue
+            conditions && !ncondition(lb0,ni,nb0+1,nj) && continue
+            conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _induction_tTT!(is,js,aijs,i+npb,j+np,lmnj,lmnb0,lmni, r, wr, tu, t_mf, t_mf; thresh)
         end

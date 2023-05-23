@@ -357,15 +357,15 @@ function rhs_lorentz_btor_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
         li, mi, ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj, mj, nj = lmnj
-            !ncondition(lb0, ni, nb0, nj) && continue
-            !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            conditions && !ncondition(lb0, ni, nb0+1, nj) && continue
+            conditions && !condition2(li, lb0, lj, mi, mb0, mj) && continue
             aij = _lorentz_STs_pre(lmnj, lmnb0, lmni, r, wr, Smf, Tmfb0, su, dSmf, d2Smf, dTmfb0, d2Tmfb0)
             appendit!(is, js, aijs, i, j, aij; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj, mj, nj = lmnj
-            !ncondition(lb0, ni, nb0, nj) && continue
-            !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            conditions && !ncondition(lb0, ni, nb0+1, nj) && continue
+            conditions && !condition1(li, lb0, lj, mi, mb0, mj) && continue
             aij = _lorentz_TTs_pre(lmnj, lmnb0, lmni, r, wr, Tmf, Tmfb0, su, dTmf, dTmfb0)
             aij += _lorentz_TTs_pre(lmnb0, lmnj, lmni, r, wr, Tmfb0, Tmf, su, dTmfb0, dTmf)
             appendit!(is, js, aijs, i, j + npb, aij; thresh)
@@ -376,15 +376,15 @@ function rhs_lorentz_btor_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
         li, mi, ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj, mj, nj = lmnj
-            !ncondition(lb0, ni, nb0, nj) && continue
-            !condition1(li, lb0, lj, mi, mb0, mj) && continue
+            conditions && !ncondition(lb0, ni, nb0+1, nj) && continue
+            conditions && !condition1(li, lb0, lj, mi, mb0, mj) && continue
             aij = _lorentz_STt_pre(lmnj, lmnb0, lmni, r, wr, Smf, Tmfb0, tu, dSmf, dTmfb0)
             appendit!(is, js, aijs, i + np, j, aij; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj, mj, nj = lmnj
-            !ncondition(lb0, ni, nb0, nj) && continue
-            !condition2(li, lb0, lj, mi, mb0, mj) && continue
+            conditions && !ncondition(lb0, ni, nb0+1, nj) && continue
+            conditions && !condition2(li, lb0, lj, mi, mb0, mj) && continue
             aij = _lorentz_TTt_pre(lmnj, lmnb0, lmni, r, wr, Tmf, Tmfb0, tu)
             aij += _lorentz_TTt_pre(lmnb0, lmnj, lmni, r, wr, Tmfb0, Tmf, tu)
             appendit!(is, js, aijs, i + np, j + npb, aij; thresh)

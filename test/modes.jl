@@ -350,21 +350,15 @@ end
 	d2_lj22 = (js0,rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r[i])
 	d3_lj22 = (js0, rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r),r[i])
 
-    # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)*5/14*sqrt(3/182)
-
-    # lmnb0 = (1,0,1)
-    # lj22(l,m,n,r) = r*(5-3r^2)*sqrt(7/46)/2
 
     LHS = lhs(N, m)
     RHS = rhs_pre(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22, d_smfb0 = d_lj22, d2_smfb0 = d2_lj22, d3_smfb0 = d3_lj22, s_mf_b0 = lj22)
 
-    target = -0.0066 - 1.033im
-    # target = -0.042+0.66im
+    target = -0.0065952461 - 1.0335959942im
     evals, evecs = eigstarget(RHS, LHS, target; nev = 4)
 
-    lj22_n350 = -0.0065952461 - 1.0335959942im
 
-    @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
+    @test any(isapprox.(evals, target, atol = 1e-7))
 
 
 end
@@ -385,7 +379,7 @@ end
 	RHS = rhs_pre(N, m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
 	target = -0.041950864156977755 - 0.6599458208985812im
 	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
-	@test isapprox(target,evals[1], atol = 1e-6)
+	@test isapprox(first(evals), target, atol = 1e-6)
 
 end
 
@@ -408,64 +402,50 @@ end
     
     LHS = lhs(N, m)
     nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-    # LHS[1:nu,1:nu] .= 0
     LHS[1:nu,1:nu] .*=Eη
 
-    # dropzeros!(LHS)
     RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = true, B0fac)
-    # RHS = rhs_pre(N, m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
 
 
-    # target = (-19.3+0.149im)/Lu
-    # target = (-742.7652176+684.132152im)/Lu
-    target = (-287.9448432-115.2081087im) #/Lu
-    # target = -0.042+0.66im
+    target = -287.9448432-115.2081087im
+
     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
 
-    @test isapprox(evals[1], target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
+    @test isapprox(first(evals), target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
 
 
 end
 
-# @testset "Luo, Marti & Jackson 2022 t₁⁰" begin
+@testset "Luo, Marti & Jackson 2022 t₁⁰" begin
 
 
-#     using Limace.MHDProblem: rhs, rhs_pre, lhs
-# 	DP = Limace.DiscretePart
-#     N = 120
-#     m = 3
-#     Eη = 1e-9
-#     Le = 2√(Eη)
-#     Lu = 2 / Le
+    using Limace.MHDProblem: rhs, rhs_pre, lhs
+	DP = Limace.DiscretePart
+    N = 70
+    m = 3
+    Eη = 1e-9
+    Le = 2√(Eη)
+    Lu = 2 / Le
 
-#     lmnb0 = (1, 0, 1)
+    lmnb0 = (1, 0, 1)
 
 
-#     B0fac = -4sqrt(pi/35)
+    B0fac = -4sqrt(pi/35)
     
-#     LHS = lhs(N, m)
-#     nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-#     # LHS[1:nu,1:nu] .= 0
-#     LHS[1:nu,1:nu] .*=Eη
+    LHS = lhs(N, m)
+    nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
+    LHS[1:nu,1:nu] .*=Eη
 
-#     # dropzeros!(LHS)
-#     RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = false, B0fac)
-#     # RHS = rhs_pre(N, m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
+    RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = false, B0fac)
 
 
-#     # target = (-19.3+0.149im)/Lu
-#     target = (-742.7652176+684.132152im)
-#     # target = -742.7652176-684.132152im
-#     # target = -140.3 + 93.6im
-#     # target = -47.7+29.6im
-#     # target = (-287.9448432-115.2081087im) #/Lu
-#     # target = -0.042+0.66im
-#     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+    target = -742.7652176+684.132152im
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
 
-#     @test isapprox(evals[1], target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
+    @test isapprox(first(evals), target, atol = 1e-4) #at N=70 we match the 1e-4 converged digits of N=120 of LMJ2022
 
 
-# end
+end
 
 
 @testset "Distributed vs serial" begin
