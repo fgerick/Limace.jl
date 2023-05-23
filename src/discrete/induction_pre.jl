@@ -435,7 +435,7 @@ function rhs_induction_upol_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            # !ncondition(lu0,ni,nu0,nj) && continue
+            conditions && !ncondition(lu0,ni,nu0+1,nj) && continue
             conditions && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
             aij = _induction_sSS_pre(lmnu0,lmnj,lmni, r, wr, su, Smf, Smf, dsu, dSmf, dSmf, d2su, d2Smf, s_in, s_mf, s_mf)
             appendit!(is,js,aijs,i,j,aij; thresh)
@@ -453,14 +453,14 @@ function rhs_induction_upol_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            # !ncondition(lu0,ni,nu0,nj) && continue
+            conditions && !ncondition(lu0,ni,nu0+1,nj) && continue
             conditions && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
             aij = _induction_sST_pre(lmnu0,lmnj,lmni, r, wr, su, Smf, Tmf, dsu, dSmf, d2su, d2Smf)
             appendit!(is,js,aijs,i+np,j,aij; thresh)
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            # !ncondition(lu0,ni,nu0,nj) && continue
+            conditions && !ncondition(lu0,ni,nu0+1,nj) && continue
             conditions && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
             aij = _induction_sTT_pre(lmnu0,lmnj,lmni, r, wr, su, Tmf, Tmf, dsu, dTmf)
             appendit!(is,js,aijs,i+np,j+np,aij; thresh)
