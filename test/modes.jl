@@ -447,6 +447,40 @@ end
 
 end
 
+@testset "Luo, Marti & Jackson 2022 t₁⁰s₁⁰" begin
+
+
+    using Limace.MHDProblem: rhs, rhs_pre, lhs
+	DP = Limace.DiscretePart
+    N = 70
+    m = 5
+    Eη = 1e-9
+    Le = 2√(Eη)
+    Lu = 2 / Le
+
+    lmnb0 = (1, 0, 1)
+
+
+    B0fact = -1/√2
+    B0facp = -√(15/23)
+    
+    LHS = lhs(N, m)
+    nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
+    LHS[1:nu,1:nu] .*=Eη
+
+    RHSp = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = true, B0fac=B0facp)
+
+    RHSt = rhs_pre(N, m; Ω = 0.0, η = 0.0, lmnb0, B0poloidal = false, B0fac=B0fact)
+    RHS = RHSp+RHSt
+
+
+    target = -2134.0 + 2555.2im
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+
+    @test isapprox(first(evals), target, atol = 1e-1) # only one significant digit available
+
+
+end
 
 @testset "Distributed vs serial" begin
     addprocs(4; exeflags=`--project=$(Base.active_project())`)
