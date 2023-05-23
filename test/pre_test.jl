@@ -124,8 +124,24 @@ end
 @testset "RHS conditions" begin
 	N = 10
 	m = -N:N
+
+	r,wr = rquad(2N+1)
+
+	js_a1 = [jacobis(N,1.0,l+1/2,r) for l in 1:N]
+	js_a0 = [jacobis(N,0.0,l+1/2,r) for l in 1:N]
+
+	rls = [r.^l for l in 1:N]
+	
+
 	for lb0 in 1:3, mb0 in -lb0:lb0, nb0 in 1:3
 		lmnb0 = (lb0,mb0, nb0)
+
+		DP.__wiginit(100)
+		RHS1 = DP.rhs_induction_utor_pre(N,m, lmnb0, r,wr, js_a1,js_a0; conditions=true)
+		RHS2 = DP.rhs_induction_utor_pre(N,m, lmnb0, r,wr, js_a1,js_a0; conditions=false)
+		DP.wig_temp_free()
+		
+		@test RHS1 ≈ RHS2
 
 		RHS1 = Limace.MHDProblem.rhs_pre(N,m; lmnb0)
 		RHS2 = Limace.MHDProblem.rhs_pre(N,m; conditions = false, lmnb0)
