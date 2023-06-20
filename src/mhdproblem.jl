@@ -5,9 +5,9 @@ using SparseArrays
 using Wigxjpf
 using Distributed
 
-VB = Limace.InviscidBasis
-BB = Limace.InsulatingMFBasis
-DP = Limace.DiscretePart 
+const VB = Limace.InviscidBasis
+const BB = Limace.InsulatingMFBasis
+const DP = Limace.DiscretePart 
 
 function lhs(N,m; ns = false, Ω::T = 1.0, η::T = 1.0, external=true) where T
     LHSu = VB.lhs(N,m; ns, Ω)
