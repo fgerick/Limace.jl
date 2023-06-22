@@ -3,7 +3,6 @@ using Limace.DiscretePart: t_mf_pre, d_t_mf_pre, d2_t_mf_pre, d3_t_mf_pre
 using Limace.DiscretePart: s_in_pre, d_s_in_pre, d2_s_in_pre, d3_s_in_pre
 using Limace.DiscretePart: t_in_pre, d_t_in_pre, d2_t_in_pre, d3_t_in_pre
 using Limace.DiscretePart: t_in, s_in, t_mf, s_mf, rquad, jacobis
-const DP = Limace.DiscretePart
 
 Limace.DiscretePart.__wiginit(100)
 

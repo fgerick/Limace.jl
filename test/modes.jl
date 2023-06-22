@@ -1,5 +1,5 @@
-
-DP.__wiginit(100)
+using SparseArrays
+# DP.__wiginit(100)
 
 function eigstarget(A, B, target; kwargs...)
     P = lu(A - target * B)
@@ -25,6 +25,31 @@ end
     @test any(evals .≈ zhang(3, 1))
 end
 
+@testset "Inviscid inertial modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
+    function assembleU0uniHydro(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
+        r,wr = DP.rquad(N+2+5)
+    
+        js_a1 = DP.jacobis_l(N,r,1.0)
+        js_a0 = DP.jacobis_l(N,r,0.0)
+        RHS = Limace.InviscidBasis.rhs_coriolis(N,m; ns, Ω)
+        if Ω2 != 0.0
+            DP.wig_table_init(2N, 9)
+            DP.wig_temp_init(2N)
+            RHSadv = -Ω2*2sqrt(2pi/15)*DP.rhs_advection_utor_pre(N,m, (1,0,0), r,wr, js_a1,js_a0, conditions=true)
+            DP.wig_temp_free()
+            RHS += RHSadv
+        end
+        return RHS
+    end
+    N = 3
+    for m = -3:3
+        λ = eigvals(Matrix(assembleU0uniHydro(N,m)))
+        λu0 = eigvals(Matrix(assembleU0uniHydro(N,m; Ω=0.0, Ω2 = 1.0))) .+ m*im
+
+        @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))] 
+    end
+
+end
 
 @testset "Free decay modes" begin
     #free decay modes damping
@@ -93,7 +118,7 @@ end
 
     LHS = Limace.InsulatingMFBasis.lhs(N, m)
     RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N, m)
-    # DP.__wiginit(2N)
+    DP.__wiginit(2N)
     ind_utor = DP.rhs_induction_utor(
         N,
         m,
@@ -109,7 +134,7 @@ end
     RHS = RHS_diff + RHS_ind
 
     λdyn = eigvals(inv(Matrix(LHS)) * Matrix(RHS))
-    # Limace.DiscretePart.wig_temp_free()
+    DP.wig_temp_free()
 
 
     #solid body rotation should add a constant imaginary part ( = frequency) to all eigenvalues
@@ -131,7 +156,7 @@ end
         m = 0
         LHS = Limace.InsulatingMFBasis.lhs(N, m)
         RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N, m)
-
+        DP.__wiginit(2N)
         ind_upol = Limace.DiscretePart.rhs_induction_upol(
             N,
             m,
@@ -150,6 +175,7 @@ end
             tmf = t_mf,
             condition = true,
         )
+        DP.wig_temp_free()
         return LHS, RHS_diff, ind_upol, ind_utor
     end
 
@@ -215,6 +241,43 @@ end
     for m = vcat(-(N-1):-1, 1:(N-1))
         @test any(evals .≈ slow(m, 1, Le))
         @test any(evals .≈ fast(m, 1, Le))
+    end
+
+end
+
+@testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
+
+    function assembleU0uniMalkus(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
+        r,wr = DP.rquad(N+5+5)
+    
+        js_a1 = DP.jacobis_l(N,r,1.0)
+        js_a0 = DP.jacobis_l(N,r,0.0)
+
+        RHSuu = Limace.InviscidBasis.rhs_coriolis(N,m; ns, Ω)
+
+        DP.wig_table_init(2N, 9)
+        DP.wig_temp_init(2N)
+        B0fac = 2sqrt(2pi/15)
+        RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns, η=0.0)*B0fac
+        RHSbu = DP.rhs_induction_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns, η=0.0)*B0fac
+        RHSbb = spzeros(size(RHSbu,1),size(RHSub,2))
+        if Ω2 != 0.0
+            RHSuu += -Ω2*2sqrt(2pi/15)*DP.rhs_advection_utor_pre(N,m, (1,0,0), r,wr, js_a1,js_a0, conditions=true) 
+            RHSbb += Ω2*2sqrt(2pi/15)*DP.rhs_induction_utor_cond_pre(N,m, (1,0,0), r,wr, js_a1,js_a0; ns, η=0.0) 
+        end
+
+
+        DP.wig_temp_free()
+        RHS = [RHSuu RHSub
+                RHSbu RHSbb]
+        return RHS
+    end
+    N = 3
+    Le = 1e-2
+    for m = -3:3
+        λ = eigvals(Matrix(assembleU0uniMalkus(N,m; Ω=2/Le)))
+        λu0 = eigvals(Matrix(assembleU0uniMalkus(N,m; Ω=0.0, Ω2 = 1/Le))) .+ m*im/Le
+        @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))]
     end
 
 end

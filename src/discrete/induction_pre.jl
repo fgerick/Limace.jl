@@ -536,6 +536,71 @@ function rhs_induction_utor_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T
     return sparse(is,js,aijs,nmatb, nmatb)
 end
 
+function rhs_induction_utor_cond_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions=true) where T
+
+    lu0,mu0,nu0 = lmnu0
+
+    rls = [r .^ l for l in 1:N]
+
+	Base.@propagate_inbounds  Smf(l,m,n,r,i) = s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dSmf(l,m,n,r,i) = d_s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2Smf(l,m,n,r,i) = d2_s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d3Smf(l,m,n,r,i) = d3_s_in_pre(js_a1,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  Tmf(l,m,n,r,i) = t_in_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dTmf(l,m,n,r,i) = d_t_in_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2Tmf(l,m,n,r,i) = d2_t_in_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d3Tmf(l,m,n,r,i) = d3_t_in_pre(js_a0,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  tu(l,m,n,r,i) = t_in_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dtu(l,m,n,r,i) = d_t_in_pre(js_a0,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2tu(l,m,n,r,i) = d2_t_in_pre(js_a0,rls,l,m,n,r,i)
+
+	Base.@propagate_inbounds  su(l,m,n,r,i) = s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  dsu(l,m,n,r,i) = d_s_in_pre(js_a1,rls,l,m,n,r,i)
+	Base.@propagate_inbounds  d2su(l,m,n,r,i) = d2_s_in_pre(js_a1,rls,l,m,n,r,i)
+
+    lmn_bp = Limace.InviscidBasis.lmn_upol(N,m,ns)
+    lmn_bt = Limace.InviscidBasis.lmn_utor(N,m,ns)
+
+    np = length(lmn_bp)
+
+    is,js,aijs = Int[],Int[],Complex{T}[]
+
+
+    for (i,lmni) in enumerate(lmn_bp)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            conditions && !ncondition(lu0,ni,nu0+1,nj) && continue
+            conditions && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
+            aij = _induction_tSS_pre(lmnu0,lmnj,lmni, r, wr, tu, Smf, Smf, dtu, dSmf, dSmf, t_in, s_in, s_in)
+            appendit!(is,js,aijs,i,j,aij; thresh)
+        end
+    end
+
+    for (i,lmni) in enumerate(lmn_bt)
+        li,mi,ni = lmni
+        for (j, lmnj) in enumerate(lmn_bp)
+            lj,mj,nj = lmnj
+            conditions && !ncondition(lu0,ni,nu0+1,nj) && continue
+            conditions && !condition1u(lu0,li,lj,mu0,mi,mj) && continue
+            aij = _induction_tST_pre(lmnu0,lmnj,lmni, r, wr, tu, Smf, Tmf, dtu, dSmf)
+            appendit!(is,js,aijs,i+np,j,aij; thresh)
+        end
+        for (j, lmnj) in enumerate(lmn_bt)
+            lj,mj,nj = lmnj
+            conditions && !ncondition(lu0,ni,nu0+1,nj) && continue
+            conditions && !condition2u(lu0,li,lj,mu0,mi,mj) && continue
+            aij = _induction_tTT_pre(lmnu0,lmnj,lmni, r, wr, tu, Tmf, Tmf)
+            appendit!(is,js,aijs,i+np,j+np,aij; thresh)
+        end
+    end
+    nmatb = length(lmn_bp)+length(lmn_bt)
+
+    return sparse(is,js,aijs,nmatb, nmatb)
+end
+
 function rhs_induction_btor_cond_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     ns=false,
     η::T=1.0,
