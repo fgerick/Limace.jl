@@ -16,6 +16,11 @@ function __wiginit(N)
     wig_temp_init(2N)
 end
 
+function __wiginit_thread(N)
+    wig_table_init(2N, 9)
+    wig_thread_temp_init(2N)
+end
+
 include("poly.jl")
 include("quad.jl")
 include("pt_scalars.jl")
