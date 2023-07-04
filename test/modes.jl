@@ -13,7 +13,12 @@ end
 
 @testset "Inviscid inertial modes" begin
 
-    zhang(m, N) = -2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
+    # zhang(m, N) = -2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
+    function zhang(m, N) 
+        sm = sign(m)
+        m = abs(m)
+        return -sm*2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
+    end
 
     N = 7
     RHS = Limace.InviscidBasis.rhs_coriolis(N, -N:N)
@@ -23,6 +28,13 @@ end
     @test any(evals .≈ zhang(1, 1))
     @test any(evals .≈ zhang(2, 1))
     @test any(evals .≈ zhang(3, 1))
+
+    for m in -(N-1):(N-1)
+        RHS = Limace.InviscidBasis.rhs_coriolis(N, m)
+        evals = eigvals(Matrix(RHS))
+        m == 1 && @test any(evals .≈ 1im)
+        @test any(evals .≈ zhang(m, 1))
+    end
 end
 
 @testset "Inviscid inertial modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
@@ -243,6 +255,20 @@ end
         @test any(evals .≈ fast(m, 1, Le))
     end
 
+    for m = vcat(-(N-1):-1, 1:(N-1))
+        LHS = lhs_cond(N, m)
+        RHS = rhs_cond_pre(
+            N,
+            m;
+            Ω = 2 / Le,
+            lmnb0,
+            B0poloidal = false,
+            B0fac = 2sqrt(2pi/15),
+        )
+        evals = eigvals(inv(Matrix(LHS)) * RHS)    
+        @test any(evals .≈ slow(m, 1, Le))
+        @test any(evals .≈ fast(m, 1, Le))
+    end
 end
 
 @testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
@@ -415,10 +441,10 @@ end
 
 
     LHS = lhs(N, m)
-    RHS = rhs_pre(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22, d_smfb0 = d_lj22, d2_smfb0 = d2_lj22, d3_smfb0 = d3_lj22, s_mf_b0 = lj22)
+    RHS = rhs_pre(N, m; Ω = -2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22, d_smfb0 = d_lj22, d2_smfb0 = d2_lj22, d3_smfb0 = d3_lj22, s_mf_b0 = lj22)
 
     target = -0.0065952461 - 1.0335959942im
-    evals, evecs = eigstarget(RHS, LHS, target; nev = 4)
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
 
 
     @test any(isapprox.(evals, target, atol = 1e-7))
@@ -439,7 +465,7 @@ end
 	B0fac = sqrt(30/23) #1/sqrt(2)
 
 	LHS = lhs(N, m)
-	RHS = rhs_pre(N, m; Ω = 2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
+	RHS = rhs_pre(N, m; Ω = -2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
 	target = -0.041950864156977755 - 0.6599458208985812im
 	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
 	@test isapprox(first(evals), target, atol = 1e-6)
