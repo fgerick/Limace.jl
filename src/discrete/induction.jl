@@ -12,7 +12,7 @@ end
 
 
 #poloidal flow, poloidal B0
-function _induction_sSS(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc)
+function _induction_sSS(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc; external=true)
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
@@ -26,7 +26,10 @@ function _induction_sSS(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc)
 
     aij = ∫dr(f,r,wr)*Aabc
 
-    aij += lc*p(lb)*( p(la)-p(lb)+p(lc))*Sb(lb,mb,nb,1.0)*∂(r->sa(la,ma,na,r),1.0)*Sc(lc,mc,nc,1.0)/2*Aabc
+    # aij += lc*p(lb)*( p(la)-p(lb)+p(lc))*Sb(lb,mb,nb,1.0)*∂(r->sa(la,ma,na,r),1.0)*Sc(lc,mc,nc,1.0)/2*Aabc
+    if external
+        aij += f1(1.0)*Sc(lc,mc,nc,1.0)*p(lc)*lc*Aabc
+    end
     return aij
 end
 
@@ -64,7 +67,8 @@ function _induction_tSS(lmna, lmnb, lmnc, r,wr, ta,Sb,Sc; external=true)
     #if toroidal velocity is not 0 at r=11 
 
     if external
-        aij += lc*p(lb)*ta(la,ma,na,1.0)*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+        # aij += lc*p(lb)*ta(la,ma,na,1.0)*Sb(lb,mb,nb,1.0)*Sc(lc,mc,nc,1.0)*Eabc
+        aij += f1(1.0)*Sc(lc,mc,nc,1.0)*lc*p(lc)*Eabc
     end
 
     return aij

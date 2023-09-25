@@ -48,7 +48,6 @@ function _induction_sSS_pre(lmna, lmnb, lmnc, r,wr, sa,Sb,Sc, dsa, dSb, dSc, d2s
     return aij
 end
 
-
 #poloidal flow, toroidal B0
 function _induction_sTS_pre(lmna, lmnb, lmnc, r,wr, sa,Tb,Sc,dsa, dTb, dSc)
     la,ma,na = lmna

@@ -15,57 +15,57 @@ lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) 
 _coriolis_tt(l,m; Ω = 2) = Ω*im*m/(l*(l+1))
 _coriolis_ss(l,m; Ω = 2) = _coriolis_tt(l,m; Ω)
 
-function _coriolis_ts(is,js,aijs, i,j, l,l2,m,m2,n,n2; Ω = 2) 
-    if (m != m2)
-        return nothing
-    end
-    if (l==l2+1) && (n>=n2-1)
-        if n+1==n2
-            aij = sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
-        else
-            aij = -sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
-        end
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,Ω*aij)
-    elseif (l==l2-1) && (n>=n2)
-        if n==n2
-            aij = (l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
-        else
-            aij = -sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
-        end
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,Ω*aij)
-    end
-    return nothing
-end
+# function _coriolis_ts(is,js,aijs, i,j, l,l2,m,m2,n,n2; Ω = 2) 
+#     if (m != m2)
+#         return nothing
+#     end
+#     if (l==l2+1) && (n>=n2-1)
+#         if n+1==n2
+#             aij = sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
+#         else
+#             aij = -sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
+#         end
+#         push!(is,i)
+#         push!(js,j)
+#         push!(aijs,Ω*aij)
+#     elseif (l==l2-1) && (n>=n2)
+#         if n==n2
+#             aij = (l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
+#         else
+#             aij = -sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
+#         end
+#         push!(is,i)
+#         push!(js,j)
+#         push!(aijs,Ω*aij)
+#     end
+#     return nothing
+# end
 
-function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2) 
-    if (m != m2)
-        return nothing
-    end
-    if (l==l2+1) && (n>=n2-1)
-        if n+1==n2
-            aij = -sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
-        else
-            aij = sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
-        end
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,Ω*aij)
-    elseif (l==l2-1) && (n>=n2)
-        if n==n2
-            aij = -(l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
-        else
-            aij = sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
-        end
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,Ω*aij)
-    end
-    return nothing
-end
+# function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2) 
+#     if (m != m2)
+#         return nothing
+#     end
+#     if (l==l2+1) && (n>=n2-1)
+#         if n+1==n2
+#             aij = -sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
+#         else
+#             aij = sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
+#         end
+#         push!(is,i)
+#         push!(js,j)
+#         push!(aijs,Ω*aij)
+#     elseif (l==l2-1) && (n>=n2)
+#         if n==n2
+#             aij = -(l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
+#         else
+#             aij = sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
+#         end
+#         push!(is,i)
+#         push!(js,j)
+#         push!(aijs,Ω*aij)
+#     end
+#     return nothing
+# end
 
 
 function _viscous_tt(is,js,aijs, i,j, l,m,n,n2; ν = 1.0) 
@@ -89,19 +89,19 @@ function _viscous_tt(is,js,aijs, i,j, l,m,n,n2; ν = 1.0)
 end
 
 
-function _viscous_ss(is,js,aijs, i,j, l,m,n,n2; ν = 1.0) 
+# function _viscous_ss(is,js,aijs, i,j, l,m,n,n2; ν = 1.0) 
     
    
-    if n<n2 
-        aij = -(n - n2)*(1 + n2)*(5 + 2*l + 2*n + 2*n2)*sqrt(((5 + 2*l + 4*n)*(5 + 2*l + 4*n2))/(1 + n2)^2)
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,ν*aij)
-    end
-    # end
+#     if n<n2 
+#         aij = -(n - n2)*(1 + n2)*(5 + 2*l + 2*n + 2*n2)*sqrt(((5 + 2*l + 4*n)*(5 + 2*l + 4*n2))/(1 + n2)^2)
+#         push!(is,i)
+#         push!(js,j)
+#         push!(aijs,ν*aij)
+#     end
+#     # end
         
-    return nothing
-end
+#     return nothing
+# end
 
 function rhs1(indices, lmn_p,lmn_t,Ω::T,ν::T) where T
     is,js,aijs = Int[], Int[], Complex{T}[]

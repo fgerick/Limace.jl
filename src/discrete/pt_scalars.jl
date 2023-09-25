@@ -81,15 +81,18 @@ end
 # end
 
 
-# @inline function t_visc(l,m,n,r) 
-#     fac = 1/2 * sqrt((3+2l+2n)*(5+2l+2n)*(7+2l+4n))/sqrt(l*(l+1)*(n+1)*(n+2))
-#     return (1-r^2)*r^l*jacobi(n,2,l+1/2, 2r^2-1)*fac
-# end
+@inline function t_visc(l,m,n,r) 
+    fac = 1/2 * sqrt((3+2l+2n)*(5+2l+2n)*(7+2l+4n))/sqrt(l*(l+1)*(n+1)*(n+2))
+    return (1-r^2)*r^l*jacobi(n,2,l+1/2, 2r^2-1)*fac
+end
 
-# @inline function s_visc(l,m,n,r) 
-#     fac = sqrt(5+2l+4n)/sqrt(l*(l+1))/(2*(n+1))
-#     return (1-r^2)*r^l*jacobi(n,1,l+1/2, 2r^2-1)*fac
-# end
+@inline function s_visc(l,m,n,r) 
+    fac = 1/sqrt(l*(1 + l)*(5 + 2*l + 4*n)*(5 + 4*l^2*(1 + n^2) + 4*l*(1 + n)*(3 + n + 2*n^2) + n*(3 + 2*n)*(8 + n*(3 + 2*n))))
+    c0 = 2n^2+(2l+3)*n;
+    c1 = -2n^2+(-7-2l)*n-2l-5;
+    c2 = 2l+4n+5;
+    return (1-r^2)*r^l*(c0*jacobi(n+1,0,l+1/2,2r^2-1) + c1*jacobi(n,0,l+1/2,2r^2-1) + c2*jacobi(n-1,0,l+1/2,2r^2-1))*fac
+end
 
 # @inline function drs_visc(l,m,n,r) 
 #     s = s_visc(l,m,n,r)
