@@ -393,7 +393,7 @@ function rhs_induction_btor_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     return sparse(is,js,aijs,nmatb, nmatu)
 end
 
-function rhs_induction_upol_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions = true) where T
+function rhs_induction_upol_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, thresh::T = sqrt(eps()), conditions = true) where T
     # su::Sf = s_in_pre,
     # d_su::dSf = d_s_in_pre, 
     # d2_su::d2Sf = d2_s_in_pre, 
@@ -470,7 +470,7 @@ function rhs_induction_upol_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T
     return sparse(is,js,aijs,nmatb, nmatb)
 end
 
-function rhs_induction_utor_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions=true) where T
+function rhs_induction_utor_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, thresh::T = sqrt(eps()), conditions=true) where T
 
     lu0,mu0,nu0 = lmnu0
 
@@ -535,7 +535,7 @@ function rhs_induction_utor_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T
     return sparse(is,js,aijs,nmatb, nmatb)
 end
 
-function rhs_induction_utor_cond_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions=true) where T
+function rhs_induction_utor_cond_pre(N,m, lmnu0, r,wr, js_a1,js_a0; ns = false, thresh::T = sqrt(eps()), conditions=true) where T
 
     lu0,mu0,nu0 = lmnu0
 
@@ -682,7 +682,7 @@ function rhs_induction_btor_cond_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
 
     return sparse(is,js,aijs,nmatb, nmatu)
 end
-# function rhs_induction_btor_cond_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
+# function rhs_induction_btor_cond_pre(N,m, lmnb0; ns = false, thresh::T = sqrt(eps())) where T
 #     su = s_in
 #     tu = t_in
 #     lb0,mb0,nb0 = lmnb0
@@ -922,7 +922,7 @@ function rhs_induction_btor_dist_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     return sparse(vcat(isd...),vcat(jsd...),vcat(aijsd...),nmatb, nmatu)
 end
 
-# function rhs_induction_bpol_dist_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), smfb0::Sf = s_mf) where {T,Sf}
+# function rhs_induction_bpol_dist_pre(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()), smfb0::Sf = s_mf) where {T,Sf}
 #     su = s_in
 #     tu = t_in
 #     lb0,mb0,nb0 = lmnb0
@@ -989,7 +989,7 @@ end
 #     return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatb, nmatu)
 # end
 
-# function rhs_induction_btor_dist_pre(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions=true) where T
+# function rhs_induction_btor_dist_pre(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()), conditions=true) where T
 #     su = s_in
 #     tu = t_in
 #     lb0,mb0,nb0 = lmnb0

@@ -20,8 +20,7 @@ const _advection_ttt_pre = _lorentz_TTt_pre
 
 function rhs_advection_upol_pre(N, m, lmnu0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     su0::Sf=s_in_pre,
     d_su0::dSf=d_s_in_pre,
     d2_su0::d2Sf=d2_s_in_pre,
@@ -106,15 +105,14 @@ end
 
 function rhs_advection_utor_pre(N, m, lmnu0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     tu0::Tf=t_in_pre,
     d_tu0::dTf=d_t_in_pre,
     d2_tu0::d2Tf=d2_t_in_pre,
     d3_tu0::d3Tf=d3_t_in_pre,
     conditions=true) where {T,Tf,dTf,d2Tf,d3Tf}
 
-    rhs_lorentz_btor_cond_pre(N, m, lmnu0, r, wr, js_a1, js_a0; conditions, ns, η, thresh,
+    rhs_lorentz_btor_cond_pre(N, m, lmnu0, r, wr, js_a1, js_a0; conditions, ns, thresh,
     tmfb0=tu0,
     d_tmfb0=d_tu0,
     d2_tmfb0=d2_tu0,

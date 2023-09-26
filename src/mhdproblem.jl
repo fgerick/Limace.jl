@@ -59,20 +59,20 @@ function rhs(N, m;
     wig_temp_init(2N)
 
     if B0poloidal
-        RHSub = DP.rhs_lorentz_bpol(N,m, lmnb0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_bpol(N,m, lmnb0; ns, η, thresh, external, kwargs...)
+        RHSub = DP.rhs_lorentz_bpol(N,m, lmnb0; ns, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_bpol(N,m, lmnb0; ns, thresh, external, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, external, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_bpol(N,m, (lb0,-mb0,nb0); ns, thresh, external, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
     else
-        RHSub = DP.rhs_lorentz_btor(N,m, lmnb0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_btor(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_btor(N,m, lmnb0; ns, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_btor(N,m, lmnb0; ns, thresh, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_btor(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_btor(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_btor(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_btor(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
@@ -84,15 +84,15 @@ function rhs(N, m;
     if u0fac != 0.0
         lu0, mu0, nu0 = lmnu0
         if u0poloidal
-            RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, η, thresh, su = ufunc, kwargs...)
+            RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, thresh, su = ufunc, kwargs...)
             if mu0 != 0
-                RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, η, thresh, su = ufunc, kwargs...)
+                RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, thresh, su = ufunc, kwargs...)
                 RHSbbt/=2
             end
         else
-            RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, η, thresh, tu = ufunc, kwargs...)
+            RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, thresh, tu = ufunc, kwargs...)
             if mu0 != 0
-                RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, η, thresh, tu = ufunc, kwargs...)
+                RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, thresh, tu = ufunc, kwargs...)
                 RHSbbt/=2
             end
         end
@@ -151,20 +151,20 @@ function rhs_pre(N, m;
     wig_temp_init(2N)
 
     if B0poloidal
-        RHSub = DP.rhs_lorentz_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
     else
-        RHSub = DP.rhs_lorentz_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
@@ -175,15 +175,15 @@ function rhs_pre(N, m;
     # if u0fac != 0.0
     #     lu0, mu0, nu0 = lmnu0
     #     if u0poloidal
-    #         RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, η, thresh, su = ufunc, kwargs...)
+    #         RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, thresh, su = ufunc, kwargs...)
     #         if mu0 != 0
-    #             RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, η, thresh, su = ufunc, kwargs...)
+    #             RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, thresh, su = ufunc, kwargs...)
     #             RHSbbt/=2
     #         end
     #     else
-    #         RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, η, thresh, tu = ufunc, kwargs...)
+    #         RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, thresh, tu = ufunc, kwargs...)
     #         if mu0 != 0
-    #             RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, η, thresh, tu = ufunc, kwargs...)
+    #             RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, thresh, tu = ufunc, kwargs...)
     #             RHSbbt/=2
     #         end
     #     end
@@ -242,20 +242,20 @@ function rhs_pre_dist(N, m;
     end
 
     if B0poloidal
-        @time RHSub = DP.rhs_lorentz_bpol_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-        @time RHSbu = DP.rhs_induction_bpol_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        @time RHSub = DP.rhs_lorentz_bpol_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+        @time RHSbu = DP.rhs_induction_bpol_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
     else
-        RHSub = DP.rhs_lorentz_btor_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_btor_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_btor_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_btor_dist_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
@@ -264,15 +264,15 @@ function rhs_pre_dist(N, m;
     # if u0fac != 0.0
     #     lu0, mu0, nu0 = lmnu0
     #     if u0poloidal
-    #         RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, η, thresh, su = ufunc, kwargs...)
+    #         RHSbbt = DP.rhs_induction_upol(N,m, lmnu0; ns, thresh, su = ufunc, kwargs...)
     #         if mu0 != 0
-    #             RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, η, thresh, su = ufunc, kwargs...)
+    #             RHSbbt += (-1)^mu0*DP.rhs_induction_upol(N,m, (lu0,-mu0,nu0); ns, thresh, su = ufunc, kwargs...)
     #             RHSbbt/=2
     #         end
     #     else
-    #         RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, η, thresh, tu = ufunc, kwargs...)
+    #         RHSbbt = DP.rhs_induction_utor(N,m, lmnu0; ns, thresh, tu = ufunc, kwargs...)
     #         if mu0 != 0
-    #             RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, η, thresh, tu = ufunc, kwargs...)
+    #             RHSbbt += (-1)^mu0*DP.rhs_induction_utor(N,m, (lu0,-mu0,nu0); ns, thresh, tu = ufunc, kwargs...)
     #             RHSbbt/=2
     #         end
     #     end
@@ -315,20 +315,20 @@ function rhs_dist(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0polo
     end
 
     if B0poloidal
-        RHSub = DP.rhs_lorentz_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_bpol_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_bpol_dist(N,m, lmnb0; ns, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_bpol_dist(N,m, lmnb0; ns, thresh, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_bpol_dist(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_bpol_dist(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
     else
-        RHSub = DP.rhs_lorentz_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
-        RHSbu = DP.rhs_induction_btor_dist(N,m, lmnb0; ns, η, thresh, kwargs...)
+        RHSub = DP.rhs_lorentz_btor_dist(N,m, lmnb0; ns, thresh, kwargs...)
+        RHSbu = DP.rhs_induction_btor_dist(N,m, lmnb0; ns, thresh, kwargs...)
         if mb0 != 0
-            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-            RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+            RHSub += (-1)^mb0*DP.rhs_lorentz_btor_dist(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
+            RHSbu += (-1)^mb0*DP.rhs_induction_btor_dist(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
             RHSub/=2
             RHSbu/=2
         end
@@ -372,20 +372,20 @@ function rhs_combined(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0
     for (lmnb0,b0p,α) in zip(lmnb0,B0poloidal,B0fac)
         lb0,mb0,nb0 = lmnb0
         if b0p
-            @time "Lorentz" RHSubt = DP.rhs_lorentz_bpol(N,m, lmnb0; ns, η, thresh, kwargs...)
-            @time "Induction" RHSbut = DP.rhs_induction_bpol(N,m, lmnb0; ns, η, thresh, kwargs...)
+            @time "Lorentz" RHSubt = DP.rhs_lorentz_bpol(N,m, lmnb0; ns, thresh, kwargs...)
+            @time "Induction" RHSbut = DP.rhs_induction_bpol(N,m, lmnb0; ns, thresh, kwargs...)
             if mb0 != 0
-                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_bpol(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_bpol(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
+                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_bpol(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
                 RHSubt/=2
                 RHSbut/=2
             end
         else
-            @time "Lorentz" RHSubt = DP.rhs_lorentz_btor(N,m, lmnb0; ns, η, thresh, kwargs...)
-            @time "Induction" RHSbut = DP.rhs_induction_btor(N,m, lmnb0; ns, η, thresh, kwargs...)
+            @time "Lorentz" RHSubt = DP.rhs_lorentz_btor(N,m, lmnb0; ns, thresh, kwargs...)
+            @time "Induction" RHSbut = DP.rhs_induction_btor(N,m, lmnb0; ns, thresh, kwargs...)
             if mb0 != 0
-                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_btor(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_btor(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+                @time "Lorentz" RHSubt += (-1)^mb0*DP.rhs_lorentz_btor(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
+                @time "Induction" RHSbut += (-1)^mb0*DP.rhs_induction_btor(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
                 RHSubt/=2
                 RHSbut/=2
             end
@@ -441,20 +441,20 @@ function rhs_pre_combined(N, m;
     for (lmnb0,B0poloidal,B0fac) in zip(lmnb0,B0poloidal,B0fac)
         lb0,mb0,nb0 = lmnb0
         if B0poloidal
-            RHSubt = DP.rhs_lorentz_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-            RHSbut = DP.rhs_induction_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSubt = DP.rhs_lorentz_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbut = DP.rhs_induction_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
             if mb0 != 0
-                RHSubt += (-1)^mb0*DP.rhs_lorentz_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-                RHSbut += (-1)^mb0*DP.rhs_induction_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+                RHSubt += (-1)^mb0*DP.rhs_lorentz_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+                RHSbut += (-1)^mb0*DP.rhs_induction_bpol_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
                 RHSubt/=2
                 RHSbut/=2
             end
         else
-            RHSubt = DP.rhs_lorentz_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-            RHSbut = DP.rhs_induction_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+            RHSubt = DP.rhs_lorentz_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbut = DP.rhs_induction_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
             if mb0 != 0
-                RHSubt += (-1)^mb0*DP.rhs_lorentz_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
-                RHSbut += (-1)^mb0*DP.rhs_induction_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, η, thresh, kwargs...)
+                RHSubt += (-1)^mb0*DP.rhs_lorentz_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+                RHSbut += (-1)^mb0*DP.rhs_induction_btor_pre(N,m, (lb0,-mb0,nb0),r,wr, js_a1,js_a0; ns, thresh, kwargs...)
                 RHSubt/=2
                 RHSbut/=2
             end
@@ -474,15 +474,15 @@ function rhs_pre_combined(N, m;
 
     return RHS
 end
-function rhs_lorentz_induction(N,m,b0p,lmnb0; ns, η, thresh, kwargs...)
+function rhs_lorentz_induction(N,m,b0p,lmnb0; ns, thresh, kwargs...)
     lb0,mb0,nb0 = lmnb0
     florentz = b0p ? DP.rhs_lorentz_bpol_dist : DP.rhs_lorentz_btor_dist
     finduction = b0p ? DP.rhs_induction_bpol_dist : DP.rhs_induction_btor_dist
-    @time "Lorentz $lb0, $mb0, $nb0" RHSubt = florentz(N,m, lmnb0; ns, η, thresh, kwargs...)
-    @time "Induction $lb0, $mb0, $nb0" RHSbut = finduction(N,m, lmnb0; ns, η, thresh, kwargs...)
+    @time "Lorentz $lb0, $mb0, $nb0" RHSubt = florentz(N,m, lmnb0; ns, thresh, kwargs...)
+    @time "Induction $lb0, $mb0, $nb0" RHSbut = finduction(N,m, lmnb0; ns, thresh, kwargs...)
     if mb0 != 0
-        @time "Lorentz $lb0, -$mb0, $nb0" RHSubt2 = florentz(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
-        @time "Induction $lb0, -$mb0, $nb0" RHSbut2 = finduction(N,m, (lb0,-mb0,nb0); ns, η, thresh, kwargs...)
+        @time "Lorentz $lb0, -$mb0, $nb0" RHSubt2 = florentz(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
+        @time "Induction $lb0, -$mb0, $nb0" RHSbut2 = finduction(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)
         if mb0<0
             RHSubt = (RHSubt - (-1)^mb0*RHSubt2)*im/sqrt(2)
             RHSbut = (RHSbut - (-1)^mb0*RHSbut2)*im/sqrt(2)
@@ -520,7 +520,7 @@ function rhs_dist_combined(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.
     RHSbu = spzeros(ComplexF64,nb,nu)
     
     for (lmnb0,b0p,α) in zip(lmnb0,B0poloidal,B0fac)
-        RHSubt, RHSbut = rhs_lorentz_induction(N,m,b0p,lmnb0; ns, η, thresh, kwargs...)
+        RHSubt, RHSbut = rhs_lorentz_induction(N,m,b0p,lmnb0; ns, thresh, kwargs...)
         RHSub +=RHSubt*α
         RHSbu +=RHSbut*α
     end
@@ -567,11 +567,11 @@ function rhs_cond(N,m; ns = false, Ω::T = 2.0, B0poloidal = false, B0fac=1.0, l
         # RHSub/=2
         # RHSbu/=2
     else
-        RHSub = DP.rhs_lorentz_btor_cond(N,m, lmnb0; ns, η=Ω, thresh, kwargs...)*B0fac
-        RHSbu = DP.rhs_induction_btor_cond(N,m, lmnb0; ns, η=Ω, thresh, kwargs...)*B0fac
+        RHSub = DP.rhs_lorentz_btor_cond(N,m, lmnb0; ns, thresh, kwargs...)*B0fac
+        RHSbu = DP.rhs_induction_btor_cond(N,m, lmnb0; ns, thresh, kwargs...)*B0fac
         if mb0 != 0
-            RHSub += DP.rhs_lorentz_btor_cond(N,m, (lb0,-mb0,nb0); ns, η=Ω, thresh, kwargs...)*B0fac*(-1)^mb0
-            RHSbu += DP.rhs_induction_btor_cond(N,m, (lb0,-mb0,nb0); ns, η=Ω, thresh, kwargs...)*B0fac*(-1)^mb0
+            RHSub += DP.rhs_lorentz_btor_cond(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)*B0fac*(-1)^mb0
+            RHSbu += DP.rhs_induction_btor_cond(N,m, (lb0,-mb0,nb0); ns, thresh, kwargs...)*B0fac*(-1)^mb0
             RHSub/=2
             RHSbu/=2
         end
@@ -616,11 +616,11 @@ function rhs_cond_pre(N,m; ns = false, Ω::T = 2.0, B0poloidal = false, B0fac=1.
         # RHSub/=2
         # RHSbu/=2
     else
-        RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, lmnb0, r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac
-        RHSbu = DP.rhs_induction_btor_cond_pre(N,m, lmnb0, r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac
+        RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, lmnb0, r, wr, js_a1, js_a0; ns, thresh, kwargs...)*B0fac
+        RHSbu = DP.rhs_induction_btor_cond_pre(N,m, lmnb0, r, wr, js_a1, js_a0; ns, thresh, kwargs...)*B0fac
         if mb0 != 0
-            RHSub += DP.rhs_lorentz_btor_cond_pre(N,m, (lb0,-mb0,nb0), r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac*(-1)^mb0
-            RHSbu += DP.rhs_induction_btor_cond_pre(N,m, (lb0,-mb0,nb0), r, wr, js_a1, js_a0; ns, η=Ω, thresh, kwargs...)*B0fac*(-1)^mb0
+            RHSub += DP.rhs_lorentz_btor_cond_pre(N,m, (lb0,-mb0,nb0), r, wr, js_a1, js_a0; ns, thresh, kwargs...)*B0fac*(-1)^mb0
+            RHSbu += DP.rhs_induction_btor_cond_pre(N,m, (lb0,-mb0,nb0), r, wr, js_a1, js_a0; ns, thresh, kwargs...)*B0fac*(-1)^mb0
             RHSub/=2
             RHSbu/=2
         end

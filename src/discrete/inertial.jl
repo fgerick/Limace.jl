@@ -5,7 +5,7 @@ function _inertial_SS(lmna, lmnb, r,wr, Sa,Sb)
     @inline _Sa = r->Sa(la,ma,na,r)
     @inline _Sb = r->Sb(lb,mb,nb,r)
 
-    @inline f = r-> inners(_Sb,_Sb, lb, r)
+    @inline f = r-> inners(_Sa,_Sb, lb, r)
 
     aij = ∫dr(f,r,wr)
     return aij
@@ -25,11 +25,12 @@ function _inertial_TT(lmna, lmnb, r,wr, Ta,Tb)
 end
 
 
-function lhs_inertial_b(N,m; ns = false, η::T=1.0, thresh = sqrt(eps()), smf = s_mf, tmf = t_mf) where T
-
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
-
+function lhs_inertial_b(N,m; ns = false, η::T=1.0, thresh = sqrt(eps()), 
+                            smf = s_mf, 
+                            tmf = t_mf,
+                            lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns),
+                            lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns),
+                        ) where T
     np = length(lmn_bp)
 
     is,js,aijs = Int[],Int[],Complex{T}[]

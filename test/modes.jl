@@ -284,12 +284,12 @@ end
         DP.wig_table_init(2N, 9)
         DP.wig_temp_init(2N)
         B0fac = 2sqrt(2pi/15)
-        RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns, η=0.0)*B0fac
-        RHSbu = DP.rhs_induction_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns, η=0.0)*B0fac
+        RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns)*B0fac
+        RHSbu = DP.rhs_induction_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns)*B0fac
         RHSbb = spzeros(size(RHSbu,1),size(RHSub,2))
         if Ω2 != 0.0
             RHSuu += -Ω2*2sqrt(2pi/15)*DP.rhs_advection_utor_pre(N,m, (1,0,0), r,wr, js_a1,js_a0, conditions=true) 
-            RHSbb += Ω2*2sqrt(2pi/15)*DP.rhs_induction_utor_cond_pre(N,m, (1,0,0), r,wr, js_a1,js_a0; ns, η=0.0) 
+            RHSbb += Ω2*2sqrt(2pi/15)*DP.rhs_induction_utor_cond_pre(N,m, (1,0,0), r,wr, js_a1,js_a0; ns) 
         end
 
 

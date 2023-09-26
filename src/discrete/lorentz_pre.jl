@@ -198,8 +198,7 @@ end
 
 function rhs_lorentz_bpol_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     smfb0::Sf=s_mf_pre,
     d_smfb0::dSf=d_s_mf_pre,
     d2_smfb0::d2Sf=d2_s_mf_pre,
@@ -303,8 +302,7 @@ end
 
 function rhs_lorentz_bpol_pre_thread(N, m, lmnb0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     smfb0::Sf=s_mf_pre,
     d_smfb0::dSf=d_s_mf_pre,
     d2_smfb0::d2Sf=d2_s_mf_pre,
@@ -413,8 +411,7 @@ end
 
 function rhs_lorentz_btor_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     tmfb0::Tf=t_mf_pre,
     d_tmfb0::dTf=d_t_mf_pre,
     d2_tmfb0::d2Tf=d2_t_mf_pre,
@@ -508,8 +505,7 @@ end
 
 function rhs_lorentz_btor_cond_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     tmfb0::Tf=t_in_pre,
     d_tmfb0::dTf=d_t_in_pre,
     d2_tmfb0::d2Tf=d2_t_in_pre,
@@ -603,8 +599,7 @@ end
 
 function rhs_lorentz_bpol_dist_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     smfb0::Sf=s_mf_pre,
     d_smfb0::dSf=d_s_mf_pre,
     d2_smfb0::d2Sf=d2_s_mf_pre,
@@ -717,8 +712,7 @@ end
 
 function rhs_lorentz_btor_dist_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     ns=false,
-    η::T=1.0,
-    thresh=sqrt(eps()),
+    thresh::T=sqrt(eps()),
     tmfb0::Tf=t_mf_pre,
     d_tmfb0::dTf=d_t_mf_pre,
     d2_tmfb0::d2Tf=d2_t_mf_pre,

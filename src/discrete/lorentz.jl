@@ -170,21 +170,18 @@ end
 
 #matrix assembly
 
-function rhs_lorentz_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf, conditions=true) where {T,Sf}
-    su = s_in 
-    tu = t_in
-    smf = s_mf 
-    tmf = t_mf 
-    
+function rhs_lorentz_bpol(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0::Sf = s_mf, conditions=true, nconditions=true,
+            su = s_in,
+            tu = t_in,
+            smf = s_mf,
+            tmf = t_mf,
+            lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns),
+            lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns),
+            lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns),
+            lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)) where {T,Sf}
+
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
-
     np = length(lmn_p)
-
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
-
     npb = length(lmn_bp)
 
     is,js,aijs = Int[],Int[],Complex{T}[]
@@ -195,7 +192,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            conditions && !ncondition(lb0,ni,nb0+1,nj) && continue
+            conditions && nconditions && !ncondition(lb0,ni,nb0+1,nj) && continue
             conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
@@ -205,7 +202,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && nconditions && !ncondition(lb0,ni,nb0,nj) && continue
             conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
@@ -217,7 +214,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()
         li,mi,ni = lmni
         for (j, lmnj) in enumerate(lmn_bp)
             lj,mj,nj = lmnj
-            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && nconditions && !ncondition(lb0,ni,nb0,nj) && continue
             conditions && !condition2(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
@@ -226,7 +223,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()
         end
         for (j, lmnj) in enumerate(lmn_bt)
             lj,mj,nj = lmnj
-            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && nconditions && !ncondition(lb0,ni,nb0,nj) && continue
             conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
             # _dummy!(is,js,aijs,i,j)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
@@ -239,7 +236,7 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()
     return sparse(is,js,aijs,nmatu, nmatb)
 end
 
-# function rhs_lorentz_bpol2(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf, conditions=true) where {T,Sf}
+# function rhs_lorentz_bpol2(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0::Sf = s_mf, conditions=true) where {T,Sf}
 #     su = s_in 
 #     tu = t_in
 #     smf = s_mf 
@@ -330,7 +327,7 @@ function triangles_odd(li,lb0,Nmax)
     return ls
 end
 
-function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf, conditions=true) where {T,Sf}
+function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0::Sf = s_mf, conditions=true) where {T,Sf}
     su = s_in 
     tu = t_in
     smf = s_mf 
@@ -397,7 +394,7 @@ function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps(
 end
 
 
-function rhs_lorentz_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions = true) where T
+function rhs_lorentz_btor(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()), conditions = true) where T
     su=s_in 
     tu = t_in
     smf = s_mf 
@@ -463,7 +460,7 @@ function rhs_lorentz_btor(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()
 end
 
 
-function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()), conditions = true) where T
+function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()), conditions = true) where T
     su=s_in 
     tu = t_in
     smf = s_in
@@ -525,7 +522,7 @@ function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(
 end
 
 
-function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps()),smfb0::Sf = s_mf) where {T,Sf}
+function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0::Sf = s_mf) where {T,Sf}
     su = s_in 
     tu = t_in
     smf = s_mf 
@@ -599,7 +596,7 @@ function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(
     return sparse(vcat(is...),vcat(js...),vcat(aijs...),nmatu, nmatb)
 end
 
-function rhs_lorentz_btor_dist(N,m, lmnb0; ns = false, η::T=1.0, thresh = sqrt(eps())) where T
+function rhs_lorentz_btor_dist(N,m, lmnb0; ns = false, thresh::T = sqrt(eps())) where T
     su=s_in 
     tu = t_in
     smf = s_mf 
