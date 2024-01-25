@@ -2,6 +2,19 @@ module InsulatingMFBasis
 
 using SparseArrays
 
+# The basis elements are normalized so that ∫₀^∞ B⋅B dV = 1.
+# There is no external contribution for the toroidal components.
+# For the poloidal components with n=1, there is an external contribution (r>1).
+# To normalize the basis elements so that ∫₀¹ B⋅B dV = 1, the following norm function can be used:
+function unitspherenorm(l,n)
+    if n==1
+        return sqrt((6+8l*(l+2))/(6+l*(6l+11)))
+    else
+        return 1.0
+    end
+end
+
+
 #lmns
 
 function lmn_bpol(N, ms = -N:N, ns = false) 

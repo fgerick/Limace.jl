@@ -8,6 +8,7 @@ using ArnoldiMethod
 using Distributed
 const DP=Limace.DiscretePart
 
+include("misc.jl")
 include("pre_test.jl")
 include("modes.jl")
 
