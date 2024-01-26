@@ -26,7 +26,7 @@ end
 	for (lmn_p, lmn_t, B0fac) in Bs
 		norm_B0fac!(B0fac, lmn_p, lmn_t )
 		A = inner_b0norm(lmn_p, lmn_t)
-		@test 4π/3*(B0fac'*A*B0fac) ≈ 1
+		@test (B0fac'*A*B0fac) ≈ 4π/3
 	end
 
 

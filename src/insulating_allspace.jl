@@ -53,7 +53,7 @@ function norm_B0fac!(B0fac, lmn_p, lmn_t)
         B0fac[i] *= unitspherenorm(l,n)
     end
     _n = sqrt(B0fac'*A*B0fac)
-    B0fac./=_n*√(4π/3)
+    B0fac.*=√(4π/3)/_n
     return nothing
 end	
 
