@@ -14,6 +14,49 @@ function unitspherenorm(l,n)
     end
 end
 
+#convenience functions to normalize a B₀ that is assembled from different components to have (4π/3)⁻¹ ∫₀¹ B⋅B dV = 1
+
+#construct Aᵢⱼ = ∫₀¹ Bᵢ ⋅Bⱼ dV 
+function inner_b0norm(lmn_p, lmn_t)
+    T= Float64
+
+    np = length(lmn_p)
+    nt = length(lmn_t)
+    nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        _inner_ss!(is,js,aijs,i,i, T(l),T(n),T(n))
+        aijs[end]/=unitspherenorm(l,n)^2
+        if n>1
+            _inner_ss!(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
+        end
+    end
+
+    for (i,(l,m,n)) in enumerate(lmn_t)
+        _inner_tt!(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
+        if n>1
+            _inner_tt!(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
+        end
+    end
+
+    LHS = sparse(is,js,aijs, nu, nu)
+    return LHS
+
+end
+
+function norm_B0fac!(B0fac, lmn_p, lmn_t)
+    A = inner_b0norm(lmn_p, lmn_t)
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        B0fac[i] *= unitspherenorm(l,n)
+    end
+    _n = sqrt(B0fac'*A*B0fac)
+    B0fac./=_n*√(4π/3)
+    return nothing
+end	
+
 
 #lmns
 
