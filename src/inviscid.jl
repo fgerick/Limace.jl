@@ -6,20 +6,20 @@ using LinearAlgebra
 # lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:(N-l+1)÷2 if abs(m)<=l]
 # lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) if abs(m)<=l]
 
-function lmn_upol(N, ms = -N:N, ns = 0) 
-    if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:(N-1) for n in ns if abs(m)<=l]
+function lmn_upol(N, ms = -N:N, ns = false) 
+    if ns != false
+        [(l,m,n) for l in 1:(N-1) for m in ms for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
+        [(l,m,n) for l in 1:(N-1) for m in ms for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
         # [(l,m,n) for n in 0:N for l in 1:(N-1) for m in ms if (abs(m)<=l) && (n<=((N-l+1)÷2-1))] 
     end
 end
 
-function lmn_utor(N, ms = -N:N, ns = 0) 
-    if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
+function lmn_utor(N, ms = -N:N, ns = false) 
+    if ns != false
+        [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) if abs(m)<=l] 
+        [(l,m,n) for l in 1:N for m in ms for n in 0:((N-l)÷2) if abs(m)<=l] 
         # [(l,m,n) for n in 0:N for l in 1:N for m in ms if (abs(m)<=l) && (n<=((N-l)÷2))] 
     end
 end
@@ -31,8 +31,20 @@ end
 #     vcat(_lmn_utor(1,ms,ns),[setdiff(_lmn_utor(n,ms,ns),_lmn_utor(n-1,ms,ns)) for n in 2:N]...)
 # end
 
+n(N) = (2N^3+9N^2+7N)÷6
+np(N) = ((-1)^N*(3 + (-1)^N*(-3+2N*(-1+N*(3+N)))))÷12
+nt(N) = ((-1)^N*(-3 + (-1)^N*(3 + 2*N*(2 + N)*(4 + N))))÷12
 
+function nlp(N,l)
+    ((-1)^N*(3 - 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(1 - 6*l - 4*l^2 + 6*(2 + l)*N))))÷12
+end
 
+function nlt(N,l)
+    ((-1)^N*(-3 + 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(13 - 4*l^2 + 6*(2 + l)*N))))÷12
+end
+
+lmn2k_p(l,m,n,N) = nlp(N,l-1) + (l+m)*((N-l+1)÷2) + n + 1
+lmn2k_t(l,m,n,N) = nlt(N,l-1) + (l+m)*((N-l)÷2+1) + n + 1
 
 function lmn_upol_l(N, ms = -N:N, ns=0)
     lmn = lmn_upol(N,ms,ns)
@@ -177,7 +189,7 @@ end
 
     return is, js, aijs
 end
-function rhs_coriolis(N,m; ns = 0, Ω::T = 2.0) where T
+function rhs_coriolis(N,m; ns = false, Ω::T = 2.0) where T
     lmn_p = lmn_upol(N,m,ns)
     lmn_t = lmn_utor(N,m,ns)
     lmn_p_l = lmn_upol_l(N,m,ns)
@@ -201,7 +213,7 @@ function rhs_coriolis(N,m; ns = 0, Ω::T = 2.0) where T
 
 end
 
-function rhs_coriolis_old(N,m; ns = 0, Ω::T = 2.0) where T
+function rhs_coriolis_old(N,m; ns = false, Ω::T = 2.0) where T
     lmn_p = lmn_upol(N,m)
     lmn_t = lmn_utor(N,m)
 
@@ -239,9 +251,9 @@ function rhs_coriolis_old(N,m; ns = 0, Ω::T = 2.0) where T
 
 end
 
-function lhs(N,m; ns = 0, Ω::T = 2.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
+function lhs(N,m; ns = false, Ω::T = 2.0) where T
+    lmn_p = lmn_upol(N,m, ns)
+    lmn_t = lmn_utor(N,m, ns)
 
     np = length(lmn_p)
     nt = length(lmn_t)

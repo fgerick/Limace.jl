@@ -2,22 +2,78 @@ module InsulatingMFBasis
 
 using SparseArrays
 
+# The basis elements are normalized so that ∫₀^∞ B⋅B dV = 1.
+# There is no external contribution for the toroidal components.
+# For the poloidal components with n=1, there is an external contribution (r>1).
+# To normalize the basis elements so that ∫₀¹ B⋅B dV = 1, the following norm function can be used:
+function unitspherenorm(l,n)
+    if n==1
+        return sqrt((6+8l*(l+2))/(6+l*(6l+11)))
+    else
+        return 1.0
+    end
+end
+
+#convenience functions to normalize a B₀ that is assembled from different components to have (4π/3)⁻¹ ∫₀¹ B⋅B dV = 1
+
+#construct Aᵢⱼ = ∫₀¹ Bᵢ ⋅Bⱼ dV 
+function inner_b0norm(lmn_p, lmn_t)
+    T= Float64
+
+    np = length(lmn_p)
+    nt = length(lmn_t)
+    nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        _inner_ss!(is,js,aijs,i,i, T(l),T(n),T(n))
+        aijs[end]/=unitspherenorm(l,n)^2
+        if n>1
+            _inner_ss!(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
+        end
+    end
+
+    for (i,(l,m,n)) in enumerate(lmn_t)
+        _inner_tt!(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
+        if n>1
+            _inner_tt!(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
+        end
+    end
+
+    LHS = sparse(is,js,aijs, nu, nu)
+    return LHS
+
+end
+
+function norm_B0fac!(B0fac, lmn_p, lmn_t)
+    A = inner_b0norm(lmn_p, lmn_t)
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        B0fac[i] *= unitspherenorm(l,n)
+    end
+    _n = sqrt(B0fac'*A*B0fac)
+    B0fac.*=√(4π/3)/_n
+    return nothing
+end	
+
+
 #lmns
 
-function lmn_bpol(N, ms = -N:N, ns = 0) 
-    if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
+function lmn_bpol(N, ms = -N:N, ns = false) 
+    if ns != false
+        [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:N for n in 1:(N-l+1)÷2 if abs(m)<=l] 
+        [(l,m,n) for l in 1:N for m in ms for n in 1:(N-l+1)÷2 if abs(m)<=l] 
         # [(l,m,n) for n in 1:N for l in 1:N for m in ms if (abs(m)<=l) && (n<=((N-l+1)÷2))] 
     end
 end
 
-function lmn_btor(N, ms = -N:N, ns = 0) 
-    if (ns != 0)
-        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
+function lmn_btor(N, ms = -N:N, ns = false) 
+    if ns != false
+        [(l,m,n) for l in 1:N  for m in ms for n in ns if abs(m)<=l]
     else
-        [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2)  if abs(m)<=l]  
+        [(l,m,n) for l in 1:N for m in ms for n in 1:((N-l)÷2)  if abs(m)<=l]  
         # [(l,m,n) for n in 1:N for l in 1:N for m in ms  if (abs(m)<=l) && (n<=((N-l)÷2))] 
     end
 end
@@ -28,6 +84,15 @@ end
 # function lmn_btor(N, ms=-N:N, ns=0)
 #     vcat(_lmn_btor(1,ms,ns),[setdiff(_lmn_btor(n,ms,ns),_lmn_btor(n-1,ms,ns)) for n in 2:N]...)
 # end
+n(N) = ((-1)^(2*N)*(-1 + N)*N*(5 + 2*N))÷6
+np(N) = ((-1)^N*(3 + (-1)^N*(-3 + 2*N*(-1 + N*(3 + N)))))÷12
+nt(N) = ((-1)^N*(-3 + (-1)^N*(3 - 8*N + 2*N^3)))÷12
+
+nlp(N,l) = ((-1)^N*(3 - 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(1 - 6*l - 4*l^2 + 6*(2 + l)*N))))÷12
+nlt(N,l) = ((-1)^N*(-3 + 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(-11 - 4*l*(3 + l) + 12*N + 6*l*N))))÷12
+
+lmn2k_p(l,m,n,N) = nlp(N,l-1) + (l+m)*((N-l+1)÷2) + n
+lmn2k_t(l,m,n,N) = nlt(N,l-1) + (l+m)*((N-l)÷2) + n
 
 
 function lmn_bpol_l(N, ms = -N:N, ns=0)
@@ -100,7 +165,7 @@ end
 
 #inner products
 
-@inline function _inner_tt(is,js,aijs, i,j, l,n,n2)
+@inline function _inner_tt!(is,js,aijs, i,j, l,n,n2)
     if n==n2 
         aij = one(l)
         push!(is,i)
@@ -122,7 +187,7 @@ end
     return nothing
 end
 
-@inline function _inner_ss(is,js,aijs, i,j, l,n,n2)
+@inline function _inner_ss!(is,js,aijs, i,j, l,n,n2)
     
    
     if n==n2 
@@ -154,7 +219,7 @@ end
 end
 
 
-function lhs(N,m; ns = 0, Ω::T = 1.0) where T
+function lhs(N,m; ns = false, Ω::T = 1.0) where T
     lmn_p = lmn_bpol(N,m,ns)
     lmn_t = lmn_btor(N,m,ns)
 
@@ -166,16 +231,16 @@ function lhs(N,m; ns = 0, Ω::T = 1.0) where T
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
-        _inner_ss(is,js,aijs,i,i, T(l),T(n),T(n))
+        _inner_ss!(is,js,aijs,i,i, T(l),T(n),T(n))
         if n>1
-            _inner_ss(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
+            _inner_ss!(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
-        _inner_tt(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
+        _inner_tt!(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
         if n>1
-            _inner_tt(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
+            _inner_tt!(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
         end
     end
 
@@ -186,7 +251,7 @@ end
 
 #diffusion
 
-@inline function _diffusion_tt(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
+@inline function _diffusion_tt!(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
     
    
     if n==n2 
@@ -200,12 +265,12 @@ end
 end
 
 
-@inline function _diffusion_ss(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
+@inline function _diffusion_ss!(is,js,aijs, i,j, l,m,n,n2; η = 1.0) 
     
    
     if n==n2 
         # if n==1
-        #     aij = -(((1 + 2*l)^2*(3 + 2*l)*(5 + 2*l))/(6 + l*(11 + 6*l)))
+        #     aij = -(5+7l+2l^2)/2
         # else
             aij = -((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
         # end
@@ -217,7 +282,7 @@ end
     return nothing
 end
 
-function rhs_diffusion(N,m; ns = 0, η::T = 1.0) where T
+function rhs_diffusion(N,m; ns = false, η::T = 1.0) where T
     lmn_p = lmn_bpol(N,m,ns)
     lmn_t = lmn_btor(N,m,ns)
 
@@ -230,12 +295,12 @@ function rhs_diffusion(N,m; ns = 0, η::T = 1.0) where T
 
     for (i,(l,m,n)) in enumerate(lmn_p)
         l,m,n = T.((l,m,n))
-        _diffusion_ss( is,js,aijs,i,i, l,m,n,n; η)
+        _diffusion_ss!( is,js,aijs,i,i, l,m,n,n; η)
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
         l,m,n = T.((l,m,n))
-        _diffusion_tt( is,js,aijs, i+np,i+np, l,m,n,n; η)  
+        _diffusion_tt!( is,js,aijs, i+np,i+np, l,m,n,n; η)  
     end
 
     RHS = sparse(is,js,aijs, nu, nu)

@@ -26,3 +26,12 @@ function ∫dr(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
 	end
 	return out
 end
+
+
+function ∫dr_pre(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
+	out = zero(ComplexF64)
+	@inbounds for i in eachindex(r,wr)
+		out+=f(i)*r[i]^2*wr[i]
+	end
+	return out
+end
