@@ -4,7 +4,6 @@ using Limace.DiscretePart: s_in_pre, d_s_in_pre, d2_s_in_pre, d3_s_in_pre
 using Limace.DiscretePart: t_in_pre, d_t_in_pre, d2_t_in_pre, d3_t_in_pre
 using Limace.DiscretePart: t_in, s_in, t_mf, s_mf, rquad, jacobis
 
-Limace.DiscretePart.__wiginit(100)
 
 @testset "lorentz & induction pre vs AD" begin
 	N = 50
@@ -35,7 +34,7 @@ Limace.DiscretePart.__wiginit(100)
 	Base.@propagate_inbounds dsu(l,m,n,r,i) = d_s_in_pre(js_a1,rls,l,m,n,r,i)
 	Base.@propagate_inbounds d2su(l,m,n,r,i) = d2_s_in_pre(js_a1,rls,l,m,n,r,i)
 
-	for lmna in lmns, lmnc in lmns
+	for lmna in lmns, lmnb in lmns, lmnc in lmns
 		l1 = DP._induction_sSS_pre(lmna, lmnb, lmnc, r,wr, su,Smf,Smf,  dsu, dSmf, dSmf, d2su, d2Smf, s_in, s_mf, s_mf)
 		l2 = DP._induction_sSS(lmna, lmnb, lmnc, r,wr, s_in, s_mf, s_mf)
 		@test l1 ≈ l2 atol=1e-14
@@ -99,13 +98,14 @@ end
 @testset "RHS assembly" begin
 	N = 10
 	m = -N:N
-	for lb0 in 1:3, mb0 in 0:lb0, nb0 in 1:2
+	for lb0 in 1:5, mb0 in 0:lb0, nb0 in 1:5
 		lmnb0 = (lb0,mb0, nb0)
 
 		RHS1 = Limace.MHDProblem.rhs(N,m; lmnb0)
 		RHS2 = Limace.MHDProblem.rhs_pre(N,m; lmnb0)
+		RHS3 = Limace.MHDProblem.rhs_pre(N,m; lmnb0, nr_extra=10)
 			
-		@test RHS1 ≈ RHS2
+		@test RHS1 ≈ RHS2 ≈ RHS3
 
 		RHS1 = Limace.MHDProblem.rhs(N,m; lmnb0, B0poloidal=false)
 		RHS2 = Limace.MHDProblem.rhs_pre(N,m; lmnb0, B0poloidal=false)

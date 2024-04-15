@@ -124,11 +124,12 @@ function rhs_pre(N, m;
     u0poloidal = true,
     u0fac = 0.0,
     ufunc = DP.t_in,
+    nr_extra = 5,
     lmnu0::NTuple{3,Int} = (1,0,1),
     kwargs...) where T
 
     lb0,mb0,nb0 = lmnb0
-    r,wr = DP.rquad(N+lb0+nb0+5)
+    r,wr = DP.rquad(N+lb0+nb0+nr_extra)
 
 	js_a1 = DP.jacobis_l(N,r,1.0)
 	js_a0 = DP.jacobis_l(N,r,0.0)
@@ -474,6 +475,65 @@ function rhs_pre_combined(N, m;
 
     return RHS
 end
+
+function rhs_pre_combined_noextra(N, m; 
+    ns = false, 
+    Ω::T = 2.0, 
+    η::T = 1.0, 
+    B0poloidal::Vector{Bool} = [true], 
+    lmnb0::Vector{NTuple{3,Int}} = [(1,0,1)], 
+    B0fac = [1.0],
+    thresh = 1000eps(),
+    kwargs...) where T
+
+    lb0,mb0,nb0 = [maximum(getindex.(lmnb0,i)) for i=1:3]
+    r,wr = DP.rquad(N+lb0+nb0+5)
+
+	js_a1 = DP.jacobis_l(N,r,1.0)
+	js_a0 = DP.jacobis_l(N,r,0.0)
+
+
+    RHSc = VB.rhs_coriolis(N,m; ns, Ω)
+    RHSbb = BB.rhs_diffusion(N,m; ns, η)
+
+    RHSuu = RHSc
+
+
+    #wigner symbol temporary arrays alloc
+    wig_table_init(2N, 9)
+    wig_temp_init(2N)
+
+    nu = size(RHSuu,1)
+    nb = size(RHSbb,1)
+    
+    RHSub = spzeros(ComplexF64,nu,nb)
+    RHSbu = spzeros(ComplexF64,nb,nu)
+
+    for (lmnb0,B0poloidal,B0fac) in zip(lmnb0,B0poloidal,B0fac)
+        lb0,mb0,nb0 = lmnb0
+        if B0poloidal
+            RHSubt = DP.rhs_lorentz_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbut = DP.rhs_induction_bpol_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+        else
+            RHSubt = DP.rhs_lorentz_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+            RHSbut = DP.rhs_induction_btor_pre(N,m, lmnb0,r,wr, js_a1,js_a0; ns, thresh, kwargs...)
+        end
+        RHSbu += RHSbut*B0fac
+        RHSub += RHSubt*B0fac
+    end
+
+
+
+    #wigner symbol temporary arrays dealloc
+    Limace.DiscretePart.wig_temp_free()
+
+
+    RHS = [RHSuu RHSub
+           RHSbu RHSbb]
+
+    return RHS
+end
+
 function rhs_lorentz_induction(N,m,b0p,lmnb0; ns, thresh, kwargs...)
     lb0,mb0,nb0 = lmnb0
     florentz = b0p ? DP.rhs_lorentz_bpol_dist : DP.rhs_lorentz_btor_dist
