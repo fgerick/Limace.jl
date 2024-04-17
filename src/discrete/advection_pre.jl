@@ -45,8 +45,8 @@ function rhs_advection_upol_pre(N, m, lmnu0, r, wr, js_a1, js_a0;
     Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
     Base.@propagate_inbounds d3su(l, m, n, r, i) = d3_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_p = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = InviscidBasis.lmn_utor(N, m, ns)
 
     np = length(lmn_p)
 

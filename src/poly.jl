@@ -1,3 +1,9 @@
+module Poly
+
+using SpecialFunctions
+using Wigxjpf
+using ForwardDiff
+
 wigner9j(j1,j2,j3,j4,j5,j6,j7,j8,j9) = wig9jj(2j1,2j2,2j3,2j4,2j5,2j6,2j7,2j8,2j9)
 wigner6j(j1,j2,j3,j4,j5,j6) = wig6jj(2j1,2j2,2j3,2j4,2j5,2j6)
 wigner3j(j1,j2,j3,j4,j5,j6) = wig3jj(2j1,2j2,2j3,2j4,2j5,2j6)
@@ -9,13 +15,6 @@ end
 
 @inline Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
 
-# @inline function Δ(la,lb,lc) 
-#     try
-#         return sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1))
-#     catch
-#         return 0.0
-#     end
-# end
 
 @inline function elsasser(la,lb,lc,ma,mb,mc)
     return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*Δ(la,lb,lc)*wigner3j(Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
@@ -110,12 +109,11 @@ function ylm(ℓ::Int, m::Int, θ, φ) #norm -> ∫YₗᵐYᵢʲsin(θ)dθdϕ = 
 end
 
 function dylmdθ(l,m,θ,ϕ)
-    # return m*cot(θ)*ylm(l,m,θ,ϕ) + sqrt(exp(loggamma(1+l-m)+loggamma(2+l+m)-loggamma(l-m)-loggamma(1+l+m)))*exp(-im*ϕ)*ylm(l,m+1,θ,ϕ) 
     return m*cot(θ)*ylm(l,m,θ,ϕ) + sqrt((l-m)*(l+m+1))*exp(-im*ϕ)*ylm(l,m+1,θ,ϕ)  
 end
 
 function dylmdϕ(l,m,θ,ϕ)
-    return im*m*ylm(l,m,θ,ϕ) #∂(ϕ->real(ylm(l,m,θ,ϕ)),ϕ) + im*∂(ϕ->imag(ylm(l,m,θ,ϕ)),ϕ)
+    return im*m*ylm(l,m,θ,ϕ)
 end
 
 
@@ -133,3 +131,5 @@ function toroidal_discretize(t,l,m,n,r,θ,ϕ)
 
     return (ur,uθ,uϕ)
 end
+
+end #module

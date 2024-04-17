@@ -27,8 +27,8 @@ function _diffusion_TT(lmna, lmnb, r,wr, Ta,Tb)
 end
 
 
-function rhs_diffusion(N,m; ns = false, η::T=1.0, thresh = sqrt(eps()), smf = s_mf, tmf = t_mf, lmn_p = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns),
-    lmn_t = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)) where T
+function rhs_diffusion(N,m; ns = false, η::T=1.0, thresh = sqrt(eps()), smf = s_mf, tmf = t_mf, lmn_p = InsulatingMFBasis.lmn_bpol(N,m,ns),
+    lmn_t = InsulatingMFBasis.lmn_btor(N,m,ns)) where T
 
     
 

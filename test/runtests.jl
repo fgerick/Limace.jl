@@ -10,8 +10,8 @@ const DP=Limace.DiscretePart
 
 Limace.DiscretePart.__wiginit(100)
 
-include("misc.jl")
-include("pre_test.jl")
+# include("misc.jl")
+# include("pre_test.jl")
 include("modes.jl")
 
 Limace.DiscretePart.wig_temp_free()

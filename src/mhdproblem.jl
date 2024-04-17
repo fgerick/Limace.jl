@@ -1,14 +1,23 @@
 module MHDProblem
 
-using Limace
 using SparseArrays
 using Wigxjpf
 using Distributed
+using DocStringExtensions
 
-const VB = Limace.InviscidBasis
-const BB = Limace.InsulatingMFBasis
-const DP = Limace.DiscretePart 
+import ..InviscidBasis
+import ..InsulatingMFBasis
+import ..DiscretePart
 
+const VB = InviscidBasis
+const BB = InsulatingMFBasis
+const DP = DiscretePart 
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct left hand side.
+"""
 function lhs(N,m; ns = false, Ω::T = 1.0, η::T = 1.0, external=true) where T
     LHSu = VB.lhs(N,m; ns, Ω)
     if external
@@ -102,7 +111,7 @@ function rhs(N, m;
 
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
 
     RHS = [RHSuu RHSub
@@ -194,7 +203,7 @@ function rhs_pre(N, m;
 
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
 
     RHS = [RHSuu RHSub
@@ -238,8 +247,8 @@ function rhs_pre_dist(N, m;
 
     #wigner symbol temporary arrays alloc
     @everywhere begin
-        Limace.DiscretePart.wig_table_init($(2N), 9)
-        Limace.DiscretePart.wig_temp_init($(2N))
+        DiscretePart.wig_table_init($(2N), 9)
+        DiscretePart.wig_temp_init($(2N))
     end
 
     if B0poloidal
@@ -283,7 +292,7 @@ function rhs_pre_dist(N, m;
 
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
 
     RHS = [RHSuu RHSub
@@ -311,8 +320,8 @@ function rhs_dist(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0polo
 
     #wigner symbol temporary arrays alloc
     @everywhere begin
-        Limace.DiscretePart.wig_table_init($(2N), 9)
-        Limace.DiscretePart.wig_temp_init($(2N))
+        DiscretePart.wig_table_init($(2N), 9)
+        DiscretePart.wig_temp_init($(2N))
     end
 
     if B0poloidal
@@ -336,7 +345,7 @@ function rhs_dist(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0polo
     end
 
     #wigner symbol temporary arrays dealloc
-    @everywhere Limace.DiscretePart.wig_temp_free()
+    @everywhere DiscretePart.wig_temp_free()
 
 
     RHS = [RHSuu RHSub
@@ -396,7 +405,7 @@ function rhs_combined(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.0, B0
     end
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
    
 
@@ -467,7 +476,7 @@ function rhs_pre_combined(N, m;
 
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
 
     RHS = [RHSuu RHSub
@@ -525,7 +534,7 @@ function rhs_pre_combined_noextra(N, m;
 
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
 
     RHS = [RHSuu RHSub
@@ -570,8 +579,8 @@ function rhs_dist_combined(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.
 
     #wigner symbol temporary arrays alloc
     @everywhere begin
-        Limace.DiscretePart.wig_table_init($(2N), 9)
-        Limace.DiscretePart.wig_temp_init($(2N))
+        DiscretePart.wig_table_init($(2N), 9)
+        DiscretePart.wig_temp_init($(2N))
     end
 
     nu = size(RHSuu,1)
@@ -586,7 +595,7 @@ function rhs_dist_combined(N,m; ns = false, Ω::T = 2.0, ν::T = 1.0, η::T = 1.
     end
 
     #wigner symbol temporary arrays dealloc
-    @everywhere Limace.DiscretePart.wig_temp_free()
+    @everywhere DiscretePart.wig_temp_free()
 
 
     RHS = [RHSuu RHSub
@@ -639,7 +648,7 @@ function rhs_cond(N,m; ns = false, Ω::T = 2.0, B0poloidal = false, B0fac=1.0, l
     end
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
     RHS = [RHSuu RHSub
            RHSbu spzeros(size(RHSbu,1),size(RHSub,2))]
@@ -688,11 +697,12 @@ function rhs_cond_pre(N,m; ns = false, Ω::T = 2.0, B0poloidal = false, B0fac=1.
     end
 
     #wigner symbol temporary arrays dealloc
-    Limace.DiscretePart.wig_temp_free()
+    DiscretePart.wig_temp_free()
 
     RHS = [RHSuu RHSub
            RHSbu spzeros(size(RHSbu,1),size(RHSub,2))]
     
     return RHS
 end
+
 end

@@ -1,11 +1,8 @@
 module Limace
 
-using LinearAlgebra
-using SparseArrays
-using SpecialFunctions
-using Distributed
-using DistributedArrays
-using Random
+
+include("utils.jl")
+include("poly.jl")
 
 include("viscous.jl")
 include("inviscid.jl")
@@ -15,5 +12,8 @@ include("insulating_allspace.jl")
 include("discrete/DiscretePart.jl")
 
 include("mhdproblem.jl")
+
+using .Utils, .Poly
+using .InviscidBasis
 
 end

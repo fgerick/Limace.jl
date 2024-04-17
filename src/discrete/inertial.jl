@@ -28,8 +28,8 @@ end
 function lhs_inertial_b(N,m; ns = false, η::T=1.0, thresh = sqrt(eps()), 
                             smf = s_mf, 
                             tmf = t_mf,
-                            lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns),
-                            lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns),
+                            lmn_bp = InsulatingMFBasis.lmn_bpol(N,m,ns),
+                            lmn_bt = InsulatingMFBasis.lmn_btor(N,m,ns),
                         ) where T
     np = length(lmn_bp)
 

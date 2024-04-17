@@ -2,16 +2,55 @@ module InviscidBasis
 
 using SparseArrays
 using LinearAlgebra
+using DocStringExtensions
 
-# lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:(N-l+1)÷2 if abs(m)<=l]
-# lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) if abs(m)<=l]
+using ..Utils
+using ..Poly
+
+export Inviscid, lmn_t, lmn_p, s, t
+
+struct Inviscid; end
+
+Inviscid(N; kwargs...) = Basis{Inviscid}(;N, BC=InviscidBC(), kwargs...)
+
+function t(::Basis{Inviscid}, l,m,n,r) 
+    fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
+    return r^l*jacobi(n,0,l+1/2, 2r^2-1)*fac
+end
+
+function s(::Basis{Inviscid}, l,m,n,r) 
+    fac = sqrt(5+2l+4n)/sqrt(4l*(l+1)*(n+1)^2)
+    return (1-r^2)*r^l*jacobi(n,1,l+1/2, 2r^2-1)*fac
+end
+
+function lmn_p(b::Basis{Inviscid})
+    N,ms,ns = b.N, b.m, b.n
+    if ns != 0:0
+        return [(l,m,n) for l in 1:(N-1) for m in ms for n in ns if abs(m)<=l]
+    else
+        return [(l,m,n) for l in 1:(N-1) for m in ms for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
+    end
+end
+
+function lmn_t(b::Basis{Inviscid})
+    N,ms,ns = b.N, b.m, b.n
+    if ns != 0:0
+        return [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
+    else
+        return [(l,m,n) for l in 1:N for m in ms for n in 0:((N-l)÷2) if abs(m)<=l] 
+    end
+end
+
+lpmax(b::Basis{Inviscid}) = b.N-1
+ltmax(b::Basis{Inviscid}) = b.N
+
+
 
 function lmn_upol(N, ms = -N:N, ns = false) 
     if ns != false
         [(l,m,n) for l in 1:(N-1) for m in ms for n in ns if abs(m)<=l]
     else
         [(l,m,n) for l in 1:(N-1) for m in ms for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
-        # [(l,m,n) for n in 0:N for l in 1:(N-1) for m in ms if (abs(m)<=l) && (n<=((N-l+1)÷2-1))] 
     end
 end
 
@@ -20,16 +59,8 @@ function lmn_utor(N, ms = -N:N, ns = false)
         [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
     else
         [(l,m,n) for l in 1:N for m in ms for n in 0:((N-l)÷2) if abs(m)<=l] 
-        # [(l,m,n) for n in 0:N for l in 1:N for m in ms if (abs(m)<=l) && (n<=((N-l)÷2))] 
     end
 end
-
-# function lmn_upol(N, ms=-N:N, ns=0)
-#     vcat(_lmn_upol(1,ms,ns),[setdiff(_lmn_upol(n,ms,ns),_lmn_upol(n-1,ms,ns)) for n in 2:N]...)
-# end
-# function lmn_utor(N, ms=-N:N, ns=0)
-#     vcat(_lmn_utor(1,ms,ns),[setdiff(_lmn_utor(n,ms,ns),_lmn_utor(n-1,ms,ns)) for n in 2:N]...)
-# end
 
 n(N) = (2N^3+9N^2+7N)÷6
 np(N) = ((-1)^N*(3 + (-1)^N*(-3+2N*(-1+N*(3+N)))))÷12
@@ -79,76 +110,40 @@ end
 _coriolis_tt(l,m; Ω = 2) = Ω*im*m/(l*(l+1))
 _coriolis_ss(l,m; Ω = 2) = _coriolis_tt(l,m; Ω)
 
-function _coriolis_tt(is,js,aijs, i,j, l,m; Ω = 2.0)
-    aij =  _coriolis_tt(l,m; Ω)
-    push!(is,i)
-    push!(js,j)
-    push!(aijs,aij)
-end
-
-function _coriolis_ss(is,js,aijs, i,j, l,m; Ω = 2.0)
-    aij = _coriolis_ss(l,m; Ω)
-    push!(is,i)
-    push!(js,j)
-    push!(aijs,aij)
-end
-
-
-function _coriolis_ts(is,js,aijs, i,j, l,l2,m,m2,n,n2; Ω = 2.0) 
+function _coriolis_ts(l,l2,m,m2,n,n2; Ω = 2.0) 
     if (m != m2)
         return nothing
     end
     if (l==l2+1) && (n==n2)
         
-        aij = -Ω*sqrt((l^2-1)/(4l^2-1))*sqrt((l-m)*(l+m))/l
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,aij)
+        return -Ω*sqrt((l^2-1)/(4l^2-1))*sqrt((l-m)*(l+m))/l
     elseif (l==l2-1) && (n==n2+1)
-        aij = -Ω*sqrt(l*(l-m+1)*(l+m+1)/((2+l)*(2l+1)*(2l+3)))*(l+2)/(l+1)
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,aij)
+        return -Ω*sqrt(l*(l-m+1)*(l+m+1)/((2+l)*(2l+1)*(2l+3)))*(l+2)/(l+1)
     end
     return nothing
 end
 
-function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2.0) 
-    if (m != m2)
-        return nothing
+function _coriolis_st(l,l2,m,m2,n,n2; Ω = 2.0)
+    aij = _coriolis_ts(l2,l,m2,m,n2,n; Ω)
+    if !isnothing(aij)
+        aij = -aij
     end
-    if (l==l2+1) && (n==n2)
-        
-        aij = Ω*sqrt((l^2-1)/(4l^2-1))*sqrt((l-m)*(l+m))/l
-        push!(is,i)
-        push!(js,j)
-        push!(aijs, aij)
-    elseif (l==l2-1) && (n==n2+1)
-        aij = Ω*sqrt(l*(l-m+1)*(l+m+1)/((2+l)*(2l+1)*(2l+3)))*(l+2)/(l+1)
-        push!(is,i)
-        push!(js,j)
-        push!(aijs,aij)
-    end
-    return nothing
+    return aij
 end
 
-
-@inline function _rhs_coriolis_1(N, np, lmn_p_l, lmn_t_l; Ω::T = 2.0 ) where T
+@inline function _rhs_coriolis_1(N, np, lmn_p_l, lmn_t_l; Ω::T = 2.0, thresh=sqrt(eps())) where T
 
     is,js,aijs = Int[], Int[], Complex{T}[]
 
     for ilmn in lmn_p_l
         for (i,l,m,n) in ilmn
-            _coriolis_ss(is,js,aijs, i,i, T(l),T(m); Ω)
-            # for (j,l2,m2,n2) in lmn_p_l[l]
-            #     if (m==m2) && (n==n2)
-            #     end
-            # end
+            aij = _coriolis_ss(T(l),T(m); Ω)
+            appendit!(is,js,aijs,i,i,aij; thresh)
             lrange = (l== 1) ? [2] : ((l==(N)) ? [l-1] : [l-1,l+1])
             for lmn2 in view(lmn_t_l,lrange)
-                # l2,m2,n2 = T.(lmn_p[j])
                 for (j,l2,m2,n2) in lmn2
-                    _coriolis_st(is,js,aijs, i,j+np, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
+                    aij = _coriolis_st(T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
+                    appendit!(is,js,aijs, i,j+np, aij)
                 end
             end
         end
@@ -158,30 +153,18 @@ end
 end
 @inline function _rhs_coriolis_2(N, np, lmn_p_l, lmn_t_l; Ω::T = 2.0 ) where T
 
-    # np = length(lmn_p)
-    # nt = length(lmn_t)
-    # nu = np+nt
-
     is,js,aijs = Int[], Int[], Complex{T}[]
-
 
     for ilmn in lmn_t_l
         for (i,l,m,n) in ilmn
-        #     # l,m,n = T.((l,m,n))
-            # for (j,l2,m2,n2) in lmn_t_l[l]
-        #         if (m==m2) && (n==n2)
-        #         # l2,m2,n2 = T.(lmn_t[j])
-        #         _coriolis_tt(is,js,aijs, i+np,j+np, T(l),T(m); Ω)
-        #         end
-            _coriolis_tt(is,js,aijs, i+np,i+np, T(l),T(m); Ω)
-            # end
+            aij = _coriolis_tt(T(l),T(m); Ω)
+            appendit!(is,js,aijs, i+np,i+np, aij)
 
-            # lrange = l == 1 ? [1,2] : (l-1:l+1)
             lrange = (l== 1) ? [2] : ((l>=N-1) ? [l-1] : [l-1,l+1])
             for lmn2 in view(lmn_p_l,lrange)
-                # l2,m2,n2 = T.(lmn_p[j])
                 for (j,l2,m2,n2) in lmn2
-                    _coriolis_ts(is,js,aijs, i+np,j, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
+                   aij =  _coriolis_ts(T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
+                   appendit!(is,js,aijs, i+np,j, aij)
                 end
             end
         end
@@ -189,6 +172,7 @@ end
 
     return is, js, aijs
 end
+
 function rhs_coriolis(N,m; ns = false, Ω::T = 2.0) where T
     lmn_p = lmn_upol(N,m,ns)
     lmn_t = lmn_utor(N,m,ns)
@@ -199,8 +183,6 @@ function rhs_coriolis(N,m; ns = false, Ω::T = 2.0) where T
     nt = length(lmn_t)
     nu = np+nt
 
-    # is, js, aijs = rhs_coriolis_1(eachindex(lmn_p), lmn_p, lmn_t; Ω )
-    # is2, js2, aijs2 = rhs_coriolis_2(eachindex(lmn_t), lmn_p, lmn_t; Ω )
     is, js, aijs = _rhs_coriolis_1(N, np, lmn_p_l, lmn_t_l; Ω )
     is2, js2, aijs2 = _rhs_coriolis_2(N, np, lmn_p_l, lmn_t_l; Ω )
 
@@ -209,44 +191,6 @@ function rhs_coriolis(N,m; ns = false, Ω::T = 2.0) where T
     append!(aijs,aijs2)
 
     RHS = sparse(is,js,aijs, nu, nu)
-    return RHS
-
-end
-
-function rhs_coriolis_old(N,m; ns = false, Ω::T = 2.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
-
-    np = length(lmn_p)
-    nt = length(lmn_t)
-    nu = np+nt
-
-    is,js,aijs = Int[], Int[], Complex{T}[]
-
-
-    for (i,(l,m,n)) in enumerate(lmn_p)
-        # l,m,n = Float64.((l,m,n))
-        push!(is,i)
-        push!(js,i)
-        push!(aijs,_coriolis_ss(T(l),T(m); Ω))
-        for (j,(l2,m2,n2)) in enumerate(lmn_t)
-            # l2,m2,n2 = T.((l2,m2,n2))
-            _coriolis_st(is,js,aijs, i,j+np, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
-        end
-    end
-
-    for (i,(l,m,n)) in enumerate(lmn_t)
-        # l,m,n = Float64.((l,m,n))
-        push!(is,i+np)
-        push!(js,i+np)
-        push!(aijs,_coriolis_tt(T(l),T(m); Ω))
-        for (j,(l2,m2,n2)) in enumerate(lmn_p)
-            # l2,m2,n2 = T.((l2,m2,n2))
-            _coriolis_ts(is,js,aijs, i+np,j, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
-        end
-    end
-
-    RHS = sparse(is,js,aijs,nu,nu)
     return RHS
 
 end

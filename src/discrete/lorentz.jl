@@ -175,10 +175,10 @@ function rhs_lorentz_bpol(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0:
             tu = t_in,
             smf = s_mf,
             tmf = t_mf,
-            lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns),
-            lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns),
-            lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns),
-            lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)) where {T,Sf}
+            lmn_p = InviscidBasis.lmn_upol(N,m,ns),
+            lmn_t = InviscidBasis.lmn_utor(N,m,ns),
+            lmn_bp = InsulatingMFBasis.lmn_bpol(N,m,ns),
+            lmn_bt = InsulatingMFBasis.lmn_btor(N,m,ns)) where {T,Sf}
 
     lb0,mb0,nb0 = lmnb0
     np = length(lmn_p)
@@ -243,13 +243,13 @@ end
 #     tmf = t_mf 
     
 #     lb0,mb0,nb0 = lmnb0
-#     lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-#     lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+#     lmn_p = InviscidBasis.lmn_upol(N,m,ns)
+#     lmn_t = InviscidBasis.lmn_utor(N,m,ns)
 
 #     np = length(lmn_p)
 
-#     lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-#     lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+#     lmn_bp = InsulatingMFBasis.lmn_bpol(N,m,ns)
+#     lmn_bt = InsulatingMFBasis.lmn_btor(N,m,ns)
 
 #     npb = length(lmn_bp)
 
@@ -334,13 +334,13 @@ function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0
     tmf = t_mf 
     
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    lmn_p = InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = InviscidBasis.lmn_utor(N,m,ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N,m,ns)
 
     npb = length(lmn_bp)
 
@@ -352,7 +352,7 @@ function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0
         li,mi,ni = lmni
         for lj in triangles(li,lb0,N-1), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj+1)÷2) #nc <= na+nb+lb
 
-            j = Limace.InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
+            j = InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
             lmnj = (lj,mj,nj)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             # _dummy!(is,js,aijs,i,j)
@@ -362,7 +362,7 @@ function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0
             # end
         end
         for lj in triangles_odd(li,lb0,N), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj)÷2)
-            j = Limace.InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
+            j = InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
             # conditions && !ncondition(lb0,ni,nb0,nj) && continue
             # _dummy!(is,js,aijs,i,j+npb)
             lmnj = (lj,mj,nj)
@@ -374,14 +374,14 @@ function rhs_lorentz_bpol3(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),smfb0
     @inbounds for (i,lmni) in enumerate(lmn_t)
         li,mi,ni = lmni
         for lj in triangles_odd(li,lb0,N-1), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj+1)÷2)
-            j = Limace.InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
+            j = InsulatingMFBasis.lmn2k_p(lj,mj,nj,N)
             lmnj = (lj,mj,nj)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)] 
             _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,smf,tu; thresh)
             _lorentz_SSt!(is,js,aijs,i+np,j,T.(lmnj),T.(lmnb0),T.(lmni), r, wr, smf,smfb0,tu; thresh)
         end
         for lj in triangles(li,lb0,N), mj in mnumber(mi,mb0,lj), nj in max(1,ni-nb0-lb0+1):min(ni+nb0+lb0+1,(N-lj)÷2)
-            j = Limace.InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
+            j = InsulatingMFBasis.lmn2k_t(lj,mj,nj,N)
             lmnj = (lj,mj,nj)
             r,wr = rwrs[min(N,li÷2+ni+lj÷2+nj+1)]
             _lorentz_STt!(is,js,aijs,i+np,j+npb,T.(lmnb0),T.(lmnj),T.(lmni), r, wr, smfb0,tmf,tu; thresh)
@@ -402,13 +402,13 @@ function rhs_lorentz_btor(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()), condi
     tmfb0 = t_mf
     
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    lmn_p = InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = InviscidBasis.lmn_utor(N,m,ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N,m,ns)
 
     npb = length(lmn_bp)
 
@@ -468,13 +468,13 @@ function rhs_lorentz_btor_cond(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()), 
     tmfb0 = t_in
     
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    lmn_p = InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = InviscidBasis.lmn_utor(N,m,ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InviscidBasis.lmn_upol(N,m,ns)
-    lmn_bt = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    lmn_bp = InviscidBasis.lmn_upol(N,m,ns)
+    lmn_bt = InviscidBasis.lmn_utor(N,m,ns)
 
     npb = length(lmn_bp)
 
@@ -529,13 +529,13 @@ function rhs_lorentz_bpol_dist(N,m, lmnb0; ns = false, thresh::T = sqrt(eps()),s
     tmf = t_mf 
     
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    lmn_p = InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = InviscidBasis.lmn_utor(N,m,ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N,m,ns)
 
     npb = length(lmn_bp)
 
@@ -604,13 +604,13 @@ function rhs_lorentz_btor_dist(N,m, lmnb0; ns = false, thresh::T = sqrt(eps())) 
     tmfb0 = t_mf
     
     lb0,mb0,nb0 = lmnb0
-    lmn_p = Limace.InviscidBasis.lmn_upol(N,m,ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N,m,ns)
+    lmn_p = InviscidBasis.lmn_upol(N,m,ns)
+    lmn_t = InviscidBasis.lmn_utor(N,m,ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N,m,ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N,m,ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N,m,ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N,m,ns)
 
     npb = length(lmn_bp)
     nt = nprocs()

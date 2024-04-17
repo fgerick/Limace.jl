@@ -186,13 +186,6 @@ end
 #     end
 # end
 
-function appendit!(is, js, aijs, i, j, aij; thresh=sqrt(eps()))
-    if abs(aij) > thresh
-        push!(is, i)
-        push!(js, j)
-        push!(aijs, aij)
-    end
-end
 
 #matrix assembly
 
@@ -235,13 +228,13 @@ function rhs_lorentz_bpol_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
     Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_p = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = InviscidBasis.lmn_utor(N, m, ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N, m, ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N, m, ns)
 
     npb = length(lmn_bp)
 
@@ -339,13 +332,13 @@ function rhs_lorentz_bpol_pre_thread(N, m, lmnb0, r, wr, js_a1, js_a0;
     Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
     Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_p = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = InviscidBasis.lmn_utor(N, m, ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N, m, ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N, m, ns)
 
     npb = length(lmn_bp)
 
@@ -447,13 +440,13 @@ function rhs_lorentz_btor_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
     Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_p = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = InviscidBasis.lmn_utor(N, m, ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N, m, ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N, m, ns)
 
     npb = length(lmn_bp)
 
@@ -541,13 +534,13 @@ function rhs_lorentz_btor_cond_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
     Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_p = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = InviscidBasis.lmn_utor(N, m, ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_bt = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_bp = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_bt = InviscidBasis.lmn_utor(N, m, ns)
 
     npb = length(lmn_bp)
 
@@ -636,13 +629,13 @@ function rhs_lorentz_bpol_dist_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
     Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_p = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = InviscidBasis.lmn_utor(N, m, ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N, m, ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N, m, ns)
 
     npb = length(lmn_bp)
 
@@ -748,13 +741,13 @@ function rhs_lorentz_btor_dist_pre(N, m, lmnb0, r, wr, js_a1, js_a0;
     Base.@propagate_inbounds dsu(l, m, n, r, i) = d_s_in_pre(js_a1, rls, l, m, n, r, i)
     Base.@propagate_inbounds d2su(l, m, n, r, i) = d2_s_in_pre(js_a1, rls, l, m, n, r, i)
 
-    lmn_p = Limace.InviscidBasis.lmn_upol(N, m, ns)
-    lmn_t = Limace.InviscidBasis.lmn_utor(N, m, ns)
+    lmn_p = InviscidBasis.lmn_upol(N, m, ns)
+    lmn_t = InviscidBasis.lmn_utor(N, m, ns)
 
     np = length(lmn_p)
 
-    lmn_bp = Limace.InsulatingMFBasis.lmn_bpol(N, m, ns)
-    lmn_bt = Limace.InsulatingMFBasis.lmn_btor(N, m, ns)
+    lmn_bp = InsulatingMFBasis.lmn_bpol(N, m, ns)
+    lmn_bt = InsulatingMFBasis.lmn_btor(N, m, ns)
 
     npb = length(lmn_bp)
 

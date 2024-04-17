@@ -2,10 +2,6 @@ module ChenBasis
 
 using SparseArrays
 
-# lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] 
-
-# lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2+1) if abs(m)<=l] 
-
 function lmn_upol(N, ms = 0:N, ns = 0) 
     if (ns != 0)
         [(l,m,n) for m in ms for l in 1:(N-1) for n in ns if abs(m)<=l]
@@ -21,10 +17,6 @@ function lmn_utor(N, ms = 0:N, ns = 0)
         [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2+1) if abs(m)<=l] 
     end
 end
-
-# lmn_upol_l(N, ms = 0:N) = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)]
-
-# lmn_utor_l(N, ms = 0:N) = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
 
 function lmn_upol_l(N, ms = 0:N, ns=0)
     # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
@@ -46,7 +38,6 @@ function lmn_upol_l(N, ms = 0:N, ns=0)
 end
 
 function lmn_utor_l(N, ms = 0:N, ns=0)
-    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l] for l in 1:N]
     if (ns != 0)
         lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:N] 
     else
