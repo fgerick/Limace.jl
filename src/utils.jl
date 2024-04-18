@@ -1,7 +1,7 @@
 module Utils
 
 export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
-export Basis, isaxisymmetric, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, appendit!, nrange_p, nrange_t
+export Basis, isaxisymmetric, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, appendit!, nrange_p, nrange_t, np, nt, t, s
 
 abstract type BoundaryCondition; end
 
@@ -28,13 +28,21 @@ isaxisymmetric(b::Basis) = length(b.m) == 1
 
 
 function length(b::Basis)
-	lmn_p = lmn_p(b)
-    lmn_t = lmn_t(b)
+	lmn_ps = lmn_p(b)
+    lmn_ts = lmn_t(b)
 
-    np = length(lmn_p)
-    nt = length(lmn_t)
+    np = length(lmn_ps)
+    nt = length(lmn_ts)
     nu = np+nt
 	return nu
+end
+
+function np(b::Basis)
+	return length(lmn_p(b))
+end
+
+function nt(b::Basis)
+	return length(lmn_t(b))
 end
 
 function nrange_p(b::Basis, l)
@@ -91,6 +99,14 @@ end
 
 lmn2k_p_dict(b::Basis) = lmn2k_dict(lmn_p(b))
 lmn2k_t_dict(b::Basis) = lmn2k_dict(lmn_t(b))
+
+function t(::Type{Basis}, l, m, n, r)
+end
+
+function s(::Type{Basis}, l, m, n, r)
+end
+
+
 
 function appendit!(is, js, aijs, i, j, aij; thresh=sqrt(eps()))
     if !isnothing(aij) && (abs(aij) > thresh)

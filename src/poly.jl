@@ -4,7 +4,7 @@ using SpecialFunctions
 using Wigxjpf
 using ForwardDiff
 
-export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis
+export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂
 
 wigner9j(j1,j2,j3,j4,j5,j6,j7,j8,j9) = wig9jj(2j1,2j2,2j3,2j4,2j5,2j6,2j7,2j8,2j9)
 wigner6j(j1,j2,j3,j4,j5,j6) = wig6jj(2j1,2j2,2j3,2j4,2j5,2j6)

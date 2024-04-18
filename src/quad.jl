@@ -1,5 +1,7 @@
 module Quadrature
 
+using FastGaussQuadrature
+
 export rquad, ∫dr, ∫dr_pre
 
 # ∫₀¹ f(r) r² dr

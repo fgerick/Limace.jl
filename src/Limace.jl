@@ -21,6 +21,8 @@ include("coriolis.jl")
 include("inviscid.jl")
 using .InviscidBasis
 
+include("inviscid2.jl")
+using .InviscidBasis2
 
 include("viscous.jl")
 include("viscous_chen.jl")
