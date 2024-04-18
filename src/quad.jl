@@ -1,3 +1,7 @@
+module Quadrature
+
+export rquad, ∫dr, ∫dr_pre
+
 # ∫₀¹ f(r) r² dr
 function rquad(nr) 
 	# _r, _wr = gaussjacobi(nr,0.0,2.0) 
@@ -35,3 +39,5 @@ function ∫dr_pre(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
 	end
 	return out
 end
+
+end #module

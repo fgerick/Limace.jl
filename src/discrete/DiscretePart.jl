@@ -27,7 +27,7 @@ function __wiginit_thread(N)
     wig_thread_temp_init(2N)
 end
 
-include("quad.jl")
+# include("quad.jl")
 include("pt_scalars.jl")
 include("pt_scalars_pre.jl")
 
@@ -37,8 +37,8 @@ include("lorentz_pre.jl")
 include("advection_pre.jl")
 include("induction_pre.jl")
 include("diffusion.jl")
-include("inertial.jl")
-include("coriolis.jl")
+# include("inertial.jl")
+# include("coriolis.jl")
 
 
 end

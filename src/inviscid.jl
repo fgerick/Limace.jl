@@ -7,7 +7,10 @@ using DocStringExtensions
 using ..Utils
 using ..Poly
 
-export Inviscid, lmn_t, lmn_p, s, t
+import ..Utils: lpmax, ltmax, lmn_t, lmn_p, nrange_p, nrange_t
+import ..Limace: _coriolis_poloidal, _coriolis_toroidal, _coriolis_poloidal_new
+
+export Inviscid
 
 struct Inviscid; end
 
@@ -23,12 +26,16 @@ function s(::Basis{Inviscid}, l,m,n,r)
     return (1-r^2)*r^l*jacobi(n,1,l+1/2, 2r^2-1)*fac
 end
 
+nrange_p(b::Basis{Inviscid},l) = 0:((b.N-l+1)÷2-1)
+nrange_t(b::Basis{Inviscid},l) = 0:((b.N-l)÷2)
+
+
 function lmn_p(b::Basis{Inviscid})
     N,ms,ns = b.N, b.m, b.n
     if ns != 0:0
         return [(l,m,n) for l in 1:(N-1) for m in ms for n in ns if abs(m)<=l]
     else
-        return [(l,m,n) for l in 1:(N-1) for m in ms for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
+        return [(l,m,n) for l in 1:(N-1) for m in ms for n in nrange_p(b,l) if abs(m)<=l] 
     end
 end
 
@@ -37,7 +44,7 @@ function lmn_t(b::Basis{Inviscid})
     if ns != 0:0
         return [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
     else
-        return [(l,m,n) for l in 1:N for m in ms for n in 0:((N-l)÷2) if abs(m)<=l] 
+        return [(l,m,n) for l in 1:N for m in ms for n in nrange_t(b,l) if abs(m)<=l] 
     end
 end
 
@@ -63,8 +70,41 @@ function lmn_utor(N, ms = -N:N, ns = false)
 end
 
 n(N) = (2N^3+9N^2+7N)÷6
-np(N) = ((-1)^N*(3 + (-1)^N*(-3+2N*(-1+N*(3+N)))))÷12
+
+np(N::Int) = ((-1)^N*(3 + (-1)^N*(-3+2N*(-1+N*(3+N)))))÷12
+
+function np(N::Int, m::Int) 
+    if (m == 0)
+        m+=1
+    end
+    return (N-m+1)^2 ÷ 4
+end
+
+function np(b::Basis{Inviscid})
+    if isaxisymmetric(b)
+        return np(b.N,first(b.m))
+    else
+        return np(b.N)
+    end
+end
+
 nt(N) = ((-1)^N*(-3 + (-1)^N*(3 + 2*N*(2 + N)*(4 + N))))÷12
+
+function nt(N::Int, m::Int)
+    if (m==0)
+        m+=1
+    end
+    return (N-m+2)^2 ÷ 4
+end
+
+function nt(b::Basis{Inviscid})
+    if isaxisymmetric(b)
+        return nt(b.N,first(b.m))
+    else
+        return nt(b.N)
+    end
+end
+
 
 function nlp(N,l)
     ((-1)^N*(3 - 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(1 - 6*l - 4*l^2 + 6*(2 + l)*N))))÷12
@@ -77,35 +117,10 @@ end
 lmn2k_p(l,m,n,N) = nlp(N,l-1) + (l+m)*((N-l+1)÷2) + n + 1
 lmn2k_t(l,m,n,N) = nlt(N,l-1) + (l+m)*((N-l)÷2+1) + n + 1
 
-function lmn_upol_l(N, ms = -N:N, ns=0)
-    lmn = lmn_upol(N,ms,ns)
-    lmnk = Vector{NTuple{4,Int}}[]
-    L = N-1
-    for _ in 1:L
-        push!(lmnk,NTuple{4,Int}[])
-    end
-
-    for k in eachindex(lmn)
-        l,m,n = lmn[k]
-        push!(lmnk[l], (k,l,m,n))
-    end
-    return lmnk
-end
-
-function lmn_utor_l(N, ms = -N:N, ns=0)
-    lmn = lmn_utor(N,ms,ns)
-    lmnk = Vector{NTuple{4,Int}}[]
-    L = N
-    for _ in 1:L
-        push!(lmnk,NTuple{4,Int}[])
-    end
-
-    for k in eachindex(lmn)
-        l,m,n = lmn[k]
-        push!(lmnk[l], (k,l,m,n))
-    end
-    return lmnk
-end
+# function lmn2k_p(b::Basis{Inviscid}, l, m, n)
+#     # if isaxisymmetric(b)
+#         # return nlp()
+# end
 
 _coriolis_tt(l,m; Ω = 2) = Ω*im*m/(l*(l+1))
 _coriolis_ss(l,m; Ω = 2) = _coriolis_tt(l,m; Ω)
@@ -131,7 +146,63 @@ function _coriolis_st(l,l2,m,m2,n,n2; Ω = 2.0)
     return aij
 end
 
-@inline function _rhs_coriolis_1(N, np, lmn_p_l, lmn_t_l; Ω::T = 2.0, thresh=sqrt(eps())) where T
+@inline function _coriolis_poloidal_new(b::Basis{Inviscid}; Ω::T=2.0) where T
+
+    is, js, aijs = Int[], Int[], Complex{T}[]
+    lmn2k_p = lmn2k_p_dict(b)
+    lmn2k_t = lmn2k_t_dict(b)
+    _np = np(b)
+
+    for l in 1:lpmax(b)
+        for m in intersect(b.m,-l:l)
+            for n in nrange_p(b,l)
+                aij = _coriolis_ss(T(l), T(m); Ω)
+                appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n)], aij)
+            end
+            for l2 in  ((l == 1) ? (2,) : ((l == ltmax(b)) ? (l-1,) : (l - 1,l + 1)))
+                if l2>=abs(m)
+                    for n in nrange_p(b,l), n2 in nrange_t(b,l2)
+                        aij = _coriolis_st(T(l),T(l2),T(m),T(m),T(n),T(n2); Ω)
+                        appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_t[(l2,m,n2)] + _np, aij)
+                    end
+                end
+            end
+        end
+    end
+
+    return is, js, aijs
+end
+
+
+@inline function _coriolis_toroidal_new(b::Basis{Inviscid}; Ω::T=2.0) where T
+
+    is, js, aijs = Int[], Int[], Complex{T}[]
+    lmn2k_p = lmn2k_p_dict(b)
+    lmn2k_t = lmn2k_t_dict(b)
+    _np = np(b)
+
+    for l in 1:lpmax(b)
+        for m in intersect(b.m,-l:l)
+            for n in nrange_t(b,l)
+                aij = _coriolis_tt(T(l), T(m); Ω)
+                appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n)] + _np, aij)
+            end
+            for l2 in  ((l == 1) ? (2,) : ((l == lpmax(b)) ? (l-1,) : (l - 1,l + 1)))
+                if abs(m)<=l2
+                    for n in nrange_t(b,l), n2 in nrange_p(b,l2)
+                        aij = _coriolis_ts(T(l),T(l2),T(m),T(m),T(n),T(n2); Ω)
+                        appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_p[(l2,m,n2)], aij)
+                    end
+                end
+            end
+        end
+    end
+
+    return is, js, aijs
+end
+
+@inline function _coriolis_poloidal(b::Basis{Inviscid}, np, lmn_p_l, lmn_t_l; Ω::T = 2.0, thresh=sqrt(eps())) where T
+    N = b.N
 
     is,js,aijs = Int[], Int[], Complex{T}[]
 
@@ -151,7 +222,9 @@ end
 
     return is, js, aijs
 end
-@inline function _rhs_coriolis_2(N, np, lmn_p_l, lmn_t_l; Ω::T = 2.0 ) where T
+
+@inline function _coriolis_toroidal(b::Basis{Inviscid}, np, lmn_p_l, lmn_t_l; Ω::T = 2.0 ) where T
+    N = b.N
 
     is,js,aijs = Int[], Int[], Complex{T}[]
 
@@ -173,40 +246,16 @@ end
     return is, js, aijs
 end
 
-function rhs_coriolis(N,m; ns = false, Ω::T = 2.0) where T
-    lmn_p = lmn_upol(N,m,ns)
-    lmn_t = lmn_utor(N,m,ns)
-    lmn_p_l = lmn_upol_l(N,m,ns)
-    lmn_t_l = lmn_utor_l(N,m,ns)
 
-    np = length(lmn_p)
-    nt = length(lmn_t)
-    nu = np+nt
-
-    is, js, aijs = _rhs_coriolis_1(N, np, lmn_p_l, lmn_t_l; Ω )
-    is2, js2, aijs2 = _rhs_coriolis_2(N, np, lmn_p_l, lmn_t_l; Ω )
-
-    append!(is,is2)
-    append!(js,js2)
-    append!(aijs,aijs2)
-
-    RHS = sparse(is,js,aijs, nu, nu)
-    return RHS
-
-end
-
-function lhs(N,m; ns = false, Ω::T = 2.0) where T
-    lmn_p = lmn_upol(N,m, ns)
-    lmn_t = lmn_utor(N,m, ns)
-
-    np = length(lmn_p)
-    nt = length(lmn_t)
-    nu = np+nt
-
+function inertial(b::Basis{Inviscid}, Ω::T = 2.0) where T
+    nu = length(b)
+    # if !isaxisymmetric(b) && (b.n==0:0)
+    #     nu = n(b.N)
+    # end
+    
 
     LHS = sparse(I(nu)*one(Complex{T}))
     return LHS
-
 end
 
 end
