@@ -1,7 +1,8 @@
 module Utils
 
 export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
-export Basis, isaxisymmetric, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, appendit!, nrange_p, nrange_t, np, nt, t, s
+export Basis, isaxisymmetric, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
+export appendit!, nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t
 
 abstract type BoundaryCondition; end
 
@@ -51,6 +52,14 @@ end
 
 
 function nrange_t(b::Basis, l)
+	@error "define nrange_t(b::Basis, l)!"
+end
+
+function nrange_p_bc(b::Basis, l)
+	@error "define nrange_p(b::Basis, l)!"
+end
+
+function nrange_t_bc(b::Basis, l)
 	@error "define nrange_t(b::Basis, l)!"
 end
 
@@ -106,6 +115,11 @@ end
 function s(::Type{Basis}, l, m, n, r)
 end
 
+function bcs_p(::Type{Basis})
+end
+
+function bcs_t(::Type{Basis})
+end
 
 
 function appendit!(is, js, aijs, i, j, aij; thresh=sqrt(eps()))

@@ -8,7 +8,7 @@ using ..Utils
 using ..Poly
 
 import ..Utils: lpmax, ltmax, lmn_t, lmn_p, nrange_p, nrange_t, np, nt, t, s
-import ..Limace: _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
+import ..Limace: inertial, _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 
 export Inviscid
 
@@ -77,7 +77,7 @@ function _np(N::Int, m::Int)
     if (m == 0)
         m+=1
     end
-    return (N-m+1)^2 ÷ 4
+    return (N-abs(m)+1)^2 ÷ 4
 end
 
 function np(b::Basis{Inviscid})
@@ -94,7 +94,7 @@ function _nt(N::Int, m::Int)
     if (m==0)
         m+=1
     end
-    return (N-m+2)^2 ÷ 4
+    return (N-abs(m)+2)^2 ÷ 4
 end
 
 function nt(b::Basis{Inviscid})
@@ -233,10 +233,8 @@ end
 #     return is, js, aijs
 # end
 
-function inertial(b::Basis{Inviscid})
-    nu = length(b)
-    LHS = I(nu)
-    return LHS
+function inertial(b::Basis{Inviscid}, ::Type{T}=Float64) where T<:Number
+    return one(T)*I
 end
 
 end

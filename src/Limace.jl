@@ -24,6 +24,9 @@ using .InviscidBasis
 include("inviscid2.jl")
 using .InviscidBasis2
 
+include("inviscid3.jl")
+using .InviscidBasis3
+
 include("viscous.jl")
 include("viscous_chen.jl")
 include("insulating_allspace.jl")
