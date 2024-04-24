@@ -7,20 +7,6 @@ function C(l, m)
     return (l^2 - 1) * √((l^2 - m^2) / (4l^2 - 1))
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Equation (25) in Ivers & Phillips (2008).
-"""
-function _∂ll(f,l,l1,r) 
-    @assert l1 ∈ (l-1, l+1)
-    if l1 == l-1
-        return ∂(f,r) + (l+1)/r*f(r) 
-    elseif l1 == l+1
-        return ∂(f,r)-l/r*f(r)
-    end
-end
-
 ##fallbacks
 """
 $(TYPEDSIGNATURES)

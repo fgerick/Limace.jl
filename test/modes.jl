@@ -66,29 +66,29 @@ end
 
 # end
 
-# @testset "Free decay modes" begin
-#     #free decay modes damping
-#     λfd(l, k) = -besselj_zero(l - 1 / 2, k)[end]^2
+@testset "Free decay modes" begin
+    #free decay modes damping
+    λfd(l, k) = -besselj_zero(l - 1 / 2, k)[end]^2
 
-#     #get difference between λfd and targeted eigensolution
-#     function getlk1(Nmax, lmax)
-#         N, m, ns = Nmax, 0, 1:Nmax
-#         LHS = Limace.InsulatingMFBasis.lhs(N, m; ns)
-#         RHS = Limace.InsulatingMFBasis.rhs_diffusion(N, m; ns)
-#         found = [
-#             (eigstarget(RHS, LHS, λfd(l, k) + 1e-12, nev = 1)[1][1], λfd(l, k)) for
-#             l = 1:lmax for k = 1:lmax÷2
-#         ]
-#         return found
-#     end
+    #get difference between λfd and targeted eigensolution
+    function getlk1(Nmax, lmax)
+        b = Limace.Insulating(Nmax; n=1:Nmax)
+        LHS = Limace.inertial(b)
+        RHS = Limace.diffusion(b)
+        found = [
+            (first(first(eigstarget(RHS, LHS, λfd(l, k) + 1e-9, nev = 1))), λfd(l, k)) for
+            l = 1:lmax for k = 1:lmax÷2
+        ]
+        return found
+    end
 
-#     #testing:
-#     f = getlk1(15, 4)
-#     for (f_num, f_λfd) in f
-#         @test f_num ≈ f_λfd
-#     end
+    #testing:
+    f = getlk1(15, 4)
+    for (f_num, f_λfd) in f
+        @test f_num ≈ f_λfd
+    end
 
-# end
+end
 
 
 

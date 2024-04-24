@@ -3,8 +3,21 @@ module Poly
 using SpecialFunctions
 using Wigxjpf
 using ForwardDiff
+using ClassicalOrthogonalPolynomials
+using DocStringExtensions
 
-export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂
+export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, ultrasphericalc, p, _∂ll, D, innert, inners
+
+#only for dev
+function __wiginit(N)
+    wig_table_init(2N, 9)
+    wig_temp_init(2N)
+end
+
+function __wiginit_thread(N)
+    wig_table_init(2N, 9)
+    wig_thread_temp_init(2N)
+end
 
 wigner9j(j1,j2,j3,j4,j5,j6,j7,j8,j9) = wig9jj(2j1,2j2,2j3,2j4,2j5,2j6,2j7,2j8,2j9)
 wigner6j(j1,j2,j3,j4,j5,j6) = wig6jj(2j1,2j2,2j3,2j4,2j5,2j6)
@@ -132,6 +145,35 @@ function toroidal_discretize(t,l,m,n,r,θ,ϕ)
     uϕ = -t(l,m,n,r)*dylmdθ(l,m,θ,ϕ)
 
     return (ur,uθ,uϕ)
+end
+
+
+@inline p(l) = l*(l+1.0)
+
+
+"""
+$(TYPEDSIGNATURES)
+
+Equation (25) in Ivers & Phillips (2008).
+"""
+function _∂ll(f,l,l1,r) 
+    @assert l1 ∈ (l-1, l+1)
+    if l1 == l-1
+        return ∂(f,r) + (l+1)/r*f(r) 
+    elseif l1 == l+1
+        return ∂(f,r)-l/r*f(r)
+    end
+end
+
+
+@inline D(f,l,r) = ∂(r->∂(f,r),r) + 2/r * ∂(f,r) - l*(l+1)/r^2 *f(r)
+
+@inline function innert(t,t2, l, r) 
+    return l*(l+1)*t(r)*t2(r)
+end
+
+@inline function inners(s,s2, l, r) 
+    return l*(l+1)*(s(r)*s2(r)*l*(l+1)+∂(r->r*s(r),r)*∂(r->r*s2(r),r))/r^2
 end
 
 end #module

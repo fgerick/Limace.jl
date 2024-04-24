@@ -4,7 +4,7 @@ using SparseArrays
 using LinearAlgebra
 using DocStringExtensions
 
-include("utils.jl")
+include("Utils.jl")
 using .Utils
 
 include("poly.jl")
@@ -13,26 +13,32 @@ using .Poly
 include("quad.jl")
 using .Quadrature
 
+include("Bases.jl")
+using .Bases
 
-include("inertial.jl")
-include("coriolis.jl")
+# forces
+include("forces/inertial.jl")
+include("forces/coriolis.jl")
+include("forces/diffusion.jl")
 
 
-include("inviscid.jl")
+include("bases/Inviscid.jl")
 using .InviscidBasis
 
-include("inviscid2.jl")
+include("bases/inviscid2.jl")
 using .InviscidBasis2
 
-include("inviscid3.jl")
-using .InviscidBasis3
+include("bases/InviscidNoBC.jl")
+using .InviscidBasisNoBC
 
-include("viscous.jl")
-include("viscous_chen.jl")
-include("insulating_allspace.jl")
+include("bases/Insulating.jl")
+using .InsulatingBasis
 
-include("discrete/DiscretePart.jl")
+# include("bases/viscous.jl")
+# include("bases/viscous_chen.jl")
 
-include("mhdproblem.jl")
+# include("discrete/DiscretePart.jl")
+
+# include("mhdproblem.jl")
 
 end

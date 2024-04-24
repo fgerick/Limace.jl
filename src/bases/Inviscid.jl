@@ -4,10 +4,11 @@ using SparseArrays
 using LinearAlgebra
 using DocStringExtensions
 
+using ..Bases
 using ..Utils
 using ..Poly
 
-import ..Utils: lpmax, ltmax, lmn_t, lmn_p, nrange_p, nrange_t, np, nt, t, s
+import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
 import ..Limace: inertial, _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 
 export Inviscid
@@ -26,48 +27,13 @@ function s(::Type{Basis{Inviscid}}, l,m,n,r)
     return (1-r^2)*r^l*jacobi(n,1,l+1/2, 2r^2-1)*fac
 end
 
-nrange_p(b::Basis{Inviscid},l) = 0:((b.N-l+1)÷2-1)
-nrange_t(b::Basis{Inviscid},l) = 0:((b.N-l)÷2)
-
-
-function lmn_p(b::Basis{Inviscid})
-    N,ms,ns = b.N, b.m, b.n
-    if ns != 0:0
-        return [(l,m,n) for l in 1:(N-1) for m in ms for n in ns if abs(m)<=l]
-    else
-        return [(l,m,n) for l in 1:(N-1) for m in ms for n in nrange_p(b,l) if abs(m)<=l] 
-    end
-end
-
-function lmn_t(b::Basis{Inviscid})
-    N,ms,ns = b.N, b.m, b.n
-    if ns != 0:0
-        return [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
-    else
-        return [(l,m,n) for l in 1:N for m in ms for n in nrange_t(b,l) if abs(m)<=l] 
-    end
-end
+_nrange_p(b::Basis{Inviscid},l) = 0:((b.N-l+1)÷2-1)
+_nrange_t(b::Basis{Inviscid},l) = 0:((b.N-l)÷2)
 
 lpmax(b::Basis{Inviscid}) = b.N-1
 ltmax(b::Basis{Inviscid}) = b.N
 
 
-
-function lmn_upol(N, ms = -N:N, ns = false) 
-    if ns != false
-        [(l,m,n) for l in 1:(N-1) for m in ms for n in ns if abs(m)<=l]
-    else
-        [(l,m,n) for l in 1:(N-1) for m in ms for n in 0:((N-l+1)÷2-1) if abs(m)<=l] 
-    end
-end
-
-function lmn_utor(N, ms = -N:N, ns = false) 
-    if ns != false
-        [(l,m,n) for l in 1:N for m in ms for n in ns if abs(m)<=l]
-    else
-        [(l,m,n) for l in 1:N for m in ms for n in 0:((N-l)÷2) if abs(m)<=l] 
-    end
-end
 
 n(N) = (2N^3+9N^2+7N)÷6
 
