@@ -38,31 +38,28 @@ end
     end
 end
 
-# @testset "Inviscid inertial modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
-#     function assembleU0uniHydro(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
-#         r,wr = DP.rquad(N+2+5)
-    
-#         js_a1 = DP.jacobis_l(N,r,1.0)
-#         js_a0 = DP.jacobis_l(N,r,0.0)
-#         RHS = Limace.InviscidBasis.rhs_coriolis(N,m; ns, Ω)
-#         if Ω2 != 0.0
-#             DP.wig_table_init(2N, 9)
-#             DP.wig_temp_init(2N)
-#             RHSadv = -Ω2*2sqrt(2pi/15)*DP.rhs_advection_utor_pre(N,m, (1,0,0), r,wr, js_a1,js_a0, conditions=true)
-#             DP.wig_temp_free()
-#             RHS += RHSadv
-#         end
-#         return RHS
-#     end
-#     N = 3
-#     for m = -3:3
-#         λ = eigvals(Matrix(assembleU0uniHydro(N,m)))
-#         λu0 = eigvals(Matrix(assembleU0uniHydro(N,m; Ω=0.0, Ω2 = 1.0))) .+ m*im
+@testset "Inviscid inertial modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
+    function assembleU0uniHydro(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
 
-#         @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))] 
-#     end
+        u = Inviscid(N; m)
+        RHS = Limace.coriolis(u; Ω)
+        if Ω2 != 0.0
+            Limace.Poly.__wiginit(N)
+            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 2sqrt(2pi/15))
+            RHSadv = -Ω2*Limace.lorentz(u, u, U0) #advection term is the same as Lorentz term
+            RHS += RHSadv
+        end
+        return RHS
+    end
+    N = 3
+    for m = -3:3
+        λ = eigvals(Matrix(assembleU0uniHydro(N,m)))
+        λu0 = eigvals(Matrix(assembleU0uniHydro(N,m; Ω=0.0, Ω2 = 1.0))) .+ m*im
 
-# end
+        @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))] 
+    end
+
+end
 
 @testset "Free decay modes" begin
     #free decay modes damping
@@ -120,157 +117,136 @@ end
 #     @test λ ≈ λ_li2010
 # end
 
-# @testset "solid body rotation kinematic dynamo" begin
+@testset "solid body rotation kinematic dynamo" begin
 
 
-#     using Limace.DiscretePart: s_mf, t_mf, s_in, t_in
+    # DP = Limace.DiscretePart
+    N = 12
+    m = 2
+    b = Insulating(N; m)
 
-#     # DP = Limace.DiscretePart
-#     N = 12
-#     m = 2
+    Limace.Poly.__wiginit(2N)
 
-#     LHS = Limace.InsulatingMFBasis.lhs(N, m)
-#     RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N, m)
-#     DP.__wiginit(2N)
-#     ind_utor = DP.rhs_induction_utor(
-#         N,
-#         m,
-#         (1, 0, 0);
-#         tu = t_in,
-#         smf = s_mf,
-#         tmf = t_mf,
-#         condition = false,
-#     )
+    LHS = Limace.inertial(b)
+    RHS_diff = Limace.diffusion(b)
+    U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 1.0)
+    ind_utor = Limace.induction(b,U0,b)
 
-#     Rm = 10
-#     RHS_ind = Rm * ind_utor
-#     RHS = RHS_diff + RHS_ind
+    Rm = 10.0
+    RHS_ind = Rm * ind_utor
+    RHS = RHS_diff + RHS_ind
 
-#     λdyn = eigvals(inv(Matrix(LHS)) * Matrix(RHS))
-#     DP.wig_temp_free()
+    λdyn = eigvals(LHS\Matrix(RHS))
+    Limace.Poly.wig_temp_free()
 
+    #solid body rotation should add a constant imaginary part ( = frequency) to all eigenvalues
 
-#     #solid body rotation should add a constant imaginary part ( = frequency) to all eigenvalues
+    @test all(imag.(λdyn) .≈ imag(λdyn[1]))
 
-#     @test all(imag.(λdyn) .≈ imag(λdyn[1]))
+end
 
-# end
+@testset "t₀¹s₀² kinematic dynamo" begin
 
-# @testset "t₀¹s₀² kinematic dynamo" begin
-
-#     using Limace.DiscretePart: s_mf, t_mf, s_chen, t_chen
-
-#     # Li et al. (2010) eq. (24) fixed:
-#     @inline t_10(l, m, n, r) = 8.107929179422066 * r * (1 - r^2)
-#     @inline s_20(l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2
-
-#     function assemble(N)
-#         # N =45
-#         m = 0
-#         LHS = Limace.InsulatingMFBasis.lhs(N, m)
-#         RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N, m)
-#         DP.__wiginit(2N)
-#         ind_upol = Limace.DiscretePart.rhs_induction_upol(
-#             N,
-#             m,
-#             (2, 0, 1);
-#             su = s_20,
-#             smf = s_mf,
-#             tmf = t_mf,
-#             condition = true,
-#         )
-#         ind_utor = Limace.DiscretePart.rhs_induction_utor(
-#             N,
-#             m,
-#             (1, 0, 1);
-#             tu = t_10,
-#             smf = s_mf,
-#             tmf = t_mf,
-#             condition = true,
-#         )
-#         DP.wig_temp_free()
-#         return LHS, RHS_diff, ind_upol, ind_utor
-#     end
-
-#     function _RHS(Rm, RHS_diff, ind_upol, ind_utor)
-#         RHS_ind = Rm * (ind_upol + ind_utor)
-#         RHS = RHS_diff + RHS_ind
-#         return RHS
-#     end
-
-#     function getlargestEV(Rm, LHS, RHS_diff, ind_upol, ind_utor)
-#         RHS = _RHS(Rm, RHS_diff, ind_upol, ind_utor)
-
-#         λdyn = eigvals(inv(Matrix(LHS)) * Matrix(RHS))
-#         #get eigenvalue of largest real part
-#         λ = first(λdyn[sortperm(real.(λdyn), rev = true)])
-#         return λ
-#     end
-
-#     LHS, RHS_diff, ind_upol, ind_utor = assemble(45)
-#     # reference values (Livermore & Jackson (2005), Table 1,2)
-#     refvals = [(10, -8.01600246), (100, -6.92884871)]
-#     for (Rm, λ_lj2005) in refvals
-#         @test getlargestEV(Rm, LHS, RHS_diff, ind_upol, ind_utor) ≈ λ_lj2005
-#     end
+    import Limace.Bases
 
 
-# end
+    struct Li2010; end
+    # Li et al. (2010) eq. (24) fixed:
+    @inline Limace.Bases.t(::Type{Basis{Li2010}}, l, m, n, r) = 8.107929179422066 * r * (1 - r^2) #t10
+    @inline Limace.Bases.s(::Type{Basis{Li2010}},l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2 #s20
 
-# @testset "Malkus modes" begin
+    function assemble(N)
+        # N =45
+        Limace.Poly.__wiginit(2N)
 
-#     function zhang(m, N) 
-#         sm = sign(m)
-#         m = abs(m)
-#         return -sm*2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
-#     end
+        m = 0
+        b = Insulating(N; m)
+        LHS = Limace.inertial(b)
+        RHS_diff = Limace.diffusion(b)
 
-#     # Malkus J. Fluid Mech. (1967), vol. 28, pp. 793-802, eq. (2.28)
-#     slow(m, N, Le, λ = imag(zhang(m, N))) =
-#         im * λ / 2Le * (1 - √(1 + 4Le^2 * m * (m - λ) / λ^2))
-#     fast(m, N, Le, λ = imag(zhang(m, N))) =
-#         im * λ / 2Le * (1 + √(1 + 4Le^2 * m * (m - λ) / λ^2))
+        U0_t10 = BasisElement(Basis{Li2010}, Toroidal, (1,0,1), 1.0)
+        U0_s20 = BasisElement(Basis{Li2010}, Poloidal, (2,0,1), 1.0)
 
-#     using Limace.MHDProblem: rhs_cond_pre, lhs_cond
-#     N = 5
-#     m = -5:5
-#     Le = 1e-2
+        RHS_induction_t10 = Limace.induction(b,U0_t10,b)
+        RHS_induction_s20 = Limace.induction(b,U0_s20,b)
+        Limace.Poly.wig_temp_free()
+        return LHS, RHS_diff, RHS_induction_s20, RHS_induction_t10
+    end
 
-#     lmnb0 = (1, 0, 0)
+    function _RHS(Rm, RHS_diff, ind_upol, ind_utor)
+        RHS_ind = Rm * (ind_upol + ind_utor)
+        RHS = RHS_diff + RHS_ind
+        return RHS
+    end
 
-#     LHS = lhs_cond(N, m)
-#     RHS = rhs_cond_pre(
-#         N,
-#         m;
-#         Ω = 2 / Le,
-#         lmnb0,
-#         B0poloidal = false,
-#         B0fac = 2sqrt(2pi/15),
-#     )
+    function getlargestEV(Rm, LHS, RHS_diff, ind_upol, ind_utor)
+        RHS = _RHS(Rm, RHS_diff, ind_upol, ind_utor)
 
-#     evals = eigvals(inv(Matrix(LHS)) * RHS)
+        λdyn = eigvals(LHS\Matrix(RHS))
+        #get eigenvalue of largest real part
+        λ = first(λdyn[sortperm(real.(λdyn), rev = true)])
+        return λ
+    end
 
-#     @test any(evals .≈ 1.0 * im / Le)
-#     for m = vcat(-(N-1):-1, 1:(N-1))
-#         @test any(evals .≈ slow(m, 1, Le))
-#         @test any(evals .≈ fast(m, 1, Le))
-#     end
+    LHS, RHS_diff, ind_upol, ind_utor = assemble(45)
+    # reference values (Livermore & Jackson (2005), Table 1,2)
+    refvals = [(10, -8.01600246), (100, -6.92884871)]
+    for (Rm, λ_lj2005) in refvals
+        @test getlargestEV(Rm, LHS, RHS_diff, ind_upol, ind_utor) ≈ λ_lj2005
+    end
 
-#     for m = vcat(-(N-1):-1, 1:(N-1))
-#         LHS = lhs_cond(N, m)
-#         RHS = rhs_cond_pre(
-#             N,
-#             m;
-#             Ω = 2 / Le,
-#             lmnb0,
-#             B0poloidal = false,
-#             B0fac = 2sqrt(2pi/15),
-#         )
-#         evals = eigvals(inv(Matrix(LHS)) * RHS)    
-#         @test any(evals .≈ slow(m, 1, Le))
-#         @test any(evals .≈ fast(m, 1, Le))
-#     end
-# end
+
+end
+
+@testset "Malkus modes" begin
+
+    function zhang(m, N) 
+        sm = sign(m)
+        m = abs(m)
+        return -sm*2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
+    end
+
+    # Malkus J. Fluid Mech. (1967), vol. 28, pp. 793-802, eq. (2.28)
+    slow(m, N, Le, λ = imag(zhang(m, N))) =
+        im * λ / 2Le * (1 - √(1 + 4Le^2 * m * (m - λ) / λ^2))
+    fast(m, N, Le, λ = imag(zhang(m, N))) =
+        im * λ / 2Le * (1 + √(1 + 4Le^2 * m * (m - λ) / λ^2))
+
+    # using Limace.MHDProblem: rhs_cond_pre, lhs_cond
+    N = 6
+    Limace.Poly.__wiginit(2N)
+    # m = -5:5
+    Le = 1e-1
+
+    u = Inviscid(N)
+    b = PerfectlyConducting(N)
+
+
+    B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15))
+
+   RHS = [Limace.coriolis(u)/Le Limace.lorentz(u, b, B0)
+          Limace.induction(b,u,B0) spzeros(length(b),length(u))];
+
+    evals = eigvals(Matrix(RHS))
+
+    @test any(evals .≈ 1.0 * im / Le)
+    for m = vcat(-(N-1):-1, 1:(N-1))
+        @test any(evals .≈ slow(m, 1, Le))
+        @test any(evals .≈ fast(m, 1, Le))
+    end
+
+    for m = vcat(-(N-1):-1, 1:(N-1))
+        u = Inviscid(N; m)
+        b = PerfectlyConducting(N; m)
+        RHS = [Limace.coriolis(u)/Le Limace.lorentz(u,b, B0)
+        Limace.induction(b,u,B0) spzeros(length(b),length(u))];
+        evals = eigvals(Matrix(RHS))    
+        @test any(evals .≈ slow(m, 1, Le))
+        @test any(evals .≈ fast(m, 1, Le))
+    end
+
+    Limace.Poly.wig_temp_free()
+end
 
 # @testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
 

@@ -13,8 +13,10 @@ import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
 import ..Limace: inertial, _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 
 export Inviscid
+export PerfectlyConducting #same conditions on t and s
 
 struct Inviscid; end
+const PerfectlyConducting = Inviscid
 
 Inviscid(N; kwargs...) = Basis{Inviscid}(;N, BC=InviscidBC(), kwargs...)
 
