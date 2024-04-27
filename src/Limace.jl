@@ -23,6 +23,7 @@ include("forces/inertial.jl")
 include("forces/coriolis.jl")
 include("forces/diffusion.jl")
 include("forces/induction.jl")
+include("forces/lorentz.jl")
 
 include("bases/Inviscid.jl")
 @reexport using .InviscidBasis

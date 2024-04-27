@@ -3,10 +3,9 @@ module Poly
 using SpecialFunctions
 using Wigxjpf
 using ForwardDiff
-using ClassicalOrthogonalPolynomials
 using DocStringExtensions
 
-export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, ultrasphericalc, p, _∂ll, D, innert, inners
+export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, p, _∂ll, D, innert, inners
 
 
 #only for dev, initiate wigner symbols temporary working arrays.
