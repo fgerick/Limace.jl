@@ -1,3 +1,7 @@
+"""
+$(TYPEDSIGNATURES)
+
+"""
 function _diffusion_ss(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     la,ma,na = lmna
     lb,mb,nb = lmnb
@@ -12,6 +16,10 @@ function _diffusion_ss(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     return aij
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+"""
 function _diffusion_tt(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     la,ma,na = lmna
     lb,mb,nb = lmnb
@@ -26,7 +34,10 @@ function _diffusion_tt(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     return aij
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+"""
 @inline function diffusion(b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 
     is, js, aijs = Int[], Int[], Complex{T}[]

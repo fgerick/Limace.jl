@@ -6,6 +6,7 @@ using FunctionZeros
 using LinearMaps
 using ArnoldiMethod
 using Distributed
+using SparseArrays
 
 Limace.Poly.__wiginit(100)
 

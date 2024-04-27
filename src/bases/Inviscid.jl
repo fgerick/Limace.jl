@@ -8,6 +8,7 @@ using ..Bases
 using ..Utils
 using ..Poly
 
+using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
 import ..Limace: inertial, _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 
@@ -17,21 +18,31 @@ struct Inviscid; end
 
 Inviscid(N; kwargs...) = Basis{Inviscid}(;N, BC=InviscidBC(), kwargs...)
 
-function t(::Type{Basis{Inviscid}}, l,m,n,r) 
+"""
+$(TYPEDSIGNATURES)
+
+https://homepages.see.leeds.ac.uk/~earpwl/Galerkin/Galerkin.html (5.1), normalized to unit energy ∫u⋅u dV = 1.
+"""
+@inline function t(::Type{Basis{Inviscid}}, l,m,n,r) 
     fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
     return r^l*jacobi(n,0,l+1/2, 2r^2-1)*fac
 end
 
-function s(::Type{Basis{Inviscid}}, l,m,n,r) 
+"""
+$(TYPEDSIGNATURES)
+
+https://homepages.see.leeds.ac.uk/~earpwl/Galerkin/Galerkin.html (5.6), normalized to unit energy ∫u⋅u dV = 1. 
+"""
+@inline function s(::Type{Basis{Inviscid}}, l,m,n,r) 
     fac = sqrt(5+2l+4n)/sqrt(4l*(l+1)*(n+1)^2)
     return (1-r^2)*r^l*jacobi(n,1,l+1/2, 2r^2-1)*fac
 end
 
-_nrange_p(b::Basis{Inviscid},l) = 0:((b.N-l+1)÷2-1)
-_nrange_t(b::Basis{Inviscid},l) = 0:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{Inviscid},l) = 0:((b.N-l+1)÷2-1)
+@inline _nrange_t(b::Basis{Inviscid},l) = 0:((b.N-l)÷2)
 
-lpmax(b::Basis{Inviscid}) = b.N-1
-ltmax(b::Basis{Inviscid}) = b.N
+@inline lpmax(b::Basis{Inviscid}) = b.N-1
+@inline ltmax(b::Basis{Inviscid}) = b.N
 
 
 
@@ -39,14 +50,14 @@ n(N) = (2N^3+9N^2+7N)÷6
 
 _np(N::Int) = ((-1)^N*(3 + (-1)^N*(-3+2N*(-1+N*(3+N)))))÷12
 
-function _np(N::Int, m::Int) 
+@inline function _np(N::Int, m::Int) 
     if (m == 0)
         m+=1
     end
     return (N-abs(m)+1)^2 ÷ 4
 end
 
-function np(b::Basis{Inviscid})
+@inline function np(b::Basis{Inviscid})
     if isaxisymmetric(b)
         return _np(b.N,first(b.m))
     else
@@ -56,14 +67,14 @@ end
 
 _nt(N) = ((-1)^N*(-3 + (-1)^N*(3 + 2*N*(2 + N)*(4 + N))))÷12
 
-function _nt(N::Int, m::Int)
+@inline function _nt(N::Int, m::Int)
     if (m==0)
         m+=1
     end
     return (N-abs(m)+2)^2 ÷ 4
 end
 
-function nt(b::Basis{Inviscid})
+@inline function nt(b::Basis{Inviscid})
     if isaxisymmetric(b)
         return _nt(b.N,first(b.m))
     else
@@ -144,60 +155,6 @@ function _coriolis_toroidal_poloidal!(b::Basis{Inviscid}, is, js, aijs, _np, lmn
     return nothing
 end
 
-# @inline function _coriolis_poloidal(b::Basis{Inviscid}; Ω::T=2.0) where T
-
-#     is, js, aijs = Int[], Int[], Complex{T}[]
-#     lmn2k_p = lmn2k_p_dict(b)
-#     lmn2k_t = lmn2k_t_dict(b)
-#     _np = np(b)
-
-#     for l in 1:lpmax(b)
-#         for m in intersect(b.m,-l:l)
-#             for n in nrange_p(b,l)
-#                 aij = _coriolis_ss(T(l), T(m); Ω)
-#                 appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n)], aij)
-#             end
-#             for l2 in  ((l == 1) ? (2,) : ((l == ltmax(b)) ? (l-1,) : (l - 1,l + 1)))
-#                 if l2>=abs(m)
-#                     for n in nrange_p(b,l), n2 in nrange_t(b,l2)
-#                         aij = _coriolis_st(T(l),T(l2),T(m),T(m),T(n),T(n2); Ω)
-#                         appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_t[(l2,m,n2)] + _np, aij)
-#                     end
-#                 end
-#             end
-#         end
-#     end
-
-#     return is, js, aijs
-# end
-
-
-# @inline function _coriolis_toroidal(b::Basis{Inviscid}; Ω::T=2.0) where T
-
-#     is, js, aijs = Int[], Int[], Complex{T}[]
-#     lmn2k_p = lmn2k_p_dict(b)
-#     lmn2k_t = lmn2k_t_dict(b)
-#     _np = np(b)
-
-#     for l in 1:lpmax(b)
-#         for m in intersect(b.m,-l:l)
-#             for n in nrange_t(b,l)
-#                 aij = _coriolis_tt(T(l), T(m); Ω)
-#                 appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n)] + _np, aij)
-#             end
-#             for l2 in  ((l == 1) ? (2,) : ((l == lpmax(b)) ? (l-1,) : (l - 1,l + 1)))
-#                 if abs(m)<=l2
-#                     for n in nrange_t(b,l), n2 in nrange_p(b,l2)
-#                         aij = _coriolis_ts(T(l),T(l2),T(m),T(m),T(n),T(n2); Ω)
-#                         appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_p[(l2,m,n2)], aij)
-#                     end
-#                 end
-#             end
-#         end
-#     end
-
-#     return is, js, aijs
-# end
 
 function inertial(b::Basis{Inviscid}, ::Type{T}=Float64) where T<:Number
     return one(T)*I

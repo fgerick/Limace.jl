@@ -8,7 +8,8 @@ using DocStringExtensions
 
 export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, ultrasphericalc, p, _∂ll, D, innert, inners
 
-#only for dev
+
+#only for dev, initiate wigner symbols temporary working arrays.
 function __wiginit(N)
     wig_table_init(2N, 9)
     wig_temp_init(2N)
@@ -19,22 +20,36 @@ function __wiginit_thread(N)
     wig_thread_temp_init(2N)
 end
 
+#convenience for half-integer notation.
 wigner9j(j1,j2,j3,j4,j5,j6,j7,j8,j9) = wig9jj(2j1,2j2,2j3,2j4,2j5,2j6,2j7,2j8,2j9)
 wigner6j(j1,j2,j3,j4,j5,j6) = wig6jj(2j1,2j2,2j3,2j4,2j5,2j6)
 wigner3j(j1,j2,j3,j4,j5,j6) = wig3jj(2j1,2j2,2j3,2j4,2j5,2j6)
 
+"""
+$(TYPEDSIGNATURES)
 
-@inline function adamgaunt(la,lb,lc,ma,mb,mc)
+Adam-Gaunt integral \$ A_{abc} = ...\$.
+"""
+@inline function adamgaunt(la,lb,lc,ma,mb,mc)::ComplexF64
     return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(Int(la), Int(lb), Int(lc), 0, 0, 0)*wigner3j(Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc))
 end
 
-@inline Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
+@inline _Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
 
+"""
+$(TYPEDSIGNATURES)
 
-@inline function elsasser(la,lb,lc,ma,mb,mc)
-    return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*Δ(la,lb,lc)*wigner3j(Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
+Elsasser variable \$ E_{abc} = ...\$.
+"""
+@inline function elsasser(la,lb,lc,ma,mb,mc)::ComplexF64
+    return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*_Δ(la,lb,lc)*wigner3j(Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Jacobi polynomial \$J_n^{(a,b)}(x)\$.
+"""
 @inline function jacobi(n,a,b,x)
     ox = one(x)
     zx = zero(x)
@@ -77,6 +92,11 @@ const ∂ =  ForwardDiff.derivative
     exp(loggamma(a+b+n+1+k)-loggamma(a+b+n+1))/2^k*jacobi(n-k,a+k,b+k,x)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Jacobi polynomials \$J_n^{(a,b)}(2r^2-1)\$ and derivatives in \$r\$ up to third order for all degrees \$n \\in [0,N]\$, evaluated at a given grid `rgrid` of values in \$r\$.
+"""
 function jacobis(N,a,b,rgrid)
     nr = length(rgrid)
     js = zeros(eltype(rgrid),4,N+1,nr) 
@@ -90,26 +110,50 @@ function jacobis(N,a,b,rgrid)
     return js   
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Jacobi polynomials \$J_n^{(a,l+1/2)}(2r^2-1)\$ and derivatives in \$r\$ up to third order for all degrees \$n \\in [0,N]\$ and \$l \\in [1,N]\$. Default is `a=0.0`.
+"""
 function jacobis_l(N,r,a=0.0)
     return [jacobis(N,a,l+1/2,r) for l in 1:N] 
 end
 
-# radial derivative ∂/∂r(r^l J) with J a jacobi polynomial
+"""
+$(TYPEDSIGNATURES)
+
+Derivative of \$r^lJ\$, where \$J\$ is a Jacobi polynomial.
+"""
 @inline function d_rlJ(l, r, rl, J, dJ)
     # rl = r^l
 	return rl*(l/r*J + dJ)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Second derivative of \$r^lJ\$, where \$J\$ is a Jacobi polynomial.
+"""
 @inline function d2_rlJ(l, r, rl, J, dJ, d2J)
     # rl = r^l
 	return rl*(l*(l-1)/r^2*J + 2l/r*dJ + d2J)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Third derivative of \$r^lJ\$, where \$J\$ is a Jacobi polynomial.
+"""
 @inline function d3_rlJ(l, r, rl, J, dJ, d2J, d3J)
     # rl = r^l
 	return rl*(l*(l-1)*(l-2)/r^3*J + 3l*(l-1)/r^2*dJ + 3l/r*d2J + d3J)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Spherical harmonic in full norm, i.e. \$\\int Y_l^mY_i^j\\, \\sin(\\theta)\\,\\mathrm{d}\\theta\\mathrm{d}\\phi = \\delta_{li}\\delta_{mj}\$.
+"""
 function ylm(ℓ::Int, m::Int, θ, φ) #norm -> ∫YₗᵐYᵢʲsin(θ)dθdϕ = δₗᵢδₘⱼ
     if ℓ<abs(m)
         return zero(complex(typeof(θ)))
@@ -123,10 +167,19 @@ function ylm(ℓ::Int, m::Int, θ, φ) #norm -> ∫YₗᵐYᵢʲsin(θ)dθdϕ = 
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Spherical harmonic derivative in \$\\theta\$.
+"""
 function dylmdθ(l,m,θ,ϕ)
     return m*cot(θ)*ylm(l,m,θ,ϕ) + sqrt((l-m)*(l+m+1))*exp(-im*ϕ)*ylm(l,m+1,θ,ϕ)  
 end
+"""
+$(TYPEDSIGNATURES)
 
+Spherical harmonic derivative in \$\\phi\$.
+"""
 function dylmdϕ(l,m,θ,ϕ)
     return im*m*ylm(l,m,θ,ϕ)
 end
@@ -147,7 +200,11 @@ function toroidal_discretize(t,l,m,n,r,θ,ϕ)
     return (ur,uθ,uϕ)
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+\$l(l+1)\$
+"""
 @inline p(l) = l*(l+1.0)
 
 
@@ -165,13 +222,27 @@ function _∂ll(f,l,l1,r)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Equation (xx) in Ivers & Phillips (2008).
+"""
 @inline D(f,l,r) = ∂(r->∂(f,r),r) + 2/r * ∂(f,r) - l*(l+1)/r^2 *f(r)
 
+"""
+$(TYPEDSIGNATURES)
+
+Equation (xx) in Ivers & Phillips (2008).
+"""
 @inline function innert(t,t2, l, r) 
     return l*(l+1)*t(r)*t2(r)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Equation (xx) in Ivers & Phillips (2008).
+"""
 @inline function inners(s,s2, l, r) 
     return l*(l+1)*(s(r)*s2(r)*l*(l+1)+∂(r->r*s(r),r)*∂(r->r*s2(r),r))/r^2
 end

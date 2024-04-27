@@ -11,6 +11,7 @@ using ..Bases
 using ..Utils
 using ..Poly
 
+using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
 import ..Limace: inertial, diffusion
 
@@ -58,7 +59,7 @@ lmn2k_t(l,m,n,N) = _nlt(N,l-1) + (l+m)*((N-l)÷2) + n
     elseif (n==n2+1)
         return -sqrt(1 - 3/(1 + 2*l + 4*(-1 + n)) + 3/(5 + 2*l + 4*(-1 + n)))/2
     elseif (n==n2-1)
-        return -sqrt(1 - 3/(1 + 2*l + 4*(-1 + n)) + 3/(5 + 2*l + 4*(-1 + n)))/2
+        return -sqrt(1 - 3/(1 + 2*l + 4*(-1 + n2)) + 3/(5 + 2*l + 4*(-1 + n2)))/2
     end
     return zero(l)
 end
@@ -74,42 +75,56 @@ end
     return zero(l)
 end
 
-
 function inertial(b::Basis{Insulating}, ::Type{T}=Float64) where {T<:Number}
+    lmnp = lmn_p(b)
+    lmnt = lmn_t(b)
+
+
+    inertial_s = [_inertial_ss(T(l), T(n), T(n)) for (l,m,n) in lmnp]
+    inertial_s2 = [(n-1 > 0 ? _inertial_ss(T(l), T(n), T(n-1)) : 0.0) for (l,m,n) in lmnp[2:end]]
+    inertial_t = [_inertial_tt(T(l), T(n), T(n)) for (l,m,n) in lmnt]
+    inertial_t2 = [(n-1 > 0 ? _inertial_tt(T(l), T(n), T(n-1)) : 0.0) for (l,m,n) in lmnt[2:end]]
+
+    d = vcat(inertial_s,inertial_t)
+    d2 = [inertial_s2;0.0; inertial_t2]
+    return SymTridiagonal(d, d2)
+end 
+
+# function inertial(b::Basis{Insulating}, ::Type{T}=Float64) where {T<:Number}
     
-    is, js, aijs = Int[], Int[], Complex{T}[]
-    lmn2k_p = lmn2k_p_dict(b)
-    lmn2k_t = lmn2k_t_dict(b)
-    _np = np(b)
-    nmat = length(b)
+#     is, js, aijs = Int[], Int[], Complex{T}[]
+#     lmn2k_p = lmn2k_p_dict(b)
+#     lmn2k_t = lmn2k_t_dict(b)
+#     _np = np(b)
+#     nmat = length(b)
 
 
-    for l in 1:lpmax(b)
-        for m in intersect(b.m, -l:l)
-            ns = nrange_p(b,l)
-            for n in ns
-                for n2 in max(n-1,1):min(n+1,last(ns)) #symtridiagonal
-                    aij = _inertial_ss(T(l), T(n), T(n2))
-                    appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
-                end
-            end
-        end
-    end
+#     @inbounds for l in 1:lpmax(b)
+#         for m in intersect(b.m, -l:l)
+#             ns = nrange_p(b,l)
+#             for n in ns
+#                 for n2 in max(n-1,1):min(n+1,last(ns)) #symtridiagonal
+#                     aij = _inertial_ss(T(l), T(n), T(n2))
+#                     appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
+#                 end
+#             end
+#         end
+#     end
 
-    for l in 1:ltmax(b)
-        for m in intersect(b.m, -l:l)
-            ns = nrange_t(b,l)
-            for n in ns
-                for n2 in max(n-1,1):min(n+1,last(ns)) #symtridiagonal
-                    aij = _inertial_tt(T(l), T(n), T(n2))
-                    appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
-                end
-            end
-        end
-    end
+#     @inbounds for l in 1:ltmax(b)
+#         for m in intersect(b.m, -l:l)
+#             ns = nrange_t(b,l)
+#             for n in ns
+#                 for n2 in max(n-1,1):min(n+1,last(ns)) #symtridiagonal
+#                     aij = _inertial_tt(T(l), T(n), T(n2))
+#                     appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
+#                 end
+#             end
+#         end
+#     end
 
-    return sparse(is,js,aijs, nmat, nmat)
-end
+#     return SymTridiagonal(sparse(is,js,aijs, nmat, nmat))
+# end
 
 #diffusion
 
@@ -132,11 +147,14 @@ function diffusion(b::Basis{Insulating}, η::T=1.0) where T
 end
 
 
+"""
+$(TYPEDSIGNATURES)
 
-# The basis elements are normalized so that ∫₀^∞ B⋅B dV = 1.
-# There is no external contribution for the toroidal components.
-# For the poloidal components with n=1, there is an external contribution (r>1).
-# To normalize the basis elements so that ∫₀¹ B⋅B dV = 1, the following norm function can be used:
+The basis elements are normalized so that ∫₀^∞ B⋅B dV = 1.
+There is no external contribution for the toroidal components. 
+For the poloidal components with n=1, there is an external contribution (r>1). 
+To normalize the basis elements so that ∫₀¹ B⋅B dV = 1, the following norm function can be used:
+"""
 function unitspherenorm(l,n)
     if n==1
         return sqrt((6+8l*(l+2))/(6+l*(6l+11)))
@@ -145,10 +163,12 @@ function unitspherenorm(l,n)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
 
-#convenience functions to normalize a B₀ that is assembled from different components to have (4π/3)⁻¹ ∫₀¹ B⋅B dV = 1
-
-#construct Aᵢⱼ = ∫₀¹ Bᵢ ⋅Bⱼ dV 
+Convenience functions to normalize a B₀ that is assembled from different components to have (4π/3)⁻¹ ∫₀¹ B⋅B dV = 1
+Construct Aᵢⱼ = ∫₀¹ Bᵢ ⋅Bⱼ dV 
+"""
 function inner_b0norm(lmn_p, lmn_t)
     T= Float64
 
@@ -179,6 +199,12 @@ function inner_b0norm(lmn_p, lmn_t)
 
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Normalize `B0fac` (vector of scalars) corresponding to `lmn_p` and `lmn_t` basis elements. `length(B0fac)=length(lmn_p)+length(lmn_t)`.
+Final array of `B0fac` will ensure that (4π/3)⁻¹ ∫₀¹ B⋅B dV = 1.
+"""
 function norm_B0fac!(B0fac, lmn_p, lmn_t)
     A = inner_b0norm(lmn_p, lmn_t)
     for (i,(l,m,n)) in enumerate(lmn_p)

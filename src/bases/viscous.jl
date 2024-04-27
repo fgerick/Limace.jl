@@ -2,156 +2,196 @@ module ViscousBasis
 
 
 using SparseArrays
-using Distributed
-using DistributedArrays
-using Random
+using LinearAlgebra
+using DocStringExtensions
 
-lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:(N-1) for n in 0:(N-l+1)÷2 if abs(m)<=l]
-# lmn_upol(N, ms = 0:N) = [(l,m,n) for m in ms for n in 0:(N-1) for l in 1:(N-1) if (abs(m)<=l) && (n<=(N-l+1)÷2)]
-lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for l in 1:N for n in 0:((N-l)÷2) if abs(m)<=l]
+using ..Bases
+using ..Utils
+using ..Poly
 
-# lmn_utor(N, ms = 0:N) = [(l,m,n) for m in ms for n in 0:N for l in 1:N if (abs(m)<=l) && (n<=(N-l)÷2)]
+using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
+import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
+import ..Limace: inertial, _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 
-_coriolis_tt(l,m; Ω = 2) = Ω*im*m/(l*(l+1))
-_coriolis_ss(l,m; Ω = 2) = _coriolis_tt(l,m; Ω)
+export Viscous
 
-# function _coriolis_ts(is,js,aijs, i,j, l,l2,m,m2,n,n2; Ω = 2) 
-#     if (m != m2)
-#         return nothing
-#     end
-#     if (l==l2+1) && (n>=n2-1)
-#         if n+1==n2
-#             aij = sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
-#         else
-#             aij = -sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
-#         end
-#         push!(is,i)
-#         push!(js,j)
-#         push!(aijs,Ω*aij)
-#     elseif (l==l2-1) && (n>=n2)
-#         if n==n2
-#             aij = (l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
-#         else
-#             aij = -sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
-#         end
-#         push!(is,i)
-#         push!(js,j)
-#         push!(aijs,Ω*aij)
-#     end
-#     return nothing
-# end
+struct Viscous; end
 
-# function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2) 
-#     if (m != m2)
-#         return nothing
-#     end
-#     if (l==l2+1) && (n>=n2-1)
-#         if n+1==n2
-#             aij = -sqrt(l^2-1)*sqrt((l-m)*(l+m)*(1+n)*(3+2l+2n))/l/sqrt((4l^2-1)*(2+n)*(5+2l+2n))
-#         else
-#             aij = sqrt((l^2-1)*(l-m)*(l+m)*(3+2l+4n2)*(7+2l+4n))/sqrt((4l^2-1)*(n+1)*(n+2)*(3+2l+2n)*(5+2l+2n))/l
-#         end
-#         push!(is,i)
-#         push!(js,j)
-#         push!(aijs,Ω*aij)
-#     elseif (l==l2-1) && (n>=n2)
-#         if n==n2
-#             aij = -(l+2)/(l+1)*sqrt(l*(n+1)*(l-m+1)*(l+m+1)*(2l+2n+3))/sqrt((l+2)*(2l+1)*(2l+3)*(n+2)*(2l+2n+5))
-#         else
-#             aij = sqrt((2l+4n2+7)*l*(l+2)*(l-m+1)*(l+m+1)*(2l+4n+7))/((l+1)*sqrt((4l*(l+2)+3)*(n+1)*(n+2)*(2l+2n+3)*(2l+2n+5)))
-#         end
-#         push!(is,i)
-#         push!(js,j)
-#         push!(aijs,Ω*aij)
-#     end
-#     return nothing
-# end
+Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), kwargs...)
+
+"""
+$(TYPEDSIGNATURES)
+
+Chen et al. (2018) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
+"""
+@inline function t(::Type{Basis{Viscous}}, l,m,n,r) 
+    fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
+    return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Chen et al. (2018) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
+"""
+@inline function s(::Type{Basis{Viscous}}, l,m,n,r) 
+    c1 = 2l+4n+1
+    c2 = -2(2l+4n+3)
+    c3 = 2l+4n+5
+    fac = 1/(sqrt(2l*(1 + l)*(1 + 2*l + 4*n)*(3 + 2*l + 4*n)*(5 + 2*l + 4*n)))
+    return fac*r^l*(c1*jacobi(n+1,0,l+1/2,2r^2-1) + c2*jacobi(n,0,l+1/2,2r^2-1) + c3*jacobi(n-1,0,l+1/2,2r^2-1)  ) 
+end
+
+@inline _nrange_p(b::Basis{Viscous},l) = 1:((b.N-l+1)÷2+1)
+@inline _nrange_t(b::Basis{Viscous},l) = 1:((b.N-l)÷2+1)
+
+@inline lpmax(b::Basis{Viscous}) = b.N-1
+@inline ltmax(b::Basis{Viscous}) = b.N
 
 
-function _viscous_tt(is,js,aijs, i,j, l,m,n,n2; ν = 1.0) 
+function lmn_upol(N, ms = 0:N, ns = 0) 
+    if (ns != 0)
+        [(l,m,n) for m in ms for l in 1:(N-1) for n in ns if abs(m)<=l]
+    else
+        [(l,m,n) for m in ms for l in 1:(N-1) for n in 1:((N-l+1)÷2+1) if abs(m)<=l] 
+    end
+end
+
+function lmn_utor(N, ms = 0:N, ns = 0) 
+    if (ns != 0)
+        [(l,m,n) for m in ms for l in 1:N for n in ns if abs(m)<=l]
+    else
+        [(l,m,n) for m in ms for l in 1:N for n in 1:((N-l)÷2+1) if abs(m)<=l] 
+    end
+end
+
+function lmn_upol_l(N, ms = 0:N, ns=0)
+    # lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)] 
+    if (ns != 0)
+        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:(N-1)]
+    else
+        lmn = [[(l,m,n) for m in ms for n in 1:((N-l+1)÷2+1) if abs(m)<=l] for l in 1:(N-1)]
+    end
+    lmnk = Vector{NTuple{4,Int}}[]
+    k=1
+    for l in eachindex(lmn)
+        push!(lmnk,NTuple{4,Int}[])
+        for lmn in lmn[l]
+            push!(lmnk[l], (k,lmn...))
+            k+=1
+        end
+    end
+    return lmnk
+end
+
+function lmn_utor_l(N, ms = 0:N, ns=0)
+    if (ns != 0)
+        lmn = [[(l,m,n) for m in ms for n in ns if abs(m)<=l] for l in 1:N] 
+    else
+        lmn = [[(l,m,n) for m in ms for n in 1:((N-l)÷2+1) if abs(m)<=l]  for l in 1:N]
+    end
+    lmnk = Vector{NTuple{4,Int}}[]
+    k=1
+    for l in eachindex(lmn)
+        push!(lmnk,NTuple{4,Int}[])
+        for lmn in lmn[l]
+            push!(lmnk[l], (k,lmn...))
+            k+=1
+        end
+    end
+    return lmnk
+end
+
+@inline function _inner_tt(is,js,aijs, i,j, l,n,n2)
     
    
-    if n>=n2 
-        aij = -((1 + n2)*sqrt(2 + n2)*sqrt((7 + 2*l + 4*n)*(3 + 2*l + 2*n2))*sqrt(5 + 2*l + 2*n2)*sqrt(7 + 2*l + 4*n2)*(9 + 2*n2*(7 + 2*n2) + l*(6 + 4*n2)))/sqrt((1 + n)*(2 + n)*(3 + 2*l + 2*n)*(5 + 2*l + 2*n)*(1 + n2))/6
-    else
-        #symmetric.
-        nt = n
-        n = n2
-        n2 = nt
-        aij = -((1 + n2)*sqrt(2 + n2)*sqrt((7 + 2*l + 4*n)*(3 + 2*l + 2*n2))*sqrt(5 + 2*l + 2*n2)*sqrt(7 + 2*l + 4*n2)*(9 + 2*n2*(7 + 2*n2) + l*(6 + 4*n2)))/sqrt((1 + n)*(2 + n)*(3 + 2*l + 2*n)*(5 + 2*l + 2*n)*(1 + n2))/6
+    if n==n2 
+        aij = one(l)
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,aij)
+    elseif (n==n2+1)
+        # n = n-1
+        aij = -sqrt(1 - 3/(1 + 2*l + 4*(-1 + n)) + 3/(5 + 2*l + 4*(-1 + n)))/2
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,aij)
+        #symmetric
+        push!(is,j)
+        push!(js,i)
+        push!(aijs,aij)
+
     end
-    push!(is,i)
-    push!(js,j)
-    push!(aijs,ν*aij)
-    # end
         
     return nothing
 end
 
-
-# function _viscous_ss(is,js,aijs, i,j, l,m,n,n2; ν = 1.0) 
+@inline function _inner_ss(is,js,aijs, i,j, l,n,n2)
     
    
-#     if n<n2 
-#         aij = -(n - n2)*(1 + n2)*(5 + 2*l + 2*n + 2*n2)*sqrt(((5 + 2*l + 4*n)*(5 + 2*l + 4*n2))/(1 + n2)^2)
-#         push!(is,i)
-#         push!(js,j)
-#         push!(aijs,ν*aij)
-#     end
-#     # end
+    if n==n2 
+        aij = one(l)
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,aij)
+    elseif (n==n2+1) 
+        # n = n-1
+        aij = -1/2sqrt(1 + 3/(2 + 4*l + 8*(-1 + n)) - 3/(18 + 4*l + 8*(-1 + n)))
+        # aij = -1/(2*sqrt(1 + 3/(2 + 4*l + 8*n) - 3/(18 + 4*l + 8*n)))
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,aij)
+        #symmetric
+        push!(is,j)
+        push!(js,i)
+        push!(aijs,aij)
+    end
         
-#     return nothing
+    return nothing
+end
+
+# function lhs_original(N,m; Ω::T = 1.0) where T
+#     lmn_p = lmn_upol(N,m)
+#     lmn_t = lmn_utor(N,m)
+
+#     np = length(lmn_p)
+#     @show np
+#     nt = length(lmn_t)
+#     nu = np+nt
+
+#     is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+#     for (i,(l,m,n)) in enumerate(lmn_p)
+#         # l,m,n = T.((l,m,n))
+#         for (j, (l2,m2,n2)) in enumerate(lmn_p)
+#             # l2,m2,n2 = T.((l2,m2,n2))
+#             if (l==l2) && (m==m2)
+#                 _inner_ss(is,js,aijs,i,j, T(l),T(n),T(n2))
+#             # j+=1
+#             end
+#         end
+#     end
+
+#     for (i,(l,m,n)) in enumerate(lmn_t)
+#         for (j, (l2,m2,n2)) in enumerate(lmn_t)
+#             if (l==l2) && (m==m2)
+#                 # l2,m2,n2 = T.((l2,m2,n2))
+#                 _inner_tt(is,js,aijs, i+np,j+np, T(l),T(n),T(n2))
+#                 # j+=1
+#             end
+#         end
+#     end
+
+#     LHS = sparse(is,js,aijs, nu, nu)
+#     return LHS
+
 # end
 
-function rhs1(indices, lmn_p,lmn_t,Ω::T,ν::T) where T
-    is,js,aijs = Int[], Int[], Complex{T}[]
-    np = length(lmn_p)
 
-    for i in indices
-        l,m,n = T.(lmn_p[i])
-        push!(is,i)
-        push!(js,i)
-        push!(aijs,_coriolis_ss(l,m; Ω))
-        for (j, (l2,m2,n2)) in enumerate(lmn_p)
-            l2,m2,n2 = T.((l2,m2,n2))
-            if (l==l2) && (m==m2)
-                _viscous_ss(is,js,aijs,i,j, l,m,n,n2; ν)
-            end
-        end
-        for (j,(l2,m2,n2)) in enumerate(lmn_t)
-            l2,m2,n2 = T.((l2,m2,n2))
-            _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
-        end
-    end
-    return is, js, aijs
-end
-
-function rhs2(indices,lmn_p,lmn_t,Ω::T,ν::T) where T
-    is,js,aijs = Int[], Int[], Complex{T}[]
-    np = length(lmn_p)
-
-    for i in indices
-        l,m,n = T.(lmn_t[i])
-        push!(is,i+np)
-        push!(js,i+np)
-        push!(aijs,_coriolis_tt(l,m; Ω))
-        for (j, (l2,m2,n2)) in enumerate(lmn_t)
-            if (l==l2) && (m==m2)
-                l2,m2,n2 = T.((l2,m2,n2))
-                _viscous_tt(is,js,aijs, i+np,j+np, l,m,n,n2; ν)  
-            end
-        end
-        for (j,(l2,m2,n2)) in enumerate(lmn_p)
-            l2,m2,n2 = T.((l2,m2,n2))
-            _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
-        end
-    end
-    
-    return is, js, aijs
-end
-function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
+function lhs(N,m; ns = 0, Ω::T = 1.0) where T
+    lmn_p = lmn_upol(N,m,ns)
+    lmn_t = lmn_utor(N,m,ns)
 
     np = length(lmn_p)
     # @show np
@@ -161,84 +201,186 @@ function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
     is,js,aijs = Int[], Int[], Complex{T}[]
 
 
-    is, js, aijs = rhs1(eachindex(lmn_p), lmn_p, lmn_t, Ω, ν)
-    # for (i,(l,m,n)) in enumerate(lmn_p)
-    #     l,m,n = T.((l,m,n))
-    #     push!(is,i)
-    #     push!(js,i)
-    #     push!(aijs,_coriolis_ss(l,m; Ω))
-    #     for (j, (l2,m2,n2)) in enumerate(lmn_p)
-    #         l2,m2,n2 = T.((l2,m2,n2))
-    #         if (l==l2) && (m==m2)
-    #             _viscous_ss(is,js,aijs,i,j, l,m,n,n2; ν)
-    #         end
-    #     end
-    #     for (j,(l2,m2,n2)) in enumerate(lmn_t)
-    #         l2,m2,n2 = T.((l2,m2,n2))
-    #         _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
-    #     end
-    # end
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        _inner_ss(is,js,aijs,i,i, T(l),T(n),T(n))
+        if n>1
+            _inner_ss(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
+        end
+    end
 
-    # for (i,(l,m,n)) in enumerate(lmn_t)
-    #     l,m,n = T.((l,m,n))
-    #     push!(is,i+np)
-    #     push!(js,i+np)
-    #     push!(aijs,_coriolis_tt(l,m; Ω))
-    #     for (j, (l2,m2,n2)) in enumerate(lmn_t)
-    #         if (l==l2) && (m==m2)
-    #             l2,m2,n2 = T.((l2,m2,n2))
-    #             _viscous_tt(is,js,aijs, i+np,j+np, l,m,n,n2; ν)  
-    #         end
-    #     end
-    #     for (j,(l2,m2,n2)) in enumerate(lmn_p)
-    #         l2,m2,n2 = T.((l2,m2,n2))
-    #         _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
-    #     end
-    # end
+    for (i,(l,m,n)) in enumerate(lmn_t)
+        _inner_tt(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
+        if n>1
+            _inner_tt(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
+        end
+    end
 
-    is2, js2, aijs2 = rhs2(eachindex(lmn_t), lmn_p, lmn_t, Ω, ν)
-    append!(is,is2)
-    append!(js,js2)
-    append!(aijs,aijs2)
-    RHS = sparse(is,js,aijs, nu, nu)
-    return RHS
+    LHS = sparse(is,js,aijs, nu, nu)
+    return LHS
 
 end
 
-# function dist_ind(indices, np)
-#     ni = indices÷np
+
+@inline function _coriolis_tt(is,js,aijs, i,j, l,m,n,n2; Ω = 2) 
+    if n==n2
+        aij = Ω*im*m/(2l*(l+1))
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,Ω*aij)
+    elseif (n==n2+1)
+        n = n-1
+        aij = -im*m/(2l*(1 + l)*sqrt(1 + 3/(2*(-1 + 2*l + 4*n)) - 3/(14 + 4*l + 8*n)))
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,Ω*aij)
+    elseif (n==n2-1)
+        n = n+1
+        aij = -im*m*sqrt(1 - 3/(-3 + 2*l + 4*n) + 3/(1 + 2*l + 4*n))/(2l*(1 + l))
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,Ω*aij)
+    end
+
+end
+@inline function _coriolis_ss(is,js,aijs, i,j, l,m,n,n2; Ω = 2) 
+    if n==n2
+        aij = Ω*im*m/(2l*(l+1))
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,Ω*aij)
+    elseif (n==n2+1)
+        n = n-1
+        aij = -im*m/(2l*(1 + l)*sqrt(1 + 3/(2 + 4*l + 8*n) - 3/(18 + 4*l + 8*n)))
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,Ω*aij)
+    elseif (n==n2-1)
+        n=n+1
+        aij = -im*m*sqrt(1 - 3/(-1 + 2*l + 4*n) + 3/(3 + 2*l + 4*n))/(2l*(1 + l))    
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,Ω*aij)
+    end
+
+end
 
 
-function rhsd(N,m; Ω::T = 2.0, ν::T = 1.0) where T
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
+@inline function _coriolis_ts(is,js,aijs, i,j, l,l2,m,m2,n,n2; Ω = 2) 
+    if (m != m2)
+        return nothing
+    end
+    if (l==l2+1)
+        if n==n2
+            aij = ((-1 + l^2)*sqrt(((l - m)*(l + m))/(1 - 5*l^2 + 4*l^4)))/l
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif (n == n2-1)
+            aij = -((-1 + l^2)*sqrt(((l - m)*(l + m)*(-1 + 2*l + 4*n)*(7 + 2*l + 4*n))/((1 - 5*l^2 + 4*l^4)*(1 + 2*l + 4*n)*(5 + 2*l + 4*n))))/l/2 
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif (n == n2+1)
+            aij = -((-1 + l^2)*sqrt((l - m)*(l + m))*sqrt(-5 + 2*l + 4*n))/(l*sqrt(((1 - 5*l^2 + 4*l^4)*(-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/(3 + 2*l + 4*n)))/2
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        end
+    elseif (l==l2-1)
+        if n==n2
+            aij = -sqrt((l*(2 + l)*(1 + l - m)*(1 + l + m)*(-1 + 2*l + 4*n)*(7 + 2*l + 4*n))/((3 + 4*l*(2 + l))*(1 + 2*l + 4*n)*(5 + 2*l + 4*n)))/(1 + l)/2
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif n==n2+1
+            aij = sqrt((l*(2 + l)*(1 + l - m)*(1 + l + m))/(3 + 4*l*(2 + l)))/(1 + l)
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif n==n2+2
+            aij = -(sqrt(l*(2 + l)*(1 + l - m)*(1 + l + m))*sqrt(-5 + 2*l + 4*n))/((1 + l)*sqrt(((3 + 4*l*(2 + l))*(-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/(3 + 2*l + 4*n)))/2
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        end
+       
+    end
+    return nothing
+end
 
-    np = length(lmn_p)
-    # @show np
-    nt = length(lmn_t)
-    nu = np+nt 
-    f1 = i -> rhs1(i,lmn_p, lmn_t, Ω, ν)
-    dist_indices = getindex.(distribute(lmn_p).indices,1)
-    ijaijs = pmap(f1, dist_indices)
-    # @show ijaijs[1]
-    is,js,aijs = vcat(getindex.(ijaijs,1)...),vcat(getindex.(ijaijs,2)...) , vcat(getindex.(ijaijs,3)...)
+@inline function _coriolis_st(is,js,aijs, i,j, l2,l,m2,m,n2,n; Ω = 2) 
+    if (m != m2)
+        return nothing
+    end
+    if (l==l2+1)
+        if n==n2
+            aij = -((-1 + l^2)*sqrt(((l - m)*(l + m))/(1 - 5*l^2 + 4*l^4)))/l
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif (n == n2-1)
+            aij = ((-1 + l^2)*sqrt(((l - m)*(l + m)*(-1 + 2*l + 4*n)*(7 + 2*l + 4*n))/((1 - 5*l^2 + 4*l^4)*(1 + 2*l + 4*n)*(5 + 2*l + 4*n))))/l/2 
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif (n == n2+1)
+            aij = ((-1 + l^2)*sqrt((l - m)*(l + m))*sqrt(-5 + 2*l + 4*n))/(l*sqrt(((1 - 5*l^2 + 4*l^4)*(-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/(3 + 2*l + 4*n)))/2
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        end
+    elseif (l==l2-1)
+        if n==n2
+            aij = sqrt((l*(2 + l)*(1 + l - m)*(1 + l + m)*(-1 + 2*l + 4*n)*(7 + 2*l + 4*n))/((3 + 4*l*(2 + l))*(1 + 2*l + 4*n)*(5 + 2*l + 4*n)))/(1 + l)/2
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif n==n2+1
+            aij = -sqrt((l*(2 + l)*(1 + l - m)*(1 + l + m))/(3 + 4*l*(2 + l)))/(1 + l)
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        elseif n==n2+2
+            aij = (sqrt(l*(2 + l)*(1 + l - m)*(1 + l + m))*sqrt(-5 + 2*l + 4*n))/((1 + l)*sqrt(((3 + 4*l*(2 + l))*(-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/(3 + 2*l + 4*n)))/2
+            push!(is,i)
+            push!(js,j)
+            push!(aijs,Ω*aij)
+        end
+       
+    end
+    return nothing
+end
 
-    f2 = i -> rhs2(i,lmn_p, lmn_t, Ω, ν)
-    dist_indices = getindex.(distribute(lmn_t).indices, 1)
-    ijaijs2 = pmap(f2, dist_indices)
-    is2, js2, aijs2 = vcat(getindex.(ijaijs2,1)...),vcat(getindex.(ijaijs2,2)...) , vcat(getindex.(ijaijs2,3)...)
 
+@inline function _viscous_tt(is,js,aijs, i,j, l,m,n,n2; ν = 1.0) 
     
-    append!(is,is2)
-    append!(js,js2)
-    append!(aijs,aijs2)
- 
-    RHS = sparse(is, js, aijs, nu, nu)
-    return RHS
-
+   
+    if n==n2 
+        aij = -((-1 + 2*l + 4*n)*(3 + 2*l + 4*n))/2
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,ν*aij)
+    end
+        
+    return nothing
 end
 
-function rhst(N,m; Ω = 2.0, ν = 1.0)
+
+@inline function _viscous_ss(is,js,aijs, i,j, l,m,n,n2; ν = 1.0) 
+    
+   
+    if n==n2 
+        aij = -((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
+        push!(is,i)
+        push!(js,j)
+        push!(aijs,ν*aij)
+    end
+    # end
+        
+    return nothing
+end
+
+function rhs(N,m; Ω::T = 2.0, ν::T = 1.0) where T
     lmn_p = lmn_upol(N,m)
     lmn_t = lmn_utor(N,m)
 
@@ -247,85 +389,35 @@ function rhst(N,m; Ω = 2.0, ν = 1.0)
     nt = length(lmn_t)
     nu = np+nt
 
-    nth = Threads.nthreads()
-
-    
-
-    is, js, aijs = [Int[] for _=1:nth] , [Int[] for _=1:nth], [ComplexF64[] for _=1:nth]
-
-    @inbounds @sync Threads.@threads for i in shuffle(eachindex(lmn_p))
-        # (i,(l,m,n)) in enumerate(lmn_p)
-        it = Threads.threadid()
-        l,m,n = Float64.(lmn_p[i])
-        push!(is[it],i)
-        push!(js[it],i)
-        push!(aijs[it],_coriolis_ss(l,m; Ω))
-        for (j, (l2,m2,n2)) in enumerate(lmn_p)
-            l2,m2,n2 = Float64.((l2,m2,n2))
-            if (l==l2) && (m==m2)
-                _viscous_ss(is[it],js[it],aijs[it],i,j, l,m,n,n2; ν)
-            end
-        end
-        for (j,(l2,m2,n2)) in enumerate(lmn_t)
-            l2,m2,n2 = Float64.((l2,m2,n2))
-            _coriolis_st(is[it],js[it],aijs[it], i,j+np, l,l2,m,m2,n,n2; Ω)
-        end
-    end
-
-    @inbounds @sync Threads.@threads for i in shuffle(eachindex(lmn_t))
-        it = Threads.threadid()
-        l,m,n = Float64.(lmn_t[i])
-        push!(is[it],i)
-        push!(js[it],i)
-        push!(aijs[it],_coriolis_tt(l,m; Ω))
-        for (j, (l2,m2,n2)) in enumerate(lmn_t)
-            if (l==l2) && (m==m2)
-                l2,m2,n2 = Float64.((l2,m2,n2))
-                _viscous_tt(is[it],js[it],aijs[it], i+np,j+np, l,m,n,n2; ν)  
-            end
-        end
-        for (j,(l2,m2,n2)) in enumerate(lmn_p)
-            l2,m2,n2 = Float64.((l2,m2,n2))
-            _coriolis_ts(is[it],js[it],aijs[it], i+np,j, l,l2,m,m2,n,n2; Ω)
-        end
-    end
-
-    RHS = sparse(vcat(is...),vcat(js...),vcat(aijs...), nu, nu)
-    return RHS
-
-end
-
-
-
-function rhs_coriolis(N,m; Ω = 2.0)
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
-
-    np = length(lmn_p)
-    nt = length(lmn_t)
-    nu = np+nt
-
-    is,js,aijs = Int[], Int[], ComplexF64[]
+    is,js,aijs = Int[], Int[], Complex{T}[]
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
-        l,m,n = Float64.((l,m,n))
-        push!(is,i)
-        push!(js,i)
-        push!(aijs,_coriolis_ss(l,m; Ω))
+        l,m,n = T.((l,m,n))
+        for (j, (l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = T.((l2,m2,n2))
+            if (l==l2) && (m==m2)
+                _coriolis_ss(is,js,aijs,i,j, l,m,n,n2; Ω)
+                _viscous_ss( is,js,aijs,i,j, l,m,n,n2; ν)
+            end
+        end
         for (j,(l2,m2,n2)) in enumerate(lmn_t)
-            l2,m2,n2 = Float64.((l2,m2,n2))
+            l2,m2,n2 = T.((l2,m2,n2))
             _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
-        l,m,n = Float64.((l,m,n))
-        push!(is,i+np)
-        push!(js,i+np)
-        push!(aijs,_coriolis_tt(l,m; Ω))
+        l,m,n = T.((l,m,n))
+        for (j, (l2,m2,n2)) in enumerate(lmn_t)
+            if (l==l2) && (m==m2)
+                l2,m2,n2 = T.((l2,m2,n2))
+                _coriolis_tt(is,js,aijs, i+np,j+np, l,m,n,n2; Ω)
+                _viscous_tt( is,js,aijs, i+np,j+np, l,m,n,n2; ν)  
+            end
+        end
         for (j,(l2,m2,n2)) in enumerate(lmn_p)
-            l2,m2,n2 = Float64.((l2,m2,n2))
+            l2,m2,n2 = T.((l2,m2,n2))
             _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
         end
     end
@@ -335,34 +427,133 @@ function rhs_coriolis(N,m; Ω = 2.0)
 
 end
 
-function rhs_viscosity(N,m; ν = 1.0)
-    lmn_p = lmn_upol(N,m)
-    lmn_t = lmn_utor(N,m)
+@inline function rhs_coriolis_1(indices,lmn_p, lmn_t; Ω::T = 2.0 ) where T
 
     np = length(lmn_p)
     nt = length(lmn_t)
     nu = np+nt
 
-    is,js,aijs = Int[], Int[], ComplexF64[]
+    is,js,aijs = Int[], Int[], Complex{T}[]
 
 
-    for (i,(l,m,n)) in enumerate(lmn_p)
+    for i in indices
+        # (i,(l,m,n)) in enumerate(lmn_p)
+        l,m,n = T.(lmn_p[i])
         for (j, (l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = T.((l2,m2,n2))
             if (l==l2) && (m==m2)
-                l,m,n,n2 = Float64.((l,m,n,n2))
-                _viscous_ss(is,js,aijs,i,j, l,m,n,n2; ν)
+                _coriolis_ss(is,js,aijs,i,j, l,m,n,n2; Ω)
             end
+        end
+        for (j,(l2,m2,n2)) in enumerate(lmn_t)
+            l2,m2,n2 = T.((l2,m2,n2))
+            _coriolis_st(is,js,aijs, i,j+np, l,l2,m,m2,n,n2; Ω)
         end
     end
 
-    for (i,(l,m,n)) in enumerate(lmn_t)
+    return is, js, aijs
+end
+
+
+@inline function rhs_coriolis_2(indices,lmn_p, lmn_t; Ω::T = 2.0 ) where T
+
+    np = length(lmn_p)
+    nt = length(lmn_t)
+    nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    for i in indices
+        l,m,n = T.(lmn_t[i])
         for (j, (l2,m2,n2)) in enumerate(lmn_t)
             if (l==l2) && (m==m2)
-                l,m,n,n2 = Float64.((l,m,n,n2))
-                _viscous_tt(is,js,aijs, i+np,j+np, l,m,n,n2; ν)  
+            l2,m2,n2 = T.(lmn_t[j])
+            _coriolis_tt(is,js,aijs, i+np,j+np, l,m,n,n2; Ω)
+            end
+        end
+        for (j,(l2,m2,n2)) in enumerate(lmn_p)
+            l2,m2,n2 = T.(lmn_p[j])
+            _coriolis_ts(is,js,aijs, i+np,j, l,l2,m,m2,n,n2; Ω)
+        end
+    end
+
+    return is, js, aijs
+end
+
+
+@inline function _rhs_coriolis_1(N, np, lmn_p_l, lmn_t_l; Ω::T = 2.0 ) where T
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+    for (l,ilmn) in enumerate(lmn_p_l)
+        for (i,_,m,n) in ilmn
+            for (j,l2,m2,n2) in lmn_p_l[l]
+                if (m==m2)
+                    _coriolis_ss(is,js,aijs, i,j, T(l),T(m),T(n),T(n2); Ω)
+                end
+            end
+            lrange = (l== 1) ? [2] : ((l==N) ? [l-1] : [l-1,l+1])
+            for lmn2 in view(lmn_t_l,lrange)
+                # l2,m2,n2 = T.(lmn_p[j])
+                for (j,l2,m2,n2) in lmn2
+                    _coriolis_st(is,js,aijs, i,j+np, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
+                end
             end
         end
     end
+
+    return is, js, aijs
+end
+@inline function _rhs_coriolis_2(N, np, lmn_p_l, lmn_t_l; Ω::T = 2.0 ) where T
+
+    # np = length(lmn_p)
+    # nt = length(lmn_t)
+    # nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    for (l,ilmn) in enumerate(lmn_t_l)
+        for (i,_,m,n) in ilmn
+            # l,m,n = T.((l,m,n))
+            for (j,l2,m2,n2) in lmn_t_l[l]
+                if (m==m2)
+                # l2,m2,n2 = T.(lmn_t[j])
+                _coriolis_tt(is,js,aijs, i+np,j+np, T(l),T(m),T(n),T(n2); Ω)
+                end
+            end
+            # lrange = l == 1 ? [1,2] : (l-1:l+1)
+            lrange = (l== 1) ? [2] : ((l>=N-1) ? [l-1] : [l-1,l+1])
+            for lmn2 in view(lmn_p_l,lrange)
+                # l2,m2,n2 = T.(lmn_p[j])
+                for (j,l2,m2,n2) in lmn2
+                    _coriolis_ts(is,js,aijs, i+np,j, T(l),T(l2),T(m),T(m2),T(n),T(n2); Ω)
+                end
+            end
+        end
+    end
+
+    return is, js, aijs
+end
+function rhs_coriolis(N,m; ns = 0, Ω::T = 2.0) where T
+    lmn_p = lmn_upol(N,m,ns)
+    lmn_t = lmn_utor(N,m,ns)
+    lmn_p_l = lmn_upol_l(N,m,ns)
+    lmn_t_l = lmn_utor_l(N,m,ns)
+
+    np = length(lmn_p)
+    nt = length(lmn_t)
+    nu = np+nt
+
+    # is, js, aijs = rhs_coriolis_1(eachindex(lmn_p), lmn_p, lmn_t; Ω )
+    # is2, js2, aijs2 = rhs_coriolis_2(eachindex(lmn_t), lmn_p, lmn_t; Ω )
+    is, js, aijs = _rhs_coriolis_1(N, np, lmn_p_l, lmn_t_l; Ω )
+    is2, js2, aijs2 = _rhs_coriolis_2(N, np, lmn_p_l, lmn_t_l; Ω )
+
+    append!(is,is2)
+    append!(js,js2)
+    append!(aijs,aijs2)
 
     RHS = sparse(is,js,aijs, nu, nu)
     return RHS
@@ -370,4 +561,40 @@ function rhs_viscosity(N,m; ν = 1.0)
 end
 
 
-end #module
+function rhs_viscosity(N,m; ns = 0, ν::T = 1.0) where T
+    lmn_p = lmn_upol(N,m,ns)
+    lmn_t = lmn_utor(N,m,ns)
+
+    np = length(lmn_p)
+    nt = length(lmn_t)
+    nu = np+nt
+
+    is,js,aijs = Int[], Int[], Complex{T}[]
+
+
+    for (i,(l,m,n)) in enumerate(lmn_p)
+        l,m,n = T.((l,m,n))
+        # for (j, (l2,m2,n2)) in enumerate(lmn_p)
+        #     l2,m2,n2 = T.((l2,m2,n2))
+        #     if (l==l2) && (m==m2) && (n==n2)
+        _viscous_ss( is,js,aijs,i,i, l,m,n,n; ν)
+        #     end
+        # end
+    end
+
+    for (i,(l,m,n)) in enumerate(lmn_t)
+        l,m,n = T.((l,m,n))
+        # for (j, (l2,m2,n2)) in enumerate(lmn_t)
+        #     if (l==l2) && (m==m2) && (n==n2)
+        #         l2,m2,n2 = T.((l2,m2,n2))
+        _viscous_tt( is,js,aijs, i+np,i+np, l,m,n,n; ν)  
+        #     end
+        # end
+    end
+
+    RHS = sparse(is,js,aijs, nu, nu)
+    return RHS
+
+end
+
+end

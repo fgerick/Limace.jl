@@ -1,19 +1,66 @@
 module Bases
 
+using DocStringExtensions
+
 export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
-export Basis, isaxisymmetric, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
-export nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t
-
-abstract type BoundaryCondition; end
-
-struct NoBC <: BoundaryCondition; end
-struct InviscidBC <: BoundaryCondition; end
-struct NoSlipBC <: BoundaryCondition; end
-struct PerfectlyConductingBC <: BoundaryCondition; end
-struct InsulatingBC <: BoundaryCondition; end
+export Basis, BasisElement, isaxisymmetric, Helmholtz, Poloidal, Toroidal
+# export nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
 import Base: length
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+abstract type BoundaryCondition; end
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+struct NoBC <: BoundaryCondition; end
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+struct InviscidBC <: BoundaryCondition; end
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+struct NoSlipBC <: BoundaryCondition; end
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+struct PerfectlyConductingBC <: BoundaryCondition; end
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+struct InsulatingBC <: BoundaryCondition; end
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
 Base.@kwdef struct Basis{T}
 	N::Int #truncation degree
     m::UnitRange{Int} = -N:N #spherical harmonic orders
@@ -28,7 +75,7 @@ Basis{T}(N::Int, m::Int, n::UnitRange{Int}, BC::BoundaryCondition) where T = Bas
 isaxisymmetric(b::Basis) = length(b.m) == 1
 
 
-function length(b::Basis)
+@inline function length(b::Basis)
 	lmn_ps = lmn_p(b)
     lmn_ts = lmn_t(b)
 
@@ -38,11 +85,11 @@ function length(b::Basis)
 	return nu
 end
 
-function np(b::Basis)
+@inline function np(b::Basis)
 	return length(lmn_p(b))
 end
 
-function nt(b::Basis)
+@inline function nt(b::Basis)
 	return length(lmn_t(b))
 end
 
@@ -52,7 +99,6 @@ end
     else
         return b.n
     end
-	# @error "define nrange_p(b::Basis, l)!"
 end
 
 @inline function nrange_t(b::Basis, l)
@@ -61,37 +107,40 @@ end
     else
         return b.n
     end
-	# @error "define nrange_p(b::Basis, l)!"
 end
 
-function _nrange_p(b::Basis, l)
+@inline function _nrange_p(b::Basis, l)
 	@error "define _nrange_p(b::Basis, l)!"
 end
 
-function _nrange_t(b::Basis, l)
+@inline function _nrange_t(b::Basis, l)
 	@error "define _nrange_t(b::Basis, l)!"
 end
 
-function nrange_p_bc(b::Basis, l)
-	@error "define nrange_p(b::Basis, l)!"
+@inline function nrange_p_bc(b::T, l) where T<:Basis
+    nrange = nrange_p(b,l)
+    if typeof(b.BC) != NoBC
+        return nrange
+    else
+        nbc = length(bcs_p(T))
+        return first(nrage):(last(nrange)-nbc)
+    end
 end
 
-function nrange_t_bc(b::Basis, l)
-	@error "define nrange_t(b::Basis, l)!"
+@inline function nrange_t_bc(b::T, l) where T<:Basis
+    nrange = nrange_t(b,l)
+    if typeof(b.BC) != NoBC
+        return nrange
+    else
+        nbc = length(bcs_t(T))
+        return first(nrage):(last(nrange)-nbc)
+    end
 end
 
-# function lmn_p(b::T) where T<:Basis
-# 	@error "lmn_p(b) not defined for basis of type $T"
-# end
-
-# function lmn_t(b::Basis)
-# end
-
-
-function lpmax(b::Basis)
+@inline function lpmax(b::Basis)
 end
 
-function ltmax(b::Basis)
+@inline function ltmax(b::Basis)
 end
 
 function _lmn_l(lmn, L::Int)
@@ -157,6 +206,30 @@ function lmn_t(b::Basis)
     end
 end
 
+abstract type Helmholtz end
+struct Poloidal <: Helmholtz; end
+struct Toroidal <: Helmholtz; end
+
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+struct BasisElement{TB<:Basis,PT<:Helmholtz,T<:Number}
+    lmn::NTuple{3,Int}
+    factor::T
+end
+
+BasisElement(::TB, ::Type{PT}, lmn::NTuple{3,Int}, factor::T) where {TB<:Basis, PT<:Helmholtz, T<:Number} = BasisElement{TB,PT,T}(lmn, factor)
+BasisElement(::Type{TB}, ::Type{PT}, lmn::NTuple{3,Int}, factor::T) where {TB<:Basis, PT<:Helmholtz, T<:Number} = BasisElement{TB,PT,T}(lmn, factor)
+
+
+s(b::T, l, m, n, r) where T<:Basis = s(T,l,m,n,r)
+t(b::T, l, m, n, r) where T<:Basis = t(T,l,m,n,r)
+s(b::BasisElement{T,Poloidal}, r) where T = s(T,b.lmn..., r)
+t(b::BasisElement{T,Toroidal}, r) where T = t(T,b.lmn..., r)
 
 
 end #module

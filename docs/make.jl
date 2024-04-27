@@ -1,5 +1,5 @@
 using Limace
-using Documenter
+using Documenter, DocStringExtensions
 
 DocMeta.setdocmeta!(Limace, :DocTestSetup, :(using Limace); recursive=true)
 
@@ -16,6 +16,19 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Poly" => "poly.md",
+        "Bases" => ["Basis definition" => "bases/bases.md", 
+                    "InviscidBasis" => "bases/inviscid.md",
+                    "InsulatingBasis" => "bases/insulating.md",
+        ],
+        "Forces" => ["Summary" => "forces/index.md", 
+                    "Coriolis" => "forces/coriolis.md",
+                    "Diffusion" => "forces/diffusion.md",
+                    "Induction" => "forces/induction.md",
+                    "Inertia" => "forces/inertial.md",
+                    "Lorentz" => "forces/lorentz.md",
+        ],
+        "Misc" => "misc.md"
     ],
 )
 

@@ -1,4 +1,7 @@
+"""
+$(TYPEDSIGNATURES)
 
+"""
 function _inertial_ss(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     la,ma,na = lmna
     lb,mb,nb = lmnb
@@ -12,6 +15,10 @@ function _inertial_ss(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     return aij
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+"""
 function _inertial_tt(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     la,ma,na = lmna
     lb,mb,nb = lmnb
@@ -25,7 +32,10 @@ function _inertial_tt(::Type{T}, lmna, lmnb, r,wr) where T<:Basis
     return aij
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+"""
 @inline function inertial(b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 
     is, js, aijs = Int[], Int[], Complex{T}[]

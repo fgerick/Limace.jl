@@ -1,5 +1,3 @@
-using SparseArrays
-# DP.__wiginit(100)
 
 function eigstarget(A, B, target; kwargs...)
     P = lu(A - target * B)
