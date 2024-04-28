@@ -121,36 +121,6 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Derivative of \$r^lJ\$, where \$J\$ is a Jacobi polynomial.
-"""
-@inline function d_rlJ(l, r, rl, J, dJ)
-    # rl = r^l
-	return rl*(l/r*J + dJ)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Second derivative of \$r^lJ\$, where \$J\$ is a Jacobi polynomial.
-"""
-@inline function d2_rlJ(l, r, rl, J, dJ, d2J)
-    # rl = r^l
-	return rl*(l*(l-1)/r^2*J + 2l/r*dJ + d2J)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Third derivative of \$r^lJ\$, where \$J\$ is a Jacobi polynomial.
-"""
-@inline function d3_rlJ(l, r, rl, J, dJ, d2J, d3J)
-    # rl = r^l
-	return rl*(l*(l-1)*(l-2)/r^3*J + 3l*(l-1)/r^2*dJ + 3l/r*d2J + d3J)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
 Spherical harmonic in full norm, i.e. \$\\int Y_l^mY_i^j\\, \\sin(\\theta)\\,\\mathrm{d}\\theta\\mathrm{d}\\phi = \\delta_{li}\\delta_{mj}\$.
 """
 function ylm(ℓ::Int, m::Int, θ, φ) #norm -> ∫YₗᵐYᵢʲsin(θ)dθdϕ = δₗᵢδₘⱼ
@@ -183,21 +153,6 @@ function dylmdϕ(l,m,θ,ϕ)
     return im*m*ylm(l,m,θ,ϕ)
 end
 
-
-function poloidal_discretize(s,l,m,n,r,θ,ϕ)
-    ur = l*(l+1)*s(l,m,n,r)*ylm(l,m,θ,ϕ)/r
-    uθ = 1/r*∂(r->s(l,m,n,r)*r,r)*dylmdθ(l,m,θ,ϕ)
-    uϕ = 1/(r*sin(θ))*∂(r->s(l,m,n,r)*r,r)*dylmdϕ(l,m,θ,ϕ)
-    return (ur,uθ,uϕ)
-end
-
-function toroidal_discretize(t,l,m,n,r,θ,ϕ)
-    ur = 0.0
-    uθ = 1/sin(θ)*t(l,m,n,r)*dylmdϕ(l,m,θ,ϕ)
-    uϕ = -t(l,m,n,r)*dylmdθ(l,m,θ,ϕ)
-
-    return (ur,uθ,uϕ)
-end
 
 """
 $(TYPEDSIGNATURES)

@@ -37,12 +37,10 @@ using .InviscidBasisNoBC
 include("bases/Insulating.jl")
 @reexport using .InsulatingBasis
 
+include("bases/Viscous.jl")
+@reexport using .ViscousBasis
+
 include("forces/specializations.jl")
-# include("bases/viscous.jl")
-# include("bases/viscous_chen.jl")
 
-# include("discrete/DiscretePart.jl")
-
-# include("mhdproblem.jl")
 
 end

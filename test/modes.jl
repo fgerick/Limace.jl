@@ -370,183 +370,205 @@ end
 #     @test sort(imag.(λ)) ≈ sort(imag.(λ_mire))
 # end
 
-# @testset "Luo & Jackson 2022 mode" begin
+@testset "Luo & Jackson 2022 mode" begin
 
-#     using Limace.MHDProblem: rhs, lhs
-#     N = 50
-#     m = 0
-#     Le = 1e-4
-#     Lu = 2 / Le
+    import Limace.Bases
 
-#     lmnb0 = (2, 0, 3)
-#     lj22(l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
-#     # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)*5/14*sqrt(3/182)
+    N = 50
+    m = 0
+    Le = 1e-4
+    Lu = 2 / Le
 
-#     # lmnb0 = (1,0,1)
-#     # lj22(l,m,n,r) = r*(5-3r^2)*sqrt(7/46)/2
+    Limace.Poly.__wiginit(N)
 
-#     LHS = lhs(N, m)
-#     RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
 
-#     target = -0.0066 - 1.033im
-#     # target = -0.042+0.66im
-#     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+    struct LJ22; end
 
-#     lj22_n350 = -0.0065952461 - 1.0335959942im
+    Limace.Bases.s(::Type{Basis{LJ22}}, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
 
-#     abs(lj22_n350-first(evals))
-#     @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
+    B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
 
+    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
 
-# end
+    RHSc = Limace.coriolis(u)/Le
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)/Lu
 
-# @testset "Luo & Jackson 2022 mode pre" begin
+    RHS = [RHSc RHSl
+           RHSi RHSd]
+    # RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
 
-#     using Limace.MHDProblem: rhs_pre, lhs
-# 	# DP = Limace.DiscretePart
-#     N = 50
-#     m = 0
-#     Le = 1e-4
-#     Lu = 2 / Le
+    target = -0.0066 - 1.033im
+    # target = -0.042+0.66im
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
 
-#     lmnb0 = (2, 0, 3)
-#     lj22(l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
-# 	lj22(js0,rls,l,m,n,r,i) = lj22(l,m,n,r[i])
-# 	d_lj22 = (js0, rls, l,m,n,r,i)->DP.∂(r->lj22(l,m,n,r),r[i])
-# 	d2_lj22 = (js0,rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r[i])
-# 	d3_lj22 = (js0, rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r),r[i])
+    lj22_n350 = -0.0065952461 - 1.0335959942im
 
+    abs(lj22_n350-first(evals))
+    @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
 
-#     LHS = lhs(N, m)
-#     RHS = rhs_pre(N, m; Ω = -2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22, d_smfb0 = d_lj22, d2_smfb0 = d2_lj22, d3_smfb0 = d3_lj22, s_mf_b0 = lj22)
+    Limace.Poly.wig_temp_free()
 
-#     target = -0.0065952461 - 1.0335959942im
-#     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+end
+
+@testset "Luo & Jackson 2022 dipole mode" begin
+
+    N = 130
+    m = 0
 
 
-#     @test any(isapprox.(evals, target, atol = 1e-7))
+	Le = 1e-3
+	Lu = 2 / Le
+
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+
+    B0 = BasisElement(Basis{Insulating}, Poloidal, (1,0,1), sqrt(30/23))
+
+    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
+
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u)/Le
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)/Lu
+    Limace.Poly.wig_temp_free()
+
+    RHS = [RHSc RHSl
+           RHSi RHSd]
+
+	target = -0.041950864156977755 - 0.6599458208985812im
+	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+	@test isapprox(first(evals), target, atol = 1e-6)
+
+end
 
 
-# end
-
-# @testset "Luo & Jackson 2022 dipole mode" begin
-
-#     using Limace.MHDProblem: rhs_pre, lhs
-
-#     N = 130
-#     m = 0
-# 	Le = 1e-3
-# 	Lu = 2 / Le
-
-# 	lmnb0 = (1,0,1)
-# 	B0fac = sqrt(30/23) #1/sqrt(2)
-
-# 	LHS = lhs(N, m)
-# 	RHS = rhs_pre(N, m; Ω = -2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
-# 	target = -0.041950864156977755 - 0.6599458208985812im
-# 	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
-# 	@test isapprox(first(evals), target, atol = 1e-6)
-
-# end
+@testset "Luo, Marti & Jackson 2022 s₁⁰" begin
 
 
-# @testset "Luo, Marti & Jackson 2022 s₁⁰" begin
+    N = 40
+    m = 1
+
+    Eη = 1e-9
+    Le = 2√(Eη)
+    Lu = 2 / Le
+
+    lmnb0 = (1, 0, 1)
+    B0fac = -4sqrt(pi/35)
+  
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+    B0 = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0fac)
+
+    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSb = sparse(Limace.inertial(b))
+    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
+
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u; Ω = 1.0)
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)
+    Limace.Poly.wig_temp_free()
+
+    RHS = [RHSc RHSl
+           RHSi RHSd]
+
+    target = -287.9448432-115.2081087im
+
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+
+    @test isapprox(first(evals), target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
 
 
-#     using Limace.MHDProblem: rhs, rhs_pre, lhs
-# 	DP = Limace.DiscretePart
-#     N = 40
-#     m = 1
-#     Eη = 1e-9
-#     Le = 2√(Eη)
-#     Lu = 2 / Le
+end
 
-#     lmnb0 = (1, 0, 1)
+@testset "Luo, Marti & Jackson 2022 t₁⁰" begin
 
 
-#     B0fac = -4sqrt(pi/35)
+    N = 70
+    m = 3
+    Eη = 1e-9
+    Le = 2√(Eη)
+    Lu = 2 / Le
+
+    lmnb0 = (1, 0, 1)
+
+
+    B0fac = -4sqrt(pi/35)
     
-#     LHS = lhs(N, m)
-#     nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-#     LHS[1:nu,1:nu] .*=Eη
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+    B0 = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fac)
 
-#     RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = true, B0fac)
+    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSb = sparse(Limace.inertial(b))
+    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u; Ω = 1.0)
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)
+    Limace.Poly.wig_temp_free()
 
-#     target = -287.9448432-115.2081087im
-
-#     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
-
-#     @test isapprox(first(evals), target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
-
-
-# end
-
-# @testset "Luo, Marti & Jackson 2022 t₁⁰" begin
-
-
-#     using Limace.MHDProblem: rhs, rhs_pre, lhs
-# 	DP = Limace.DiscretePart
-#     N = 70
-#     m = 3
-#     Eη = 1e-9
-#     Le = 2√(Eη)
-#     Lu = 2 / Le
-
-#     lmnb0 = (1, 0, 1)
+    RHS = [RHSc RHSl
+           RHSi RHSd]
 
 
-#     B0fac = -4sqrt(pi/35)
-    
-#     LHS = lhs(N, m)
-#     nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-#     LHS[1:nu,1:nu] .*=Eη
+    target = -742.7652176+684.132152im
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
 
-#     RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = false, B0fac)
+    @test isapprox(first(evals), target, atol = 1e-4) #at N=70 we match the 1e-4 converged digits of N=120 of LMJ2022
 
 
-#     target = -742.7652176+684.132152im
-#     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+end
 
-#     @test isapprox(first(evals), target, atol = 1e-4) #at N=70 we match the 1e-4 converged digits of N=120 of LMJ2022
-
-
-# end
-
-# @testset "Luo, Marti & Jackson 2022 t₁⁰s₁⁰" begin
+@testset "Luo, Marti & Jackson 2022 t₁⁰s₁⁰" begin
 
 
-#     using Limace.MHDProblem: rhs, rhs_pre, lhs
-# 	DP = Limace.DiscretePart
-#     N = 70
-#     m = 5
-#     Eη = 1e-9
-#     Le = 2√(Eη)
-#     Lu = 2 / Le
+    N = 70
+    m = 5
+    Eη = 1e-9
+    Le = 2√(Eη)
+    Lu = 2 / Le
 
-#     lmnb0 = (1, 0, 1)
+    lmnb0 = (1, 0, 1)
 
 
-#     B0fact = -1/√2
-#     B0facp = -√(15/23)
-    
-#     LHS = lhs(N, m)
-#     nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-#     LHS[1:nu,1:nu] .*=Eη
+    B0fact = -1/√2
+    B0facp = -√(15/23)
+   
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+    B0t = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fact)
+    B0p = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0facp)
 
-#     RHSp = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = true, B0fac=B0facp)
+    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSb = sparse(Limace.inertial(b))
+    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
-#     RHSt = rhs_pre(N, m; Ω = 0.0, η = 0.0, lmnb0, B0poloidal = false, B0fac=B0fact)
-#     RHS = RHSp+RHSt
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u; Ω = 1.0)
+    RHSl = Limace.lorentz(u,b,B0t) + Limace.lorentz(u,b, B0p)
+    RHSi = Limace.induction(b,u,B0t) + Limace.induction(b,u, B0p)
+    RHSd = Limace.diffusion(b)
+    Limace.Poly.wig_temp_free()
+
+    RHS = [RHSc RHSl
+    RHSi RHSd]
+
+    target = -2134.0 + 2555.2im
+    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+
+    @test isapprox(first(evals), target, atol = 1e-1) # only one significant digit available
 
 
-#     target = -2134.0 + 2555.2im
-#     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
-
-#     @test isapprox(first(evals), target, atol = 1e-1) # only one significant digit available
-
-
-# end
+end
 
 # @testset "Distributed vs serial" begin
 #     addprocs(4; exeflags=`--project=$(Base.active_project())`)
