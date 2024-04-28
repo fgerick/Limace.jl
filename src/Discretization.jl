@@ -1,8 +1,8 @@
 module Discretization
 
+using Limace: s,t, lmn_p, lmn_t
 using ..Bases
-using ..Poly
-using ..Poly: dylmdθ, dylmdϕ
+using ..Poly: dylmdθ, dylmdϕ, ∂, ylm
 using ..Utils
 
 function poloidal_discretize(::Type{Basis{T}},l,m,n,r,θ,ϕ) where T
@@ -21,7 +21,7 @@ function toroidal_discretize(::Type{Basis{T}},l,m,n,r,θ,ϕ) where T
     return (ur,uθ,uϕ)
 end
 
-function discretization_map(u::Basis, r, θ, ϕ)
+function discretization_map(u::T, r, θ, ϕ) where T<:Basis
 	nr = length(r)
 	nθ = length(θ)
 	nϕ = length(ϕ)
@@ -31,35 +31,32 @@ function discretization_map(u::Basis, r, θ, ϕ)
 	lmnp_u = lmn_p(u)
 	lmnt_u = lmn_t(u)
 
-	isr, jsr, aijsr = Int[], Int[], ComplexF64[]
-	isθ, jsθ, aijsθ = Int[], Int[], ComplexF64[]
-	isϕ, jsϕ, aijsϕ = Int[], Int[], ComplexF64[]
+	Mr = zeros(ComplexF64,nr*nθ*nϕ,nu)
+	Mθ = zeros(ComplexF64, nr*nθ*nϕ,nu)
+	Mϕ = zeros(ComplexF64, nr*nθ*nϕ,nu)
 
 
 	i = 1
-	for r in r, θ in θ, ϕ in ϕ
+	for ϕ in ϕ, θ in θ, r in r
 		j = 1
 		for (l,m,n) in lmnp_u
-			ur,uθ,uϕ = poloidal_discretize(u, l,m,n,r,θ,ϕ)
-			appendit!(isr, jsr, aijsr, i, j, ur)
-			appendit!(isθ, jsθ, aijsθ, i, j, uθ)
-			appendit!(isϕ, jsϕ, aijsϕ, i, j, uϕ)
+			ur,uθ,uϕ = poloidal_discretize(T, l,m,n,r,θ,ϕ)
+			Mr[i,j] = ur
+			Mθ[i,j] = uθ
+			Mϕ[i,j] = uϕ
 			j+=1
 		end
 		for (l,m,n) in lmnt_u
-			ur,uθ,uϕ = toroidal_discretize(u, l,m,n,r,θ,ϕ)
-			appendit!(isr, jsr, aijsr, i, j, ur)
-			appendit!(isθ, jsθ, aijsθ, i, j, uθ)
-			appendit!(isϕ, jsϕ, aijsϕ, i, j, uϕ)
+			ur,uθ,uϕ = toroidal_discretize(T, l,m,n,r,θ,ϕ)
+			Mr[i,j] = ur
+			Mθ[i,j] = uθ
+			Mϕ[i,j] = uϕ
 			j+=1
 		end
 		i+=1
 	end
 
 
-	Mr = sparse(isr, jsr, aijsr, nr*nθ*nϕ,nu+nb)
-	Mθ = sparse(isθ, jsθ, aijsθ, nr*nθ*nϕ,nu+nb)
-	Mϕ = sparse(isϕ, jsϕ, aijsϕ, nr*nθ*nϕ,nu+nb)
 	return Mr, Mθ, Mϕ
 end
 
@@ -77,9 +74,10 @@ function discretization_map(u::Basis, b::Basis, r, θ, ϕ)
 	lmnp_b = lmn_p(b)
 	lmnt_b = lmn_t(b)
 
-	isr, jsr, aijsr = Int[], Int[], ComplexF64[]
-	isθ, jsθ, aijsθ = Int[], Int[], ComplexF64[]
-	isϕ, jsϕ, aijsϕ = Int[], Int[], ComplexF64[]
+
+	Mr = zeros(ComplexF64,nr*nθ*nϕ,nu+nb)
+	Mθ = zeros(ComplexF64, nr*nθ*nϕ,nu+nb)
+	Mϕ = zeros(ComplexF64, nr*nθ*nϕ,nu+nb)
 
 
 	urs = zeros(ComplexF64, )
@@ -88,39 +86,35 @@ function discretization_map(u::Basis, b::Basis, r, θ, ϕ)
 		j = 1
 		for (l,m,n) in lmnp_u
 			ur,uθ,uϕ = poloidal_discretize(u, l,m,n,r,θ,ϕ)
-			appendit!(isr, jsr, aijsr, i, j, ur)
-			appendit!(isθ, jsθ, aijsθ, i, j, uθ)
-			appendit!(isϕ, jsϕ, aijsϕ, i, j, uϕ)
+			Mr[i,j] = ur
+			Mθ[i,j] = uθ
+			Mϕ[i,j] = uϕ
 			j+=1
 		end
 		for (l,m,n) in lmnt_u
 			ur,uθ,uϕ = toroidal_discretize(u, l,m,n,r,θ,ϕ)
-			appendit!(isr, jsr, aijsr, i, j, ur)
-			appendit!(isθ, jsθ, aijsθ, i, j, uθ)
-			appendit!(isϕ, jsϕ, aijsϕ, i, j, uϕ)
+			Mr[i,j] = ur
+			Mθ[i,j] = uθ
+			Mϕ[i,j] = uϕ
 			j+=1
 		end
 		for (l,m,n) in lmnp_b
 			br,bθ,bϕ = poloidal_discretize(b, l,m,n,r,θ,ϕ)
-			appendit!(isr, jsr, aijsr, i, j, br)
-			appendit!(isθ, jsθ, aijsθ, i, j, bθ)
-			appendit!(isϕ, jsϕ, aijsϕ, i, j, bϕ)
+			Mr[i,j] = br
+			Mθ[i,j] = bθ
+			Mϕ[i,j] = bϕ
 			j+=1
 		end
 		for (l,m,n) in lmnt_b
 			br,bθ,bϕ = toroidal_discretize(b, l,m,n,r,θ,ϕ)
-			appendit!(isr, jsr, aijsr, i, j, br)
-			appendit!(isθ, jsθ, aijsθ, i, j, bθ)
-			appendit!(isϕ, jsϕ, aijsϕ, i, j, bϕ)
+			Mr[i,j] = br
+			Mθ[i,j] = bθ
+			Mϕ[i,j] = bϕ
 			j+=1
 		end
 		i+=1
 	end
 
-
-	Mr = sparse(isr, jsr, aijsr, nr*nθ*nϕ,nu+nb)
-	Mθ = sparse(isθ, jsθ, aijsθ, nr*nθ*nϕ,nu+nb)
-	Mϕ = sparse(isϕ, jsϕ, aijsϕ, nr*nθ*nϕ,nu+nb)
 	return Mr, Mθ, Mϕ
 end
 

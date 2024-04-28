@@ -19,14 +19,12 @@ begin
     import Pkg
     Pkg.activate(@__DIR__)
     Pkg.instantiate()
-    using CairoMakie, LinearAlgebra, Limace, SparseArrays, PlutoUI, GeoMakie
+    using CairoMakie, SparseArrays, PlutoUI, GeoMakie
+	using Limace.Discretization: discretization_map
 end
 
-# ╔═╡ 6ea54bf3-04df-4465-a478-6dcf4ca88d73
-begin
-	using Limace: t,s, lmn_p, lmn_t, appendit!
-	using Limace.Poly: dylmdθ, dylmdϕ, ∂, ylm
-end
+# ╔═╡ 31cd9b84-eab7-40a4-9150-9f846d25b042
+using LinearAlgebra, Limace
 
 # ╔═╡ babb8f6b-6c94-4ef4-8340-0f50f9da7deb
 md"""
@@ -48,7 +46,7 @@ Assuming ``\mathbf{u}(\mathbf{r},t) = \mathbf{u}(\mathbf{r}) \exp(\lambda t)``, 
 \lambda \mathbf{B}\mathbf{x} = \mathbf{A}\mathbf{x},
 ```
 
-where 
+where the eigen vector ``\mathbf{x}`` contain the spectral coefficients of the basis elements and
 
 ```math
 B_{ij} = \int \mathbf{u}_i \cdot \mathbf{u}_j\,\mathrm{d}V,
@@ -60,6 +58,7 @@ and
 A_{ij} = \int \mathbf{u}_i \cdot \left(2\Omega\mathbf{e}_z\times\mathbf{u}_j\right)\,\mathrm{d}V.
 ```
 
+For moderate polynomial degrees we can quickly solve this.
 """
 
 # ╔═╡ 2dad3810-855c-47e6-a963-48bc949b75fd
@@ -67,7 +66,9 @@ CairoMakie.activate!(; type="png", px_per_unit=1)
 
 # ╔═╡ 1fb533ff-9ed7-4ae7-8a73-1c2fdd8bb161
 md"""
-## Solve using `Limace.jl`
+## Solve using Limace.jl
+
+First, load the packages:
 """
 
 # ╔═╡ 2edf8beb-5846-4f50-bdb0-79f955d067d9
@@ -125,64 +126,6 @@ md"""
 We can plot the velocity of the modes, for example on the surface. The azimuthal and latitudinal velocity of the mode corresponding to `zhang(3,1)` is shown below.
 """
 
-# ╔═╡ 0bacb28e-4efa-4f22-bdee-5b2b32861c6a
-begin
-	function poloidal_discretize(::Type{Basis{T}},l,m,n,r,θ,ϕ) where T
-		dsrdr = ∂(r->s(Basis{T},l,m,n,r)*r,r)
-	    ur = l*(l+1)*s(Basis{T}, l,m,n,r)*ylm(l,m,θ,ϕ)/r
-	    uθ = 1/r*dsrdr*dylmdθ(l,m,θ,ϕ)
-	    uϕ = 1/(r*sin(θ))*dsrdr*dylmdϕ(l,m,θ,ϕ)
-	    return (ur,uθ,uϕ)
-	end
-	
-	function toroidal_discretize(::Type{Basis{T}},l,m,n,r,θ,ϕ) where T
-	    ur = 0.0
-	    uθ = 1/sin(θ)*t(Basis{T}, l,m,n,r)*dylmdϕ(l,m,θ,ϕ)
-	    uϕ = -t(Basis{T},l,m,n,r)*dylmdθ(l,m,θ,ϕ)
-	
-	    return (ur,uθ,uϕ)
-	end
-	
-function discretization_map(u::T, r, θ, ϕ) where T<:Basis
-	nr = length(r)
-	nθ = length(θ)
-	nϕ = length(ϕ)
-
-	nu = length(u)
-
-	lmnp_u = lmn_p(u)
-	lmnt_u = lmn_t(u)
-
-	Mr = zeros(ComplexF64,nr*nθ*nϕ,nu)
-	Mθ = zeros(ComplexF64, nr*nθ*nϕ,nu)
-	Mϕ = zeros(ComplexF64, nr*nθ*nϕ,nu)
-
-
-	i = 1
-	for ϕ in ϕ, θ in θ, r in r
-		j = 1
-		for (l,m,n) in lmnp_u
-			ur,uθ,uϕ = poloidal_discretize(T, l,m,n,r,θ,ϕ)
-			Mr[i,j] = ur
-			Mθ[i,j] = uθ
-			Mϕ[i,j] = uϕ
-			j+=1
-		end
-		for (l,m,n) in lmnt_u
-			ur,uθ,uϕ = toroidal_discretize(T, l,m,n,r,θ,ϕ)
-			Mr[i,j] = ur
-			Mθ[i,j] = uθ
-			Mϕ[i,j] = uϕ
-			j+=1
-		end
-		i+=1
-	end
-
-
-	return Mr, Mθ, Mϕ
-end
-end;
-
 # ╔═╡ 8f973c53-9d63-4c6f-b58e-1de7a5ede1fe
 nr, nθ, nϕ = 1, 100, 100;
 
@@ -234,6 +177,7 @@ end
 # ╟─b982245e-0558-11ef-0047-8b3236b83ca0
 # ╟─2dad3810-855c-47e6-a963-48bc949b75fd
 # ╟─1fb533ff-9ed7-4ae7-8a73-1c2fdd8bb161
+# ╠═31cd9b84-eab7-40a4-9150-9f846d25b042
 # ╟─2edf8beb-5846-4f50-bdb0-79f955d067d9
 # ╠═a863379b-75e5-469d-b580-62ac53fc6426
 # ╟─8eb71322-fb38-46c8-bcfe-ca753661a12d
@@ -251,8 +195,6 @@ end
 # ╟─878004ba-7462-4595-83d6-b14bb300f653
 # ╟─52523423-eccc-4ca5-9894-0d1e4ab9ec06
 # ╟─68ec3127-f028-43c4-96ee-620a93ce941f
-# ╟─6ea54bf3-04df-4465-a478-6dcf4ca88d73
-# ╟─0bacb28e-4efa-4f22-bdee-5b2b32861c6a
 # ╟─8f973c53-9d63-4c6f-b58e-1de7a5ede1fe
 # ╟─c2010494-2d2b-4acd-b09c-a9143cfc470b
 # ╟─ecde6484-0d34-4789-9588-a0f98db9e0f5
