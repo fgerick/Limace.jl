@@ -61,6 +61,40 @@ end
 
 end
 
+@testset "Viscous spinover mode" begin
+
+    function zhang_viscous(E=1e-7, α=0)
+        ϵ2 = 2α - α^2
+        reG = -2.62047 - 0.42634 * ϵ2
+        imG = 0.25846 + 0.76633 * ϵ2
+        σ = 1/(2 -ϵ2) #inviscid freq
+        G = reG + im*imG
+        return  im*( 2*σ - im*G * sqrt(E))
+    end
+    
+    function assemble_viscous(N)
+        u = Viscous(N; m=1)
+        LHS = Limace.inertial(u)
+        RHSc = Limace.coriolis(u)
+        RHSv = Limace.diffusion(u)
+        return LHS, RHSc, RHSv
+    end
+
+    function compute(N; Ek=1e-7)
+        LHS1,RHSc1, RHSv1 = assemble_viscous(N)
+        ν = Ek
+        RHS1 = RHSc1 + ν*RHSv1
+        eval1, _ = eigstarget(RHS1,LHS1,zhang_viscous(Ek)+1e-8; nev=1)
+        return first(eval1)
+    end
+
+    λ_num = compute(200)
+    λ_ana = zhang_viscous()
+
+    @test λ_num ≈ λ_ana atol=2e-5
+
+end
+
 @testset "Free decay modes" begin
     #free decay modes damping
     λfd(l, k) = -besselj_zero(l - 1 / 2, k)[end]^2

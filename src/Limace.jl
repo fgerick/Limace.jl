@@ -31,8 +31,8 @@ include("forces/lorentz.jl")
 include("bases/Inviscid.jl")
 @reexport using .InviscidBasis
 
-include("bases/inviscid2.jl")
-using .InviscidBasis2
+# include("bases/inviscid2.jl")
+# using .InviscidBasis2
 
 include("bases/InviscidNoBC.jl")
 using .InviscidBasisNoBC
