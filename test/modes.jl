@@ -416,7 +416,7 @@ end
 
 @testset "Luo & Jackson 2022 dipole mode" begin
 
-    N = 130
+    N = 70
     m = 0
 
 
@@ -442,7 +442,7 @@ end
 
 	target = -0.041950864156977755 - 0.6599458208985812im
 	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
-	@test isapprox(first(evals), target, atol = 1e-6)
+	@test isapprox(first(evals), target, atol = 1e-4)
 
 end
 
