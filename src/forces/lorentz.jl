@@ -172,14 +172,14 @@ function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:B
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, nrange_p, _lorentz_SSs, A)
+            _crossterm!(bui, bbj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
             A = adamgaunt(l0,lj,li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, nrange_p, _lorentz_SSs, A)
+            _crossterm!(bui, B0, bbj, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
             E = elsasser(l0, lj, li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p, nrange_t, _lorentz_STs, E)
+            _crossterm!(bui, B0, bbj, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
         end
     end
 
@@ -187,14 +187,14 @@ function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:B
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             A = adamgaunt(l0,lj,li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, nrange_t, _lorentz_STt, A)
+            _crossterm!(bui, B0, bbj, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t, nrange_p, _lorentz_SSt, E)
+            _crossterm!(bui, bbj, B0, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
             E = elsasser(l0, lj, li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t, nrange_p, _lorentz_SSt, E)
+            _crossterm!(bui, B0, bbj, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
         end
     end
 
@@ -231,14 +231,14 @@ function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:B
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p, nrange_t, _lorentz_TTs, A)
+            _crossterm!(bui, bbj, B0, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
             A = adamgaunt(l0,lj,li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p, nrange_t, _lorentz_TTs, A)
+            _crossterm!(bui, B0, bbj, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, nrange_p, _lorentz_STs, E)
+            _crossterm!(bui, bbj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_STs, E)
         end
     end
 
@@ -246,14 +246,14 @@ function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:B
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t, nrange_p, _lorentz_STt, A)
+            _crossterm!(bui, bbj, B0, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_STt, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, nrange_t, _lorentz_TTt, E)
+            _crossterm!(bui, bbj, B0, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
             E = elsasser(l0, lj, li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, nrange_t, _lorentz_TTt, E)
+            _crossterm!(bui, B0, bbj, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
         end
     end
 

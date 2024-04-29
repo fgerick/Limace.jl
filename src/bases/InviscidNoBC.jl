@@ -33,8 +33,8 @@ end
 @inline _nrange_p(b::Basis{InviscidNoBC},l) = 0:((b.N-l+1)÷2)
 @inline _nrange_t(b::Basis{InviscidNoBC},l) = 0:((b.N-l)÷2)
 
-@inline nrange_p_bc(b::Basis{InviscidNoBC},l) = 0:((b.N-l+1)÷2-1)
-@inline nrange_t_bc(b::Basis{InviscidNoBC},l) = nrange_t(b, l)
+# @inline nrange_p_bc(b::Basis{InviscidNoBC},l) = 0:((b.N-l+1)÷2-1)
+# @inline nrange_t_bc(b::Basis{InviscidNoBC},l) = nrange_t(b, l)
 
 @inline function bcs_p(::Type{Basis{InviscidNoBC}})
     fs = (@inline((l,n)->s(Basis{InviscidNoBC}, l, 0, n, 1.0)), )

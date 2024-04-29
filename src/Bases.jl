@@ -123,7 +123,7 @@ end
         return nrange
     else
         nbc = length(bcs_p(T))
-        return first(nrage):(last(nrange)-nbc)
+        return first(nrange):(last(nrange)-nbc)
     end
 end
 
@@ -133,7 +133,7 @@ end
         return nrange
     else
         nbc = length(bcs_t(T))
-        return first(nrage):(last(nrange)-nbc)
+        return first(nrange):(last(nrange)-nbc)
     end
 end
 

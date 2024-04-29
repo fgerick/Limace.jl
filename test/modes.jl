@@ -1,12 +1,5 @@
 
-function eigstarget(A, B, target; kwargs...)
-    P = lu(A - target * B)
-    LO = LinearMap{ComplexF64}((y, x) -> ldiv!(y, P, B * x), size(A, 2))
-    pschur, history = partialschur(LO; kwargs...)
-    evals, u = partialeigen(pschur)
-    λ = 1 ./ evals .+ target
-    return λ, u
-end
+
 
 
 @testset "Inviscid inertial modes" begin
@@ -101,7 +94,7 @@ end
 
     #get difference between λfd and targeted eigensolution
     function getlk1(Nmax, lmax)
-        b = Limace.Insulating(Nmax; n=1:Nmax)
+        b = Limace.Insulating(Nmax; n=1:Nmax, m=0)
         LHS = Limace.inertial(b)
         RHS = Limace.diffusion(b)
         found = [
@@ -112,7 +105,7 @@ end
     end
 
     #testing:
-    f = getlk1(15, 4)
+    f = getlk1(20, 4)
     for (f_num, f_λfd) in f
         @test f_num ≈ f_λfd
     end
@@ -273,7 +266,7 @@ end
         u = Inviscid(N; m)
         b = PerfectlyConducting(N; m)
         RHS = [Limace.coriolis(u)/Le Limace.lorentz(u,b, B0)
-        Limace.induction(b,u,B0) spzeros(length(b),length(u))];
+        Limace.induction(b,u,B0) spzeros(length(b),length(b))];
         evals = eigvals(Matrix(RHS))    
         @test any(evals .≈ slow(m, 1, Le))
         @test any(evals .≈ fast(m, 1, Le))
@@ -282,127 +275,132 @@ end
     Limace.Poly.wig_temp_free()
 end
 
-# @testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
+@testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
 
-#     function assembleU0uniMalkus(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
-#         r,wr = DP.rquad(N+5+5)
+    function assembleU0uniMalkus(N,m, Le; rotatingframe=true)
+        Limace.Poly.__wiginit(2N)
+
+        u = Inviscid(N; m)
+        b = PerfectlyConducting(N; m)
+
+        B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15))
+       
+        if rotatingframe 
+            RHSuu = Limace.coriolis(u)
+            RHSbb = spzeros(length(b),length(b))
+        else
+            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 2sqrt(2pi/15))
+            RHSuu = -Limace.lorentz(u, u, U0)
+            RHSbb = Limace.induction(b,U0,b)/Le
+        end
+
+       RHS = [RHSuu/Le Limace.lorentz(u, b, B0)
+              Limace.induction(b,u,B0) RHSbb];
     
-#         js_a1 = DP.jacobis_l(N,r,1.0)
-#         js_a0 = DP.jacobis_l(N,r,0.0)
 
-#         RHSuu = Limace.InviscidBasis.rhs_coriolis(N,m; ns, Ω)
+        Limace.Poly.wig_temp_free()
+        return RHS
+    end
+    N = 4
+    Le = 1e-2
+    for m = -3:3
+        λ   = eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = true)))
+        λu0 = eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = false))) .+ m*im/Le
+        @test sort(λ, by=imag) ≈ sort(λu0, by=imag)
+    end
 
-#         DP.wig_table_init(2N, 9)
-#         DP.wig_temp_init(2N)
-#         B0fac = 2sqrt(2pi/15)
-#         RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns)*B0fac
-#         RHSbu = DP.rhs_induction_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns)*B0fac
-#         RHSbb = spzeros(size(RHSbu,1),size(RHSub,2))
-#         if Ω2 != 0.0
-#             RHSuu += -Ω2*2sqrt(2pi/15)*DP.rhs_advection_utor_pre(N,m, (1,0,0), r,wr, js_a1,js_a0, conditions=true) 
-#             RHSbb += Ω2*2sqrt(2pi/15)*DP.rhs_induction_utor_cond_pre(N,m, (1,0,0), r,wr, js_a1,js_a0; ns) 
-#         end
+end
 
+@testset "m=1 linear B₀ Mire.jl" begin
+    #benchmark nonzonal m=1 background field 
+    #against Mire.jl solution for B₀ = [0,1,0] × [x,y,z]
 
-#         DP.wig_temp_free()
-#         RHS = [RHSuu RHSub
-#                 RHSbu RHSbb]
-#         return RHS
-#     end
-#     N = 3
-#     Le = 1e-2
-#     for m = -3:3
-#         λ = eigvals(Matrix(assembleU0uniMalkus(N,m; Ω=2/Le)))
-#         λu0 = eigvals(Matrix(assembleU0uniMalkus(N,m; Ω=0.0, Ω2 = 1/Le))) .+ m*im/Le
-#         @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))]
-#     end
+    #Mire.jl code:
+    #
+    #prob = MHDProblem(3, Sphere(), [0,0,1.0], 1e-3, [0,1,0] × Mire.𝐫, IversBasis, IversBasis); 
+    #assemble!(prob);
+    #λ_mire,u_mire = eigen(inv(Matrix(prob.LHS))*prob.RHS);
 
-# end
+    λ_mire = ComplexF64[
+        -0.005095583353799794+0.0im,
+        -0.00447202108007672+0.0im,
+        -2.9796487116893485e-9+0.0im,
+        -8.080392367089447e-11+0.0im,
+        -5.950795411990839e-14-1708.0249665649847im,
+        -5.950795411990839e-14+1708.0249665649847im,
+        -5.906386491005833e-14-611.9886647220552im,
+        -5.906386491005833e-14+611.9886647220552im,
+        -5.684341886080802e-14-1509.9412787288688im,
+        -5.684341886080802e-14+1509.9412787288688im,
+        -2.3276519600656798e-14-0.0018617314109947115im,
+        -2.3276519600656798e-14+0.0018617314109947115im,
+        -1.0658141036401503e-14-176.61194539178334im,
+        -1.0658141036401503e-14+176.61194539178334im,
+        -9.020562075079397e-17-1309.309123548131im,
+        -9.020562075079397e-17+1309.309123548131im,
+        -1.3877787807814457e-17-231.931995092941im,
+        -1.3877787807814457e-17+231.931995092941im,
+        0.0-820.0114646508597im,
+        0.0+0.0im,
+        0.0+0.0im,
+        0.0+0.0im,
+        0.0+0.0im,
+        0.0+0.0im,
+        0.0+0.0im,
+        0.0+820.0114646508597im,
+        1.3877787807814457e-17-1231.9269950324663im,
+        1.3877787807814457e-17+1231.9269950324663im,
+        4.99437628008817e-17+0.0im,
+        2.0304667235765406e-15-0.0019302965014471438im,
+        2.0304667235765406e-15+0.0019302965014471438im,
+        2.227493363371469e-15-0.0065528310972463415im,
+        2.227493363371469e-15+0.0065528310972463415im,
+        2.3105161447295464e-15-1.5275119964485748im,
+        2.3105161447295464e-15+1.5275119964485748im,
+        2.635017854954458e-15-0.00199999337503616im,
+        2.635017854954458e-15+0.00199999337503616im,
+        6.727717051788765e-15-1.1585515372080849e-8im,
+        6.727717051788765e-15+1.1585515372080849e-8im,
+        1.8437122253356578e-14+0.0im,
+        3.4638958368304884e-14-1000.0000000000002im,
+        3.4638958368304884e-14+1000.0000000000002im,
+        3.552713678800501e-14-500.0024999163528im,
+        3.552713678800501e-14+500.0024999163528im,
+        8.526512829121202e-14-666.6676666560261im,
+        8.526512829121202e-14+666.6676666560261im,
+        1.4210854715202004e-13-894.4283090383414im,
+        1.4210854715202004e-13+894.4283090383414im,
+        8.080512003078941e-11+0.0im,
+        2.979634728476476e-9+0.0im,
+        0.004472021080068012+0.0im,
+        0.005095583353808171+0.0im,
+    ]
 
-# @testset "m=1 linear B₀ Mire.jl" begin
-#     #benchmark nonzonal m=1 background field 
-#     #against Mire.jl solution for B₀ = [0,1,0] × [x,y,z]
+    N = 3
+    m = -N:N
+    Le = 1e-3
 
-#     #Mire.jl code:
-#     #
-#     #prob = MHDProblem(3, Sphere(), [0,0,1.0], 1e-3, [0,1,0] × Mire.𝐫, IversBasis, IversBasis); 
-#     #assemble!(prob);
-#     #λ_mire,u_mire = eigen(inv(Matrix(prob.LHS))*prob.RHS);
+    u = Inviscid(N)
+    b = PerfectlyConducting(N)
 
-#     λ_mire = ComplexF64[
-#         -0.005095583353799794+0.0im,
-#         -0.00447202108007672+0.0im,
-#         -2.9796487116893485e-9+0.0im,
-#         -8.080392367089447e-11+0.0im,
-#         -5.950795411990839e-14-1708.0249665649847im,
-#         -5.950795411990839e-14+1708.0249665649847im,
-#         -5.906386491005833e-14-611.9886647220552im,
-#         -5.906386491005833e-14+611.9886647220552im,
-#         -5.684341886080802e-14-1509.9412787288688im,
-#         -5.684341886080802e-14+1509.9412787288688im,
-#         -2.3276519600656798e-14-0.0018617314109947115im,
-#         -2.3276519600656798e-14+0.0018617314109947115im,
-#         -1.0658141036401503e-14-176.61194539178334im,
-#         -1.0658141036401503e-14+176.61194539178334im,
-#         -9.020562075079397e-17-1309.309123548131im,
-#         -9.020562075079397e-17+1309.309123548131im,
-#         -1.3877787807814457e-17-231.931995092941im,
-#         -1.3877787807814457e-17+231.931995092941im,
-#         0.0-820.0114646508597im,
-#         0.0+0.0im,
-#         0.0+0.0im,
-#         0.0+0.0im,
-#         0.0+0.0im,
-#         0.0+0.0im,
-#         0.0+0.0im,
-#         0.0+820.0114646508597im,
-#         1.3877787807814457e-17-1231.9269950324663im,
-#         1.3877787807814457e-17+1231.9269950324663im,
-#         4.99437628008817e-17+0.0im,
-#         2.0304667235765406e-15-0.0019302965014471438im,
-#         2.0304667235765406e-15+0.0019302965014471438im,
-#         2.227493363371469e-15-0.0065528310972463415im,
-#         2.227493363371469e-15+0.0065528310972463415im,
-#         2.3105161447295464e-15-1.5275119964485748im,
-#         2.3105161447295464e-15+1.5275119964485748im,
-#         2.635017854954458e-15-0.00199999337503616im,
-#         2.635017854954458e-15+0.00199999337503616im,
-#         6.727717051788765e-15-1.1585515372080849e-8im,
-#         6.727717051788765e-15+1.1585515372080849e-8im,
-#         1.8437122253356578e-14+0.0im,
-#         3.4638958368304884e-14-1000.0000000000002im,
-#         3.4638958368304884e-14+1000.0000000000002im,
-#         3.552713678800501e-14-500.0024999163528im,
-#         3.552713678800501e-14+500.0024999163528im,
-#         8.526512829121202e-14-666.6676666560261im,
-#         8.526512829121202e-14+666.6676666560261im,
-#         1.4210854715202004e-13-894.4283090383414im,
-#         1.4210854715202004e-13+894.4283090383414im,
-#         8.080512003078941e-11+0.0im,
-#         2.979634728476476e-9+0.0im,
-#         0.004472021080068012+0.0im,
-#         0.005095583353808171+0.0im,
-#     ]
+    # For non-axisymmetric B₀ we need to take the real value. Here:
+    B0 = BasisElement(b, Toroidal, (1,1,0), sqrt(16pi / 15)/2)
+    B0c = BasisElement(b, Toroidal, (1,-1,0), -sqrt(16pi / 15)/2)
 
-#     N = 3
-#     m = -N:N
-#     Le = 1e-3
+    Limace.Poly.__wiginit(2N)
 
+    RHSl = Limace.lorentz(u, b, B0) +  Limace.lorentz(u, b, B0c)
+    RHSi = Limace.induction(b,u,B0) + Limace.induction(b,u,B0c)
 
-#     LHS = lhs_cond(N, m)
-#     RHS = rhs_cond_pre(
-#         N,
-#         m;
-#         Ω = 2 / Le,
-#         lmnb0 = (1, 1, 0),
-#         B0poloidal = false,
-#         B0fac = sqrt(16pi / 15),
-#     )
+    RHS = [Limace.coriolis(u)/Le RHSl
+           RHSi spzeros(length(b),length(b))];
+ 
+        Limace.Poly.wig_temp_free()
 
-#     λ, u = eigen(Matrix(RHS))
+    λ = eigvals(Matrix(RHS))
 
-#     @test sort(imag.(λ)) ≈ sort(imag.(λ_mire))
-# end
+    @test sort(imag.(λ)) ≈ sort(imag.(λ_mire))
+end
 
 @testset "Luo & Jackson 2022 mode" begin
 

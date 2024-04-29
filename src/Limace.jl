@@ -40,6 +40,9 @@ using .InviscidBasisNoBC
 include("bases/Insulating.jl")
 @reexport using .InsulatingBasis
 
+include("bases/InsulatingNoBC.jl")
+using .InsulatingBasisNoBC
+
 include("bases/Viscous.jl")
 @reexport using .ViscousBasis
 
