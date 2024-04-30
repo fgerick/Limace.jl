@@ -8,6 +8,7 @@ using LinearAlgebra
 using DocStringExtensions
 
 using ..Bases
+using ..UnconstrainedBasis
 using ..Utils
 using ..Poly
 
@@ -21,34 +22,12 @@ struct InsulatingNoBC end
 
 InsulatingNoBC(N; kwargs...) = Basis{InsulatingNoBC}(; N, BC=NoBC(), kwargs...)
 
-# @inline function t(::Type{Basis{InsulatingNoBC}}, l,m,n,r) 
-#     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
-#     return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
-# end
 
-# @inline function s(::Type{Basis{InsulatingNoBC}}, l,m,n,r) 
-#     fac = 1/(sqrt(2l*(1 + l)*(-3 + 2*l + 4*n)*(-1 + 2*l + 4*n)*(1 + 2*l + 4*n)))
-#     return fac * r^l * ( (2*l + 4*n - 3) * jacobi(n,0,l+1/2,2*r^2-1) - 2*(2*l + 4*n - 1)*jacobi(n-1,0,l+1/2,2*r^2-1) +(2*l + 4*n + 1)*jacobi(n-2,0,l+1/2,2*r^2-1))
-# end
-
-# @inline _nrange_p(b::Basis{InsulatingNoBC},l) = 1:((b.N-l+1)÷2)
-# @inline _nrange_t(b::Basis{InsulatingNoBC},l) = 1:((b.N-l)÷2)
-
-# @inline lpmax(b::Basis{InsulatingNoBC}) = b.N
-# @inline ltmax(b::Basis{InsulatingNoBC}) = b.N
+t(::Type{Basis{InsulatingNoBC}}, l,m,n,r)  = t(Basis{Unconstrained}, l,m,n,r) 
+s(::Type{Basis{InsulatingNoBC}}, l,m,n,r)  = s(Basis{Unconstrained}, l,m,n,r) 
 
 
-@inline function t(::Type{Basis{InsulatingNoBC}}, l, m, n, r)
-    fac = sqrt(3 + 2l + 4n) / sqrt(l * (l + 1))
-    return r^l * jacobi(n, 0, l + 1 / 2, 2r^2 - 1) * fac
-end
-
-@inline function s(::Type{Basis{InsulatingNoBC}}, l, m, n, r)
-    fac = sqrt(3 + 2l + 4n) / sqrt(l * (l + 1))
-    return r^l * jacobi(n, 0, l + 1 / 2, 2r^2 - 1) * fac
-end
-
-@inline _nrange_p(b::Basis{InsulatingNoBC}, l) = 0:((b.N-l+1)÷2)
+@inline _nrange_p(b::Basis{InsulatingNoBC}, l) = 1:((b.N-l+1)÷2+1)
 @inline _nrange_t(b::Basis{InsulatingNoBC}, l) = 0:((b.N-l)÷2)
 
 @inline lpmax(b::Basis{InsulatingNoBC}) = b.N

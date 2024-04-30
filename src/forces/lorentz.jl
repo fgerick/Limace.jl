@@ -262,3 +262,84 @@ function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:B
 
     return sparse(is, js, aijs, nmatu, nmatb)
 end
+
+
+"""
+$(TYPEDSIGNATURES)
+
+Computes the Lorentz term for a poloidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
+"""
+function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    _nt = Threads.nthreads()
+    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+
+    lmn2k_p_ui = lmn2k_p_dict(bui)
+    lmn2k_t_ui = lmn2k_t_dict(bui)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = B0.lmn
+    @assert bui.N == bbj.N "Use same resolution for bases!"
+    N = bui.N
+    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+
+    npu = length(lmn2k_p_ui)
+    npb = length(lmn2k_p_bj)
+
+    @sync begin
+        for li in 1:lpmax(bui), mi in intersect(bui.m, -li:li)
+            mj = adamgaunt_mjs(mi, m0)
+            for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
+                A = adamgaunt(lj,l0,li, mj, m0, mi)
+                Threads.@spawn begin
+                    id = Threads.threadid()
+                    _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
+                end
+                A = adamgaunt(l0,lj,li, m0, mj, mi)
+                Threads.@spawn begin
+                    id = Threads.threadid()
+                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
+                end
+            end
+            mj = elsasser_mjs(mi, m0)
+            for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
+                E = elsasser(l0, lj, li, m0, mj, mi)
+                Threads.@spawn begin
+                    id = Threads.threadid()
+                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
+                end
+            end
+        end
+
+        for li in 1:ltmax(bui), mi in intersect(bui.m, -li:li)
+            mj = adamgaunt_mjs(mi, m0)
+            for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
+                A = adamgaunt(l0,lj,li, m0, mj, mi)
+                Threads.@spawn begin
+                    id = Threads.threadid()
+                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
+                end
+            end
+            mj = elsasser_mjs(mi, m0)
+            for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
+                E = elsasser(lj, l0, li, mj, m0, mi)
+                Threads.@spawn begin
+                    id = Threads.threadid()
+                    _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+                end
+                E = elsasser(l0, lj, li, m0, mj, mi)
+                Threads.@spawn begin
+                    id = Threads.threadid()
+                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+                end
+            end
+        end
+    end
+
+    nmatu = length(bui)
+    nmatb = length(bbj)
+
+    return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatu, nmatb)
+end

@@ -231,9 +231,10 @@ Fallback functions for `_crossterm` term for `U0`. Write specialized function to
 """
 @inline function _crossterm!(bi::TI, B0::BasisElement{T0,PT,T}, bj::TJ, is, js, aijs, i0, j0,
     li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_bj, nrangefi, nrangefj, indf, EA; kwargs...) where {TI<:Basis,TJ<:Basis,T0<:Basis,PT<:Helmholtz,T}
+    l0,m0,n0 = B0.lmn
     for ni in nrangefi(bi, li)
         for nj in nrangefj(bj, lj)
-            r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1)]
+            r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
             aij = indf(T0, TJ, TI, B0.lmn, lmnj, lmni, r, wr; kwargs...)*EA
@@ -250,9 +251,10 @@ Fallback functions for `_crossterm!` term for `B0`. Write specialized function t
 """
 @inline function _crossterm!(bi::TI, bj::TJ, B0::BasisElement{T0,PT,T}, is, js, aijs, i0, j0,
     li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_bj, nrangefi, nrangefj, indf, EA; kwargs...) where {TI<:Basis,TJ<:Basis,T0<:Basis,PT<:Helmholtz,T}
+    l0,m0,n0 = B0.lmn
     for ni in nrangefi(bi, li)
         for nj in nrangefj(bj, lj)
-            r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1)]
+            r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
             aij = indf(TJ, T0, TI, lmnj, B0.lmn, lmni, r, wr; kwargs...)*EA
@@ -374,12 +376,12 @@ function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=t
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(buj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _induction_sps!(bbi, buj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj,A; external)
+            _crossterm!(bbi, buj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj, nrange_p_bc, nrange_p, _induction_sSS,A; external)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(buj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _induction_sqs!(bbi, buj, B0, is, js, aijs, 0, npu, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_t_uj,E; external)
+            _crossterm!(bbi, buj, B0, is, js, aijs, 0, npu, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_t_uj,nrange_p_bc, nrange_t, _induction_tSS, E; external)
         end
     end
 
@@ -387,12 +389,12 @@ function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=t
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(buj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _induction_tqs!(bbi, buj, B0, is, js, aijs, npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj,A)
+            _crossterm!(bbi, buj, B0, is, js, aijs, npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj,nrange_t_bc, nrange_t, _induction_tST, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(buj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _induction_tps!(bbi, buj, B0, is, js, aijs, npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj,E)
+            _crossterm!(bbi, buj, B0, is, js, aijs, npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj,nrange_t_bc, nrange_p, _induction_sST, E)
         end
     end
 

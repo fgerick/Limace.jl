@@ -51,58 +51,58 @@ end
 
 
 
-# @testset "Luo & Jackson 2022 mode NoBC" begin
+@testset "Luo & Jackson 2022 mode NoBC" begin
 
-#     import Limace.Bases
+    import Limace.Bases
 
-# 	struct LJ22; end
-# 	Limace.Bases.s(::Type{Basis{LJ22}}, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
+	# struct LJ22; end
+	# Limace.Bases.s(::Type{Basis{LJ22}}, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
 
-# 	function compute(UT, BT; N=50)
-# 		m = 0
-# 		Le = 1e-4
-# 		Lu = 2 / Le
+	function compute(UT, BT; N=50)
+		m = 0
+		Le = 1e-4
+		Lu = 2 / Le
 
-# 		Limace.Poly.__wiginit(N)
+		Limace.Poly.__wiginit(N)
 
-# 		u = UT(N; m)
-# 		b = BT(N; m)
+		u = UT(N; m)
+		b = BT(N; m)
 
 		
 
-# 		B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
+		B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
 
-# 		LHS = blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b)))
+		LHS = blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b)))
 
-# 		@time begin
-# 			RHSc = Limace.coriolis(u)/Le
-# 			RHSl = Limace.lorentz(u,b,B0)
-# 			RHSi = Limace.induction_threaded(b,u,B0)
-# 			RHSd = Limace.diffusion(b)/Lu
-# 		end
+		# @time begin
+		RHSc = Limace.coriolis(u)/Le
+		RHSl = Limace.lorentz_threaded(u,b,B0)
+		RHSi = Limace.induction_threaded(b,u,B0)
+		RHSd = Limace.diffusion_threaded(b)/Lu
+		# end
 
-# 		RHS = [RHSc RHSl
-# 			RHSi RHSd]
+		RHS = [RHSc RHSl
+			RHSi RHSd]
 
-# 		Limace.Poly.wig_temp_free()
-# 		# RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
+		Limace.Poly.wig_temp_free()
+		# RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
 
-# 		target = -0.0066 - 1.033im
-# 		# target = -0.042+0.66im
-# 		evals, _ = eigstarget(RHS, LHS, target; nev = 1)
-# 		return first(evals)
-# 	end
-
-
-#     lj22_n350 = -0.0065952461 - 1.0335959942im
-
-# 	e1 = compute(Inviscid, Insulating; N=50)
-# 	e2 = compute(Inviscid, Limace.InsulatingNoBC; N=60)
-
-# 	@test e1 ≈ e2 atol=1e-7
-# 	@test e2 ≈ lj22_n350 atol=1e-7
-
-#     # @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
+		target = -0.0066 - 1.033im
+		# target = -0.042+0.66im
+		evals, _ = eigstarget(RHS, LHS, target; nev = 1)
+		return first(evals)
+	end
 
 
-# end
+    lj22_n350 = -0.0065952461 - 1.0335959942im
+
+	# e1 = compute(Inviscid, Insulating; N=50)
+	e2 = compute(Inviscid, Limace.InsulatingNoBC; N=60)
+
+	# @test e1 ≈ e2 atol=2e-4
+	@test e2 ≈ lj22_n350 atol=2e-4
+
+    # @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
+
+
+end
