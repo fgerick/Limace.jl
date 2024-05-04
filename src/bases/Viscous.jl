@@ -9,7 +9,7 @@ using ..Bases
 using ..Utils
 using ..Poly
 
-using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
+using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, Sphere
 import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
 import ..Limace: _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 import ..Limace: inertial, diffusion
@@ -18,14 +18,14 @@ export Viscous
 
 struct Viscous; end
 
-Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), kwargs...)
+Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
 
 """
 $(TYPEDSIGNATURES)
 
 Chen et al. (2018) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
-@inline function t(::Type{Basis{Viscous}}, l,m,n,r) 
+@inline function t(::Type{Basis{Viscous}}, V::Volume, l,m,n,r) 
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
     return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
 end
@@ -35,7 +35,7 @@ $(TYPEDSIGNATURES)
 
 Chen et al. (2018) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
-@inline function s(::Type{Basis{Viscous}}, l,m,n,r) 
+@inline function s(::Type{Basis{Viscous}}, V::Volume, l,m,n,r) 
     c1 = 2l+4n+1
     c2 = -2(2l+4n+3)
     c3 = 2l+4n+5
@@ -170,7 +170,7 @@ end
 #     end
 # end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T; applyBC=true) where T
     for n in nrange_p(b,l)
         njs_all = nrange_p(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -193,7 +193,7 @@ function _coriolis_poloidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T; applyBC=true) where T
     for n in nrange_t(b,l)
         njs_all = nrange_t(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -228,7 +228,7 @@ end
     return -ν*((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Viscous}, ν::T=1.0) where T
+function diffusion(b::Basis{Viscous}; ν::T=1.0, applyBC=true) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 

@@ -5,14 +5,14 @@
 
 #poloidal B1, poloidal B2
 # Aabc = adamgaunt(la,lb,lc,ma,mb,mc)
-function _lorentz_SSs(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _lorentz_SSs(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Sa = r->s(TA,la,ma,na,r)
-    @inline _Sb = r->s(TB,lb,mb,nb,r)
-    @inline _sc = r->s(TC,lc,mc,nc,r)
+    @inline _Sa = r->s(TA,V,la,ma,na,r)
+    @inline _Sb = r->s(TB,V,lb,mb,nb,r)
+    @inline _sc = r->s(TC,V,lc,mc,nc,r)
 
     @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*D(_Sa,la,r)*∂(r->r*_Sb(r),r) + 
                         p(lb)*(p(la)-p(lb)+p(lc))*r*∂(r->D(_Sa,la,r)*_Sb(r),r))/(2r^2*p(lc))
@@ -26,15 +26,15 @@ end
 
 #poloidal B1, toroidal B0
 # Eabc = elsasser(la,lb,lc,ma,mb,mc)
-function _lorentz_STs(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _lorentz_STs(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
 
-    @inline _Sa = r->s(TA,la,ma,na,r)
-    @inline _Tb = r->t(TB,lb,mb,nb,r)
-    @inline _sc = r->s(TC,lc,mc,nc,r)
+    @inline _Sa = r->s(TA,V,la,ma,na,r)
+    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline _sc = r->s(TC,V,lc,mc,nc,r)
 
     @inline f1 = r -> (p(lc)*r^2*D(_Sa,la,r)*_Tb(r) + 
                         (p(la)+p(lb)+p(lc))*_Sa(r)*_Tb(r) - 
@@ -54,14 +54,14 @@ end
 
 #toroidal B1, toroidal B0
 # Aabc = adamgaunt(la,lb,lc,ma,mb,mc)
-function _lorentz_TTs(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _lorentz_TTs(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Ta = r->t(TA,la,ma,na,r)
-    @inline _Tb = r->t(TB,lb,mb,nb,r)
-    @inline _sc = r->s(TC,lc,mc,nc,r)
+    @inline _Ta = r->t(TA,V,la,ma,na,r)
+    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline _sc = r->s(TC,V,lc,mc,nc,r)
 
 
     @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*∂(r->r*_Ta(r),r)*_Tb(r) + p(la)*(-p(la)+p(lb)+p(lc))*r*∂(r->_Ta(r)*_Tb(r),r))/(2r^2*p(lc))
@@ -81,14 +81,14 @@ end
 
 #poloidal B1, poloidal B0
 # Eabc = elsasser(la,lb,lc,ma,mb,mc)
-function _lorentz_SSt(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _lorentz_SSt(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Sa = r->s(TA,la,ma,na,r)
-    @inline _Sb = r->s(TB,lb,mb,nb,r)
-    @inline _tc = r->t(TC,lc,mc,nc,r)
+    @inline _Sa = r->s(TA,V,la,ma,na,r)
+    @inline _Sb = r->s(TB,V,lb,mb,nb,r)
+    @inline _tc = r->t(TC,V,lc,mc,nc,r)
 
 
     @inline f1 = r -> -p(lb)*D(_Sa,la,r)*_Sb(r)/(r*p(lc))
@@ -102,14 +102,14 @@ end
 
 #poloidal B1, toroidal B0
 # Aabc = adamgaunt(la,lb,lc,ma,mb,mc)
-function _lorentz_STt(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _lorentz_STt(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Sa = r->s(TA,la,ma,na,r)
-    @inline _Tb = r->t(TB,lb,mb,nb,r)
-    @inline _tc = r->t(TC,lc,mc,nc,r)
+    @inline _Sa = r->s(TA,V,la,ma,na,r)
+    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline _tc = r->t(TC,V,lc,mc,nc,r)
 
 
     @inline f1 = r -> (p(lb)*(p(lb)-p(la)-p(lc))*∂(r->r*_Sa(r),r)*_Tb(r) - p(la)*(p(la)-p(lb)-p(lc))*_Sa(r)*∂(r->r*_Tb(r),r))/(2r^2*p(lc))
@@ -123,14 +123,14 @@ end
 
 #toroidal B1, toroidal B0
 # Eabc = elsasser(la,lb,lc,ma,mb,mc)
-function _lorentz_TTt(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _lorentz_TTt(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la,ma,na = lmna
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Ta = r->t(TA,la,ma,na,r)
-    @inline _Tb = r->t(TB,lb,mb,nb,r)
-    @inline _tc = r->t(TC,lc,mc,nc,r)
+    @inline _Ta = r->t(TA,V,la,ma,na,r)
+    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline _tc = r->t(TC,V,lc,mc,nc,r)
 
 
     @inline f1 = r -> p(la)*_Ta(r)*_Tb(r)/(r*p(lc))

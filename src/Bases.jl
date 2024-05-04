@@ -3,6 +3,7 @@ module Bases
 using DocStringExtensions
 
 export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
+export Volume
 export Basis, BasisElement, isaxisymmetric, Helmholtz, Poloidal, Toroidal
 # export nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
@@ -55,6 +56,16 @@ $(TYPEDFIELDS)
 """
 struct InsulatingBC <: BoundaryCondition; end
 
+
+Base.@kwdef struct Volume
+    r0::Float64 = 0.0
+    r1::Float64 = 1.0
+end
+
+Sphere(; r=1.0) = Volume(;r1=r)
+SphericalShell(r0,r1) = Volume(; r0,r1)
+
+
 """
 $(TYPEDEF)
 
@@ -66,11 +77,10 @@ Base.@kwdef struct Basis{T}
     m::UnitRange{Int} = -N:N #spherical harmonic orders
 	n::UnitRange{Int} = 0:0 #radial degrees, default 0:0 to make n = n(N,l).
 	BC::BoundaryCondition = NoBC()
+    V::Volume = Sphere()
 end
 
-Basis{T}(N::Int, m::Int, n::UnitRange{Int}, BC::BoundaryCondition) where T = Basis{T}(N, m:m, n, BC)
-
-# Basis{T}(N::Int; m::Int = 0, n::UnitRange{Int} = 0:0, BC::BoundaryCondition = NoBC()) where T = Basis{T}(N; m = m:m, n, BC)
+Basis{T}(N::Int, m::Int, n::UnitRange{Int}, BC::BoundaryCondition, V::Volume = Sphere()) where {T} = Basis{T}(N, m:m, n, BC, V)
 
 isaxisymmetric(b::Basis) = length(b.m) == 1
 
@@ -122,7 +132,7 @@ end
     if typeof(b.BC) != NoBC
         return nrange
     else
-        nbc = length(bcs_p(T))
+        nbc = length(bcs_p(b))
         return first(nrange):(last(nrange)-nbc)
     end
 end
@@ -132,15 +142,17 @@ end
     if typeof(b.BC) != NoBC
         return nrange
     else
-        nbc = length(bcs_t(T))
+        nbc = length(bcs_t(b))
         return first(nrange):(last(nrange)-nbc)
     end
 end
 
 @inline function lpmax(b::Basis)
+    @error "define"
 end
 
 @inline function ltmax(b::Basis)
+    @error "define"
 end
 
 function _lmn_l(lmn, L::Int)
@@ -175,16 +187,25 @@ end
 lmn2k_p_dict(b::Basis) = lmn2k_dict(lmn_p(b))
 lmn2k_t_dict(b::Basis) = lmn2k_dict(lmn_t(b))
 
-function t(::Type{Basis}, l, m, n, r)
+# function t(::Type{Basis}, l, m, n, r)
+# end
+
+# function s(::Type{Basis}, l, m, n, r)
+# end
+
+function t(::Type{Basis}, V::Volume, l, m, n, r)
 end
 
-function s(::Type{Basis}, l, m, n, r)
+function s(::Type{Basis}, V::Volume, l, m, n, r)
 end
 
-function bcs_p(::Type{Basis})
+
+function bcs_p(b::Basis)
+    @error "implement"
 end
 
-function bcs_t(::Type{Basis})
+function bcs_t(b::Basis)
+    @error "implement"
 end
 
 
@@ -226,10 +247,10 @@ BasisElement(::TB, ::Type{PT}, lmn::NTuple{3,Int}, factor::T) where {TB<:Basis, 
 BasisElement(::Type{TB}, ::Type{PT}, lmn::NTuple{3,Int}, factor::T) where {TB<:Basis, PT<:Helmholtz, T<:Number} = BasisElement{TB,PT,T}(lmn, factor)
 
 
-s(b::T, l, m, n, r) where T<:Basis = s(T,l,m,n,r)
-t(b::T, l, m, n, r) where T<:Basis = t(T,l,m,n,r)
-s(b::BasisElement{T,Poloidal}, r) where T = s(T,b.lmn..., r)
-t(b::BasisElement{T,Toroidal}, r) where T = t(T,b.lmn..., r)
+# s(b::T, l, m, n, r) where T<:Basis = s(T,l,m,n,r)
+# t(b::T, l, m, n, r) where T<:Basis = t(T,l,m,n,r)
+s(b::BasisElement{T,Poloidal}, V::Volume, r) where T = s(T,V,b.lmn..., r)
+t(b::BasisElement{T,Toroidal}, V::Volume, r) where T = t(T,V,b.lmn..., r)
 
 
 end #module

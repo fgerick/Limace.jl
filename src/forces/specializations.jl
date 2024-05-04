@@ -7,7 +7,7 @@
             r, wr = rwrs[min(bbi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
-            aij = indf(Basis{T0}, Basis{Tj}, Basis{Ti}, U0.lmn, lmnj, lmni, r, wr; kwargs...)*EA
+            aij = indf(Basis{T0}, Basis{Tj}, Basis{Ti}, bbi.V, U0.lmn, lmnj, lmni, r, wr; kwargs...)*EA
             appendit!(is, js, aijs, lmn2k_bi[lmni] + i0, lmn2k_bj[lmnj] + j0, aij*U0.factor)
         end
     end
@@ -24,7 +24,7 @@ end
             r, wr = rwrs[min(bbi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
-            aij = indf(Basis{Tj}, Basis{T0}, Basis{Ti}, lmnj, B0.lmn, lmni, r, wr; kwargs...)*EA
+            aij = indf(Basis{Tj}, Basis{T0}, Basis{Ti}, bbi.V, lmnj, B0.lmn, lmni, r, wr; kwargs...)*EA
             appendit!(is, js, aijs, lmn2k_bi[lmni] + i0, lmn2k_uj[lmnj] + j0, aij*B0.factor)
         end
     end

@@ -11,7 +11,7 @@ using ..Bases
 using ..Utils
 using ..Poly
 
-using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
+using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, Sphere
 import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
 import ..Limace: inertial, diffusion
 
@@ -19,14 +19,14 @@ export Insulating
 
 struct Insulating; end
 
-Insulating(N; kwargs...) = Basis{Insulating}(;N, BC=InsulatingBC(), kwargs...)
+Insulating(N; kwargs...) = Basis{Insulating}(;N, BC=InsulatingBC(), V=Sphere(), kwargs...)
 
-@inline function t(::Type{Basis{Insulating}}, l,m,n,r) 
+@inline function t(::Type{Basis{Insulating}}, V::Volume, l,m,n,r) 
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
     return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
 end
 
-@inline function s(::Type{Basis{Insulating}}, l,m,n,r) 
+@inline function s(::Type{Basis{Insulating}}, V::Volume, l,m,n,r) 
     fac = 1/(sqrt(2l*(1 + l)*(-3 + 2*l + 4*n)*(-1 + 2*l + 4*n)*(1 + 2*l + 4*n)))
     return fac * r^l * ( (2*l + 4*n - 3) * jacobi(n,0,l+1/2,2*r^2-1) - 2*(2*l + 4*n - 1)*jacobi(n-1,0,l+1/2,2*r^2-1) +(2*l + 4*n + 1)*jacobi(n-2,0,l+1/2,2*r^2-1))
 end
@@ -75,7 +75,7 @@ end
     return zero(l)
 end
 
-function inertial(b::Basis{Insulating}, ::Type{T}=Float64) where {T<:Number}
+function inertial(b::Basis{Insulating}, ::Type{T}=Float64; external=true) where {T<:Number}
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
@@ -136,7 +136,7 @@ end
     return -η*((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Insulating}, η::T=1.0) where T
+function diffusion(b::Basis{Insulating}; η::T=1.0, applyBC=true, external=true) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 

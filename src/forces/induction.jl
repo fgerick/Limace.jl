@@ -7,20 +7,20 @@ $(TYPEDSIGNATURES)
 
 Computes radial integral of ∫Sᵢ⋅∇×(pⱼ×Sₖ) dV. Surface integral is given by Adam-Gaunt variable.
 """
-function _induction_sSS(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr; external=true) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _induction_sSS(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr; external=true) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la, ma, na = lmna
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline f1 = r -> (-p(la) * (-p(la) + p(lb) + p(lc)) * s(TA, la, ma, na, r) * ∂(r -> r * s(TB, lb, mb, nb, r), r) +
-                       p(lb) * (p(la) - p(lb) + p(lc)) * s(TB, lb, mb, nb, r) * ∂(r -> r * s(TA, la, ma, na, r), r)) / (2r^2 * p(lc))
+    @inline f1 = r -> (-p(la) * (-p(la) + p(lb) + p(lc)) * s(TA, V, la, ma, na, r) * ∂(r -> r * s(TB, V, lb, mb, nb, r), r) +
+                       p(lb) * (p(la) - p(lb) + p(lc)) * s(TB, V, lb, mb, nb, r) * ∂(r -> r * s(TA, V, la, ma, na, r), r)) / (2r^2 * p(lc))
 
-    @inline f = r -> inners(f1, r -> s(TC, lc, mc, nc, r), lc, r)
+    @inline f = r -> inners(f1, r -> s(TC, V, lc, mc, nc, r), lc, r)
 
     aij = ∫dr(f, r, wr) 
 
     if external
-        aij += f1(1.0) * s(TC, lc, mc, nc, 1.0) * p(lc) * lc 
+        aij += f1(V.r1) * s(TC, V, lc, mc, nc, V.r1) * p(lc) * lc 
     end
     return aij
 end
@@ -32,13 +32,13 @@ $(TYPEDSIGNATURES)
 
 Computes radial integral of ∫Sᵢ⋅∇×(pⱼ×Tₖ) dV. Surface integral is given by Elsasser variable.
 """
-function _induction_sTS(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _induction_sTS(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la, ma, na = lmna
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline f1 = r -> p(la) * s(TA, la, ma, na, r) * t(TB, lb, mb, nb, r) / (r * p(lc))
-    @inline f = r -> inners(r -> s(TC, lc, mc, nc, r), f1, lc, r)
+    @inline f1 = r -> p(la) * s(TA, V, la, ma, na, r) * t(TB, V, lb, mb, nb, r) / (r * p(lc))
+    @inline f = r -> inners(r -> s(TC, V, lc, mc, nc, r), f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
     return aij
@@ -51,13 +51,13 @@ $(TYPEDSIGNATURES)
 
 Computes radial integral of ∫Sᵢ⋅∇×(qⱼ×Sₖ) dV. Surface integral is given by Elsasser variable.
 """
-function _induction_tSS(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr; external=true) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _induction_tSS(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr; external=true) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la, ma, na = lmna
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline f1 = r -> p(lb) * t(TA, la, ma, na, r) * s(TB, lb, mb, nb, r) / (r * p(lc))
-    @inline f = r -> inners(r -> s(TC, lc, mc, nc, r), f1, lc, r)
+    @inline f1 = r -> p(lb) * t(TA, V, la, ma, na, r) * s(TB, V, lb, mb, nb, r) / (r * p(lc))
+    @inline f = r -> inners(r -> s(TC, V, lc, mc, nc, r), f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
 
@@ -65,7 +65,7 @@ function _induction_tSS(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r,
     #if toroidal velocity is not 0 at r=11 
 
     if external
-        aij += f1(1.0) * s(TC,lc, mc, nc, 1.0) * lc * p(lc) 
+        aij += f1(V.r1) * s(TC,V, lc, mc, nc, V.r1) * lc * p(lc) 
     end
 
     return aij
@@ -86,14 +86,14 @@ $(TYPEDSIGNATURES)
 
 Computes radial integral of ∫Tᵢ⋅∇×(pⱼ×Sₖ) dV. Surface integral is given by Elsasser variable.
 """
-function _induction_sST(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _induction_sST(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la, ma, na = lmna
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _sa = r -> s(TA, la, ma, na, r)
-    @inline _Sb = r -> s(TB, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, lc, mc, nc, r)
+    @inline _sa = r -> s(TA, V, la, ma, na, r)
+    @inline _Sb = r -> s(TB, V, lb, mb, nb, r)
+    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
 
     @inline f1 = r -> ((p(la) + p(lb) + p(lc)) * _sa(r) * _Sb(r) -
                        (p(la) + p(lb) - p(lc)) * (r * ∂(_sa, r) * _Sb(r) + r * _sa(r) * ∂(_Sb, r) + r^2 * ∂(_sa, r) * ∂(_Sb, r)) -
@@ -112,14 +112,14 @@ $(TYPEDSIGNATURES)
 
 Computes radial integral of ∫Tᵢ⋅∇×(pⱼ×Tₖ) dV. Surface integral is given by Adam-Gaunt variable.
 """
-function _induction_sTT(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _induction_sTT(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la, ma, na = lmna
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _sa = r -> s(TA, la, ma, na, r)
-    @inline _Tb = r -> t(TB, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, lc, mc, nc, r)
+    @inline _sa = r -> s(TA, V, la, ma, na, r)
+    @inline _Tb = r -> t(TB, V, lb, mb, nb, r)
+    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
 
     @inline f1 = r -> (-p(lc) * (p(la) + p(lb) - p(lc)) * (_sa(r) * _Tb(r) + r * ∂(_sa, r) * _Tb(r)) +
                        p(la) * (p(la) - p(lb) - p(lc)) * (r * ∂(_sa, r) * _Tb(r) + r * _sa(r) * ∂(_Tb, r))) / (2r^2 * p(lc))
@@ -136,14 +136,14 @@ $(TYPEDSIGNATURES)
 
 Computes radial integral of ∫Tᵢ⋅∇×(qⱼ×Sₖ) dV. Surface integral is given by Adam-Gaunt variable.
 """
-function _induction_tST(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _induction_tST(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la, ma, na = lmna
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _ta = r -> t(TA, la, ma, na, r)
-    @inline _Sb = r -> s(TB, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, lc, mc, nc, r)
+    @inline _ta = r -> t(TA, V, la, ma, na, r)
+    @inline _Sb = r -> s(TB, V, lb, mb, nb, r)
+    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
 
     @inline f1 = r -> (p(lc) * (p(la) + p(lb) - p(lc)) * (_ta(r) * _Sb(r) + r * _ta(r) * ∂(_Sb, r)) -
                        p(lb) * (p(lb) - p(la) - p(lc)) * (r * ∂(_ta, r) * _Sb(r) + r * _ta(r) * ∂(_Sb, r))) / (2r^2 * p(lc))
@@ -160,14 +160,14 @@ $(TYPEDSIGNATURES)
 
 Computes radial integral of ∫Tᵢ⋅∇×(qⱼ×Tₖ) dV. Surface integral is given by Adam-Gaunt variable.
 """
-function _induction_tTT(::Type{TA}, ::Type{TB}, ::Type{TC}, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
+function _induction_tTT(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb, lmnc, r, wr) where {TA<:Basis,TB<:Basis,TC<:Basis}
     la, ma, na = lmna
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _ta = r -> t(TA, la, ma, na, r)
-    @inline _Tb = r -> t(TB, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, lc, mc, nc, r)
+    @inline _ta = r -> t(TA, V, la, ma, na, r)
+    @inline _Tb = r -> t(TB, V, lb, mb, nb, r)
+    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
 
     @inline f1 = r -> _ta(r) * _Tb(r) / r
     @inline f = r -> innert(_Tc, f1, lc, r)
@@ -237,7 +237,7 @@ Fallback functions for `_crossterm` term for `U0`. Write specialized function to
             r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
-            aij = indf(T0, TJ, TI, B0.lmn, lmnj, lmni, r, wr; kwargs...)*EA
+            aij = indf(T0, TJ, TI, bi.V, B0.lmn, lmnj, lmni, r, wr; kwargs...)*EA
             appendit!(is, js, aijs, lmn2k_bi[lmni] + i0, lmn2k_bj[lmnj] + j0, aij*B0.factor)
         end
     end
@@ -257,7 +257,7 @@ Fallback functions for `_crossterm!` term for `B0`. Write specialized function t
             r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
-            aij = indf(TJ, T0, TI, lmnj, B0.lmn, lmni, r, wr; kwargs...)*EA
+            aij = indf(TJ, T0, TI, bi.V, lmnj, B0.lmn, lmni, r, wr; kwargs...)*EA
             appendit!(is, js, aijs, lmn2k_bi[lmni] + i0, lmn2k_bj[lmnj] + j0, aij*B0.factor)
         end
     end
@@ -368,7 +368,7 @@ function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=t
     l0, m0, n0 = B0.lmn
     @assert bbi.N == buj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npb = length(lmn2k_p_bi)
     npu = length(lmn2k_p_uj)
@@ -422,7 +422,7 @@ function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=t
     l0, m0, n0 = B0.lmn
     @assert bbi.N == buj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npb = length(lmn2k_p_bi)
     npu = length(lmn2k_p_uj)
@@ -474,7 +474,7 @@ function induction(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=t
     l0, m0, n0 = U0.lmn
     @assert bbi.N == bbj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npbi = length(lmn2k_p_bi)
     npbj = length(lmn2k_p_bj)
@@ -523,7 +523,7 @@ function induction(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=t
     l0, m0, n0 = U0.lmn
     @assert bbi.N == bbj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npbi = length(lmn2k_p_bi)
     npbj = length(lmn2k_p_bj)
@@ -573,7 +573,7 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; e
     l0, m0, n0 = B0.lmn
     @assert bbi.N == buj.N
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npb = length(lmn2k_p_bi)
     npu = length(lmn2k_p_uj)
@@ -645,7 +645,7 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; e
     l0, m0, n0 = B0.lmn
     @assert bbi.N == buj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npb = length(lmn2k_p_bi)
     npu = length(lmn2k_p_uj)
@@ -706,7 +706,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; e
     l0, m0, n0 = U0.lmn
     @assert bbi.N == bbj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npbi = length(lmn2k_p_bi)
     npbj = length(lmn2k_p_bj)
@@ -767,7 +767,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; e
     l0, m0, n0 = U0.lmn
     @assert bbi.N == bbj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
 
     npbi = length(lmn2k_p_bi)
     npbj = length(lmn2k_p_bj)

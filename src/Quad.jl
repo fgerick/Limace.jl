@@ -1,6 +1,7 @@
 module Quadrature
 
 using FastGaussQuadrature
+using ..Bases: Volume
 
 export rquad, ∫dr
 
@@ -24,6 +25,7 @@ function rquad(nr,a,b)
 	return _r, _wr
 end
 
+rquad(nr, V::Volume) = rquad(nr, V.r0, V.r1)
 
 function ∫dr(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
 	out = zero(ComplexF64)

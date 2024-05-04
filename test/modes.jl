@@ -179,8 +179,8 @@ end
 
     struct Li2010; end
     # Li et al. (2010) eq. (24) fixed:
-    @inline Limace.Bases.t(::Type{Basis{Li2010}}, l, m, n, r) = 8.107929179422066 * r * (1 - r^2) #t10
-    @inline Limace.Bases.s(::Type{Basis{Li2010}},l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2 #s20
+    @inline Limace.Bases.t(::Type{Basis{Li2010}}, V::Volume, l, m, n, r) = 8.107929179422066 * r * (1 - r^2) #t10
+    @inline Limace.Bases.s(::Type{Basis{Li2010}}, V::Volume, l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2 #s20
 
     function assemble(N)
         # N =45
@@ -418,7 +418,7 @@ end
 
     struct LJ22; end
 
-    Limace.Bases.s(::Type{Basis{LJ22}}, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
+    Limace.Bases.s(::Type{Basis{LJ22}}, V::Volume, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
 
     B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
 
