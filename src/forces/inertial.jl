@@ -9,12 +9,12 @@ function _inertial_ss(b::T, lmna, lmnb, r,wr; external=false) where T<:Basis
     @inline _sa = r->s(T,b.V,la,ma,na,r)
     @inline _sb = r->s(T,b.V,lb,mb,nb,r)
 
-    @inline f = r-> inners(_sa,_sb, lb, r)
+    @inline f = r-> inners(_sa,_sb, la, r)
 
     aij = ∫dr(f,r,wr)
 
     if external && (la==lb) && (ma==mb)
-        aij+=_sa(b.V.r1)*_sb(b.V.r1)*la^2*(la+1)
+        aij += _sa(b.V.r1)*_sb(b.V.r1)*la^2*(la+1)
     end
     return aij
 end
@@ -30,7 +30,7 @@ function _inertial_tt(b::T, lmna, lmnb, r,wr) where T<:Basis
     @inline _ta = r->t(T,b.V,la,ma,na,r)
     @inline _tb = r->t(T,b.V,lb,mb,nb,r)
 
-    @inline f = r-> innert(_ta,_tb, lb, r)
+    @inline f = r-> innert(_ta,_tb, la, r)
 
     aij = ∫dr(f,r,wr)
     return aij

@@ -18,10 +18,7 @@ function eigstarget(A, B, target; kwargs...)
     return λ, u
 end
 
-Limace.Poly.__wiginit(100)
 
 # include("misc.jl")
 include("modes.jl")
-# include("bases_nobc.jl")
-
-Limace.Poly.wig_temp_free()
+include("bases_nobc.jl")

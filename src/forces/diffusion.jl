@@ -9,16 +9,17 @@ function _diffusion_ss(b::T, lmna, lmnb, r,wr; external=false) where T<:Basis
     @inline _sa = r->s(T,b.V,la,ma,na,r)
     @inline _sb = r->s(T,b.V,lb,mb,nb,r)
 
-    if external
-        @inline f1 = r -> D(_sa,la,r)
-        @inline f2 = r -> D(_sb,lb,r)
-        @inline f = r-> -innert(f1,f2, lb, r)
-    else
-        @inline f1 = r -> D(_sa,la,r)
-        @inline f = r-> inners(_sb,f1, lb, r)
-    end
+    @inline f1 = r -> D(_sb,lb,r)
+    @inline f = r-> inners(_sa,f1, la, r)
 
     aij = ∫dr(f,r,wr)
+
+
+    if external
+        r1 = b.V.r1
+        aij += la^2*(la+1)*(∂(r->∂(r->r*_sb(r),r),r1)-lb*(lb+1)/r1*_sb(r1))*_sa(r1)
+    end
+    
     return aij
 end
 
@@ -26,20 +27,15 @@ end
 $(TYPEDSIGNATURES)
 
 """
-function _diffusion_tt(b::T, lmna, lmnb, r,wr; external = false) where T<:Basis
+function _diffusion_tt(b::T, lmna, lmnb, r,wr) where T<:Basis
     la,ma,na = lmna
     lb,mb,nb = lmnb
 
     @inline _ta = r->t(T,b.V,la,ma,na,r)
     @inline _tb = r->t(T,b.V,lb,mb,nb,r)
 
-    if external
-        @inline f = r-> -inners(_tb,_ta, lb, r)
-    else
-        @inline f1 = r -> D(_ta,la,r)
-        @inline f = r-> innert(_tb,f1, lb, r)
-
-    end
+    @inline f1 = r -> D(_tb,lb,r)
+    @inline f = r-> innert(_ta,f1, la, r)
 
     aij = ∫dr(f,r,wr)
 
@@ -84,7 +80,7 @@ $(TYPEDSIGNATURES)
     for l in 1:ltmax(b)
         for m in intersect(b.m, -l:l)
             for n in nrange_t_bc(b,l), n2 in nrange_t(b,l)
-                aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr; external)
+                aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
                 appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
             end
             if (b.BC == NoBC()) && applyBC
@@ -106,7 +102,7 @@ end
 $(TYPEDSIGNATURES)
 
 """
-@inline function diffusion_threaded(b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
+@inline function diffusion_threaded(b::TB, ::Type{T}=Float64; applyBC = true, external=false) where {TB<:Basis,T<:Number}
 
     _nt = Threads.nthreads()
     is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
@@ -124,10 +120,10 @@ $(TYPEDSIGNATURES)
                 Threads.@spawn begin
                     id = Threads.threadid()
                     for n in nrange_p_bc(b,l), n2 in nrange_p(b,l)
-                        aij = _diffusion_ss(b, (l,m,n), (l,m,n2), r,wr)
+                        aij = _diffusion_ss(b, (l,m,n), (l,m,n2), r,wr; external)
                         appendit!(is[id], js[id], aijs[id], lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
                     end
-                    if b.BC == NoBC()
+                    if (b.BC == NoBC()) && applyBC
                         bcf = bcs_p(b) #tuple of evaluation functions
                         npmax = last(nrange_p(b,l))
                         for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
@@ -147,7 +143,7 @@ $(TYPEDSIGNATURES)
                         aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
                         appendit!(is[id], js[id], aijs[id], lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
                     end
-                    if b.BC == NoBC()
+                    if (b.BC == NoBC()) && applyBC
                         bcf = bcs_t(b) #tuple of evaluation functions
                         ntmax = last(nrange_t(b,l))
                         for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)

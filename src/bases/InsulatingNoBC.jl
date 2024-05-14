@@ -22,7 +22,6 @@ struct InsulatingNoBC end
 
 InsulatingNoBC(N; kwargs...) = Basis{InsulatingNoBC}(; N, BC=NoBC(), V=Sphere(), kwargs...)
 
-
 s(::Type{Basis{InsulatingNoBC}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
 t(::Type{Basis{InsulatingNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
 
@@ -34,13 +33,11 @@ t(::Type{Basis{InsulatingNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, 
 
 @inline function bcs_t(b::Basis{InsulatingNoBC})
     fs = (@inline((l, n) -> t(Basis{InsulatingNoBC}, b.V, l, 0, n, 1.0)),)
-    # fs = ()
     return fs
 end
 
 @inline function bcs_p(b::Basis{InsulatingNoBC})
     fs = (@inline((l, n) -> ∂(r -> s(Basis{InsulatingNoBC}, b.V, l, 0, n, r), 1.0) + (l + 1) * s(Basis{InsulatingNoBC}, b.V, l, 0, n, 1.0)),)
-    # fs = ()
     return fs
 end
 

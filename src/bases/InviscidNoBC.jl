@@ -18,14 +18,11 @@ struct InviscidNoBC; end
 
 InviscidNoBC(N; kwargs...) = Basis{InviscidNoBC}(;N, V=Sphere(), BC=NoBC(), kwargs...)
 
-t(::Type{Basis{InviscidNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
 s(::Type{Basis{InviscidNoBC}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
+t(::Type{Basis{InviscidNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
 
 @inline _nrange_p(b::Basis{InviscidNoBC},l) = 0:((b.N-l+1)÷2)
 @inline _nrange_t(b::Basis{InviscidNoBC},l) = 0:((b.N-l)÷2)
-
-# @inline nrange_p_bc(b::Basis{InviscidNoBC},l) = 0:((b.N-l+1)÷2-1)
-# @inline nrange_t_bc(b::Basis{InviscidNoBC},l) = nrange_t(b, l)
 
 @inline function bcs_p(b::Basis{InviscidNoBC})
     fs = (@inline((l,n)->s(Basis{InviscidNoBC}, b.V, l, 0, n, 1.0)), )
@@ -38,7 +35,7 @@ end
 end
 
 
-lpmax(b::Basis{InviscidNoBC}) = b.N-1
+lpmax(b::Basis{InviscidNoBC}) = b.N
 ltmax(b::Basis{InviscidNoBC}) = b.N
 
 
