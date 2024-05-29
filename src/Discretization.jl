@@ -2,24 +2,51 @@ module Discretization
 
 using Limace: s,t, lmn_p, lmn_t
 using ..Bases
+using ..Bases: Sphere
 using ..Poly: dylmdθ, dylmdϕ, ∂, ylm
 using ..Utils
+using StaticArrays
 
-function poloidal_discretize(::Type{Basis{T}},l,m,n,r,θ,ϕ) where T
-	dsrdr = ∂(r->s(Basis{T},l,m,n,r)*r,r)
-    ur = l*(l+1)*s(Basis{T}, l,m,n,r)*ylm(l,m,θ,ϕ)/r
-    uθ = 1/r*dsrdr*dylmdθ(l,m,θ,ϕ)
-    uϕ = 1/(r*sin(θ))*dsrdr*dylmdϕ(l,m,θ,ϕ)
-    return (ur,uθ,uϕ)
+function poloidal_discretize(::Type{Basis{T}},V::Volume, l,m,n,r,θ,ϕ) where T
+	if r <= V.r1
+		dsrdr = ∂(r->s(Basis{T}, V, l,m,n,r)*r,r)
+		ur = l*(l+1)*s(Basis{T}, V, l,m,n,r)*ylm(l,m,θ,ϕ)/r
+		uθ = 1/r*dsrdr*dylmdθ(l,m,θ,ϕ)
+		uϕ = 1/(r*sin(θ))*dsrdr*dylmdϕ(l,m,θ,ϕ)
+		return SVector(ur,uθ,uϕ)
+	else
+		sc = s(Basis{T}, V, l,m,n, V.r1)
+		ur = l*sc*ylm(l,m,θ,ϕ)*(l+1)*r^(-l-2)
+		uθ = -l/r*sc*r^(-l-1)*dylmdθ(l,m,θ,ϕ)
+		uϕ = -l/(r*sin(θ))*sc*dylmdϕ(l,m,θ,ϕ)
+		return SVector(ur,uθ,uϕ)
+	end
 end
 
-function toroidal_discretize(::Type{Basis{T}},l,m,n,r,θ,ϕ) where T
-    ur = 0.0
-    uθ = 1/sin(θ)*t(Basis{T}, l,m,n,r)*dylmdϕ(l,m,θ,ϕ)
-    uϕ = -t(Basis{T},l,m,n,r)*dylmdθ(l,m,θ,ϕ)
 
-    return (ur,uθ,uϕ)
+function toroidal_discretize(::Type{Basis{T}},V::Volume, l,m,n,r,θ,ϕ) where T
+	if r<= V.r1
+		ur = 0.0
+		uθ = 1/sin(θ)*t(Basis{T}, V, l,m,n,r)*dylmdϕ(l,m,θ,ϕ)
+		uϕ = -t(Basis{T},V, l,m,n,r)*dylmdθ(l,m,θ,ϕ)
+		return SVector(ur,uθ,uϕ)
+	else
+		return SVector(0.0,0.0,0.0)
+	end
 end
+
+function discretize(b::BasisElement{TB, TP, T}, r, θ, ϕ, V::Volume = Sphere()) where {TB<:Basis, TP<:Helmholtz, T<:Number}
+	if TP<:Poloidal
+		return b.factor*poloidal_discretize(TB, V, b.lmn..., r, θ, ϕ)
+	else
+		return b.factor*toroidal_discretize(TB, V, b.lmn..., r, θ, ϕ)
+	end
+end
+
+function discretize(bs, r, θ, ϕ, V::Volume = Sphere())
+	return mapreduce(b->b.factor*discretize(b, r, θ, ϕ, V),+,bs)
+end
+
 
 function discretization_map(u::T, r, θ, ϕ) where T<:Basis
 	nr = length(r)

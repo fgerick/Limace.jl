@@ -422,7 +422,7 @@ function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=t
     l0, m0, n0 = B0.lmn
     @assert bbi.N == buj.N "Use same resolution for bases!"
     N = bbi.N
-    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 5, bbi.V) for n in 1:N]
 
     npb = length(lmn2k_p_bi)
     npu = length(lmn2k_p_uj)

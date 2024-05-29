@@ -163,7 +163,7 @@ function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:B
     l0, m0, n0 = B0.lmn
     @assert bui.N == bbj.N "Use same resolution for bases!"
     N = bui.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bui.V) for n in 1:N]
 
     npu = length(lmn2k_p_ui)
     npb = length(lmn2k_p_bj)
@@ -222,7 +222,7 @@ function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:B
     l0, m0, n0 = B0.lmn
     @assert bui.N == bbj.N "Use same resolution for bases!"
     N = bui.N
-    rwrs = [rquad(n + l0 + n0 + 5) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bui.V) for n in 1:N]
 
     npu = length(lmn2k_p_ui)
     npb = length(lmn2k_p_bj)
@@ -283,7 +283,7 @@ function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) whe
     l0, m0, n0 = B0.lmn
     @assert bui.N == bbj.N "Use same resolution for bases!"
     N = bui.N
-    rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
+    rwrs = [rquad(n + l0 + n0 + 1, bui.V) for n in 1:N]
 
     npu = length(lmn2k_p_ui)
     npb = length(lmn2k_p_bj)

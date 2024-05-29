@@ -20,24 +20,25 @@ export InsulatingNoBC
 
 struct InsulatingNoBC end
 
-InsulatingNoBC(N; kwargs...) = Basis{InsulatingNoBC}(; N, BC=NoBC(), V=Sphere(), kwargs...)
+InsulatingNoBC(N; kwargs...) = Basis{InsulatingNoBC, NamedTuple}(; N, BC=NoBC(), V=Sphere(), kwargs...)
 
-s(::Type{Basis{InsulatingNoBC}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
-t(::Type{Basis{InsulatingNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{InsulatingNoBC, NamedTuple}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
+t(::Type{Basis{InsulatingNoBC, NamedTuple}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
 
-@inline _nrange_p(b::Basis{InsulatingNoBC}, l) = 0:((b.N-l+1)÷2)
-@inline _nrange_t(b::Basis{InsulatingNoBC}, l) = 0:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{InsulatingNoBC, NamedTuple}, l) = 0:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{InsulatingNoBC, NamedTuple}, l) = 0:((b.N-l)÷2)
 
-@inline lpmax(b::Basis{InsulatingNoBC}) = b.N
-@inline ltmax(b::Basis{InsulatingNoBC}) = b.N
+@inline lpmax(b::Basis{InsulatingNoBC, NamedTuple}) = b.N
+@inline ltmax(b::Basis{InsulatingNoBC, NamedTuple}) = b.N
 
-@inline function bcs_t(b::Basis{InsulatingNoBC})
-    fs = (@inline((l, n) -> t(Basis{InsulatingNoBC}, b.V, l, 0, n, 1.0)),)
+@inline function bcs_t(b::Basis{InsulatingNoBC, NamedTuple})
+    fs = (@inline((l, n) -> t(Basis{InsulatingNoBC, NamedTuple}, b.V, l, 0, n, 1.0)),)
     return fs
 end
 
-@inline function bcs_p(b::Basis{InsulatingNoBC})
-    fs = (@inline((l, n) -> ∂(r -> s(Basis{InsulatingNoBC}, b.V, l, 0, n, r), 1.0) + (l + 1) * s(Basis{InsulatingNoBC}, b.V, l, 0, n, 1.0)),)
+@inline function bcs_p(b::Basis{InsulatingNoBC, NamedTuple})
+    fs = (@inline((l, n) -> ∂(r -> s(Basis{InsulatingNoBC, NamedTuple}, b.V, l, 0, n, r), 1.0) + (l + 1) * s(Basis{InsulatingNoBC, NamedTuple}, b.V, l, 0, n, 1.0)),)
+    # fs = ()
     return fs
 end
 

@@ -38,7 +38,7 @@ end
         RHS = Limace.coriolis(u; Ω)
         if Ω2 != 0.0
             Limace.Poly.__wiginit(N)
-            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 2sqrt(2pi/15))
+            U0 = BasisElement(Basis{Inviscid, NamedTuple}, Toroidal, (1,0,0), 2sqrt(2pi/15))
             RHSadv = -Ω2*Limace.lorentz(u, u, U0) #advection term is the same as Lorentz term
             RHS += RHSadv
         end
@@ -156,7 +156,7 @@ end
 
     LHS = Limace.inertial(b)
     RHS_diff = Limace.diffusion(b)
-    U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 1.0)
+    U0 = BasisElement(Basis{Inviscid, NamedTuple}, Toroidal, (1,0,0), 1.0)
     ind_utor = Limace.induction(b,U0,b)
 
     Rm = 10.0
@@ -289,7 +289,7 @@ end
             RHSuu = Limace.coriolis(u)
             RHSbb = spzeros(length(b),length(b))
         else
-            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 2sqrt(2pi/15))
+            U0 = BasisElement(Basis{Inviscid, NamedTuple}, Toroidal, (1,0,0), 2sqrt(2pi/15))
             RHSuu = -Limace.lorentz(u, u, U0)
             RHSbb = Limace.induction(b,U0,b)/Le
         end
@@ -458,7 +458,7 @@ end
     u = Inviscid(N; m)
     b = Insulating(N; m)
 
-    B0 = BasisElement(Basis{Insulating}, Poloidal, (1,0,1), sqrt(30/23))
+    B0 = BasisElement(Basis{Insulating, NamedTuple}, Poloidal, (1,0,1), sqrt(30/23))
 
     LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
 
@@ -494,7 +494,7 @@ end
   
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0 = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0fac)
+    B0 = BasisElement(Basis{Insulating, NamedTuple}, Poloidal, lmnb0, B0fac)
 
     LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
     LHSb = sparse(Limace.inertial(b))
@@ -535,7 +535,7 @@ end
     
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0 = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fac)
+    B0 = BasisElement(Basis{Insulating, NamedTuple}, Toroidal, lmnb0, B0fac)
 
     LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
     LHSb = sparse(Limace.inertial(b))
@@ -577,8 +577,8 @@ end
    
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0t = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fact)
-    B0p = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0facp)
+    B0t = BasisElement(Basis{Insulating, NamedTuple}, Toroidal, lmnb0, B0fact)
+    B0p = BasisElement(Basis{Insulating, NamedTuple}, Poloidal, lmnb0, B0facp)
 
     LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
     LHSb = sparse(Limace.inertial(b))

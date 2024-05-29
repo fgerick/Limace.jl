@@ -15,16 +15,18 @@ export Unconstrained
 
 struct Unconstrained; end
 
-Unconstrained(N; kwargs...) = Basis{Unconstrained}(;N, BC=NoBC(), V=Sphere(), kwargs...)
+Unconstrained(N; r=1.0, kwargs...) = Basis{Unconstrained}(;N, BC=NoBC(), V=Sphere(; r), kwargs...)
 
 @inline function t(::Type{Basis{Unconstrained}}, V::Volume, l,m,n,r) 
     fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
-    return fac*r^l*jacobi(n,0,l+1/2, 2r^2-1)
+    x = (2r^2-V.r1^2)/V.r1^2
+    return fac*r^l*jacobi(n,0,l+1/2, x)
 end
 
 @inline function s(::Type{Basis{Unconstrained}}, V::Volume, l,m,n,r)
     fac = 1/sqrt(l*(l+1)*(1+2l+4n))
-    return fac*r^l*(jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2, 2r^2-1))
+    x = (2r^2-V.r1^2)/V.r1^2
+    return fac*r^l*(jacobi(n,0,l+1/2, x) - jacobi(n-1,0,l+1/2, x))
 end
 
 @inline _nrange_p(b::Basis{Unconstrained},l) = 0:((b.N-l+1)÷2)

@@ -18,14 +18,14 @@ export Viscous
 
 struct Viscous; end
 
-Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
+Viscous(N; kwargs...) = Basis{Viscous, NamedTuple}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
 
 """
 $(TYPEDSIGNATURES)
 
 Chen et al. (2018) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
-@inline function t(::Type{Basis{Viscous}}, V::Volume, l,m,n,r) 
+@inline function t(::Type{Basis{Viscous, P}}, V::Volume, l,m,n,r) where P
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
     return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
 end
@@ -35,7 +35,7 @@ $(TYPEDSIGNATURES)
 
 Chen et al. (2018) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
-@inline function s(::Type{Basis{Viscous}}, V::Volume, l,m,n,r) 
+@inline function s(::Type{Basis{Viscous, P}}, V::Volume, l,m,n,r) where P
     c1 = 2l+4n+1
     c2 = -2(2l+4n+3)
     c3 = 2l+4n+5
@@ -43,11 +43,11 @@ Chen et al. (2018) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇�
     return fac*r^l*(c1*jacobi(n+1,0,l+1/2,2r^2-1) + c2*jacobi(n,0,l+1/2,2r^2-1) + c3*jacobi(n-1,0,l+1/2,2r^2-1)  ) 
 end
 
-@inline _nrange_p(b::Basis{Viscous},l) = 1:((b.N-l+1)÷2+1)
-@inline _nrange_t(b::Basis{Viscous},l) = 1:((b.N-l)÷2+1)
+@inline _nrange_p(b::Basis{Viscous, NamedTuple},l) = 1:((b.N-l+1)÷2-1)
+@inline _nrange_t(b::Basis{Viscous, NamedTuple},l) = 1:((b.N-l)÷2)
 
-@inline lpmax(b::Basis{Viscous}) = b.N-1
-@inline ltmax(b::Basis{Viscous}) = b.N
+@inline lpmax(b::Basis{Viscous, NamedTuple}) = b.N
+@inline ltmax(b::Basis{Viscous, NamedTuple}) = b.N
 
 
 #Inertial term/inner products
@@ -76,7 +76,7 @@ end
     end
 end
 
-function inertial(b::Basis{Viscous}, ::Type{T}=Float64) where {T<:Number}
+function inertial(b::Basis{Viscous, NamedTuple}, ::Type{T}=Float64) where {T<:Number}
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
@@ -170,7 +170,7 @@ end
 #     end
 # end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Viscous, NamedTuple}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T; applyBC=true) where T
     for n in nrange_p(b,l)
         njs_all = nrange_p(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -181,7 +181,7 @@ function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, 
     return nothing
 end
 
-function _coriolis_poloidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_toroidal!(b::Basis{Viscous, NamedTuple}, is, js, aijs, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         njs_all = nrange_t(b,l2)
         for n2 in max(n-2,first(njs_all)):min(n+2, last(njs_all))
@@ -193,7 +193,7 @@ function _coriolis_poloidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Viscous, NamedTuple}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T; applyBC=true) where T
     for n in nrange_t(b,l)
         njs_all = nrange_t(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -204,7 +204,7 @@ function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2
     return nothing
 end
 
-function _coriolis_toroidal_poloidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_poloidal!(b::Basis{Viscous, NamedTuple}, is, js, aijs, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l) 
         njs_all = nrange_p(b,l2)
         for n2 in max(n-2,first(njs_all)):min(n+2, last(njs_all))
@@ -228,7 +228,7 @@ end
     return -ν*((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Viscous}; ν::T=1.0, applyBC=true) where T
+function diffusion(b::Basis{Viscous, NamedTuple}; ν::T=1.0, applyBC=true) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 

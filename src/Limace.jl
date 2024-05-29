@@ -32,6 +32,9 @@ include("forces/lorentz.jl")
 include("bases/Inviscid.jl")
 @reexport using .InviscidBasis
 
+include("bases/InviscidShell.jl")
+using .InviscidShellBasis
+
 include("bases/Unconstrained.jl")
 using .UnconstrainedBasis
 
@@ -50,6 +53,8 @@ include("bases/Viscous.jl")
 include("bases/ViscousNoBC.jl")
 @reexport using .ViscousBasisNoBC
 
+include("bases/ThinWall.jl")
+using .ThinWallBC
 
 include("bases/ViscousShell.jl")
 @reexport using .ViscousShellBasis
