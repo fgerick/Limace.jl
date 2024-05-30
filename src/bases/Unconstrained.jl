@@ -42,7 +42,7 @@ end
 end
 
 
-lpmax(b::Basis{Unconstrained}) = b.N-1
+lpmax(b::Basis{Unconstrained}) = b.N
 ltmax(b::Basis{Unconstrained}) = b.N
 
 

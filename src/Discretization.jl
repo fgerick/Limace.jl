@@ -67,11 +67,11 @@ function discretization_map(u::T, r, θ, ϕ) where T<:Basis
 	for ϕ in ϕ, θ in θ, r in r
 		j = 1
 		for (l,m,n) in lmnp_u
-			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(T, l,m,n,r,θ,ϕ)
+			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(T, u.V, l,m,n,r,θ,ϕ)
 			j+=1
 		end
 		for (l,m,n) in lmnt_u
-			Mr[i,j],Mθ[i,j],Mϕ[i,j] = toroidal_discretize(T, l,m,n,r,θ,ϕ)
+			Mr[i,j],Mθ[i,j],Mϕ[i,j] = toroidal_discretize(T, u.V, l,m,n,r,θ,ϕ)
 			j+=1
 		end
 		i+=1
