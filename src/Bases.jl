@@ -72,16 +72,16 @@ $(TYPEDEF)
 $(TYPEDFIELDS)
 
 """
-Base.@kwdef struct Basis{T,P}
+Base.@kwdef struct Basis{T}
 	N::Int #truncation degree
     m::UnitRange{Int} = -N:N #spherical harmonic orders
 	n::UnitRange{Int} = 0:0 #radial degrees, default 0:0 to make n = n(N,l).
 	BC::BoundaryCondition = NoBC()
     V::Volume = Sphere()
-    params::P = NamedTuple()
+    params::Dict{Symbol,Float64} = Dict{Symbol,Float64}()
 end
 
-Basis{T,P}(N::Int, m::Int, n::UnitRange{Int}, BC::BoundaryCondition, V::Volume = Sphere(), params::P = NamedTuple()) where {T,P} = Basis{T,P}(N, m:m, n, BC, V, params)
+Basis{T}(N::Int, m::Int, n::UnitRange{Int}, BC::BoundaryCondition, args...) where {T} = Basis{T}(N, m:m, n, BC, args...)
 
 isaxisymmetric(b::Basis) = length(b.m) == 1
 

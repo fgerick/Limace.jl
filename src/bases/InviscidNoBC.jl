@@ -16,27 +16,27 @@ export InviscidNoBC
 
 struct InviscidNoBC; end
 
-InviscidNoBC(N; kwargs...) = Basis{InviscidNoBC, NamedTuple}(;N, V=Sphere(), BC=NoBC(), kwargs...)
+InviscidNoBC(N; kwargs...) = Basis{InviscidNoBC}(;N, V=Sphere(), BC=NoBC(), kwargs...)
 
-s(::Type{Basis{InviscidNoBC, NamedTuple}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
-t(::Type{Basis{InviscidNoBC, NamedTuple}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{InviscidNoBC}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
+t(::Type{Basis{InviscidNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
 
-@inline _nrange_p(b::Basis{InviscidNoBC, NamedTuple},l) = 0:((b.N-l+1)÷2)
-@inline _nrange_t(b::Basis{InviscidNoBC, NamedTuple},l) = 0:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{InviscidNoBC},l) = 0:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{InviscidNoBC},l) = 0:((b.N-l)÷2)
 
-@inline function bcs_p(b::Basis{InviscidNoBC, NamedTuple})
-    fs = (@inline((l,n)->s(Basis{InviscidNoBC, NamedTuple}, b.V, l, 0, n, 1.0)), )
+@inline function bcs_p(b::Basis{InviscidNoBC})
+    fs = (@inline((l,n)->s(Basis{InviscidNoBC}, b.V, l, 0, n, 1.0)), )
     # return ()
     return fs
 end
 
-@inline function bcs_t(b::Basis{InviscidNoBC, NamedTuple})
+@inline function bcs_t(b::Basis{InviscidNoBC})
     return ()
 end
 
 
-lpmax(b::Basis{InviscidNoBC, NamedTuple}) = b.N
-ltmax(b::Basis{InviscidNoBC, NamedTuple}) = b.N
+lpmax(b::Basis{InviscidNoBC}) = b.N
+ltmax(b::Basis{InviscidNoBC}) = b.N
 
 
 end
