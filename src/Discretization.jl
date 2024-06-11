@@ -96,14 +96,14 @@ function discretization_map(u::Basis, b::Basis, r, θ, ϕ)
 	lmnt_b = lmn_t(b)
 
 
-	Mr = zeros(ComplexF64,nr*nθ*nϕ,nu+nb)
-	Mθ = zeros(ComplexF64, nr*nθ*nϕ,nu+nb)
-	Mϕ = zeros(ComplexF64, nr*nθ*nϕ,nu+nb)
+	Mr = zeros(ComplexF64, 2nr*nθ*nϕ,nu+nb)
+	Mθ = zeros(ComplexF64, 2nr*nθ*nϕ,nu+nb)
+	Mϕ = zeros(ComplexF64, 2nr*nθ*nϕ,nu+nb)
 
 
 	i = 1
 	for r in r, θ in θ, ϕ in ϕ
-		j = 1
+		j=1
 		for (l,m,n) in lmnp_u
 			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(typeof(u), u.V, l,m,n,r,θ,ϕ)
 			j+=1
@@ -112,6 +112,10 @@ function discretization_map(u::Basis, b::Basis, r, θ, ϕ)
 			Mr[i,j],Mθ[i,j],Mϕ[i,j] = toroidal_discretize(typeof(u), u.V, l,m,n,r,θ,ϕ)
 			j+=1
 		end
+		i+=1
+	end
+	for r in r, θ in θ, ϕ in ϕ
+		j=nu+1
 		for (l,m,n) in lmnp_b
 			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(typeof(b), b.V, l,m,n,r,θ,ϕ)
 			j+=1
