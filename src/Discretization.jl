@@ -105,19 +105,19 @@ function discretization_map(u::Basis, b::Basis, r, θ, ϕ)
 	for r in r, θ in θ, ϕ in ϕ
 		j = 1
 		for (l,m,n) in lmnp_u
-			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(u, l,m,n,r,θ,ϕ)
+			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(typeof(u), u.V, l,m,n,r,θ,ϕ)
 			j+=1
 		end
 		for (l,m,n) in lmnt_u
-			Mr[i,j],Mθ[i,j],Mϕ[i,j] = toroidal_discretize(u, l,m,n,r,θ,ϕ)
+			Mr[i,j],Mθ[i,j],Mϕ[i,j] = toroidal_discretize(typeof(u), u.V, l,m,n,r,θ,ϕ)
 			j+=1
 		end
 		for (l,m,n) in lmnp_b
-			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(b, l,m,n,r,θ,ϕ)
+			Mr[i,j],Mθ[i,j],Mϕ[i,j] = poloidal_discretize(typeof(b), b.V, l,m,n,r,θ,ϕ)
 			j+=1
 		end
 		for (l,m,n) in lmnt_b
-			Mr[i,j],Mθ[i,j],Mϕ[i,j] = toroidal_discretize(b, l,m,n,r,θ,ϕ)
+			Mr[i,j],Mθ[i,j],Mϕ[i,j] = toroidal_discretize(typeof(b), b.V, l,m,n,r,θ,ϕ)
 			j+=1
 		end
 		i+=1

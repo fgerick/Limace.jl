@@ -1,7 +1,7 @@
 # Limace.jl
-_**Li**near **m**odes **a**t the **c**ore of **E**arth_
+<!-- _**Li**near **m**odes **a**t the **c**ore of **E**arth_ -->
 _**L**inear **I**nertial **MA**gneto **C**oriolis **E**igenmodes_
-_**L**inear **I**nertial **M**agneto **A**rchimedes **C**oriolis **E**igenmodes_
+<!-- _**L**inear **I**nertial **M**agneto **A**rchimedes **C**oriolis **E**igenmodes_ -->
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://fgerick.github.io/Limace.jl/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://fgerick.github.io/Limace.jl/dev/) [![Build Status](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/fgerick/Limace.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/fgerick/Limace.jl)
 
