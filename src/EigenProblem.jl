@@ -1,4 +1,4 @@
-module Eigen
+module EigenProblem
 
 using ArnoldiMethod, LinearMaps, LinearAlgebra, SparseArrays
 
