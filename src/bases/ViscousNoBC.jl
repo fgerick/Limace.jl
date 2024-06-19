@@ -19,7 +19,7 @@ struct ViscousNoBC; end
 
 ViscousNoBC(N; kwargs...) = Basis{ViscousNoBC}(;N, V=Sphere(), BC=NoBC(), kwargs...)
 
-s(::Type{Basis{ViscousNoBC}}, V::Volume, l,m,n,r)  = s(Basis{Inviscid,NamedTuple}, V, l,m,n,r) 
+s(::Type{Basis{ViscousNoBC}}, V::Volume, l,m,n,r)  = s(Basis{Inviscid}, V, l,m,n,r) 
 t(::Type{Basis{ViscousNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
 
 @inline _nrange_p(b::Basis{ViscousNoBC},l) = 0:((b.N-l+1)÷2)

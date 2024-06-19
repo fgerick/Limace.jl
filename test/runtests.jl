@@ -6,7 +6,7 @@ using FunctionZeros
 using Distributed
 using SparseArrays
 
-using Limace.Eigen: eigstarget
+using Limace.EigenProblem: eigstarget
 
 
 # include("misc.jl")
