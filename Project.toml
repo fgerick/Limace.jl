@@ -27,4 +27,4 @@ FunctionZeros = "b21f74c0-b399-568f-9643-d20f4fa2c814"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test","FunctionZeros"]
+test = ["Test", "FunctionZeros"]

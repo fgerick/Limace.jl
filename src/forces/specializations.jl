@@ -1,5 +1,5 @@
 @inline function _crossterm!(bbi::Basis{Ti}, U0::BasisElement{Basis{T0},PT,T}, bbj::Basis{Tj}, is, js, aijs, i0, j0,
-    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_bj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Union{Insulating,Inviscid}, Tj<:Union{Insulating,Inviscid}, T0<:Union{Insulating,Inviscid}, PT<:Helmholtz,T}
+    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_bj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Union{Insulating,Inviscid,Viscous}, Tj<:Union{Insulating,Inviscid,Viscous}, T0<:Union{Insulating,Inviscid,Viscous}, PT<:Helmholtz,T}
     l0,m0,n0 = U0.lmn
     for ni in nrangefi(bbi, li)
         njs_all = nrangefj(bbj,lj)
@@ -15,7 +15,7 @@
 end
 
 @inline function _crossterm!(bbi::Basis{Ti}, buj::Basis{Tj}, B0::BasisElement{Basis{T0},PT,T}, is, js, aijs, i0, j0,
-    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_uj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Union{Insulating,Inviscid}, Tj<:Union{Insulating,Inviscid}, T0<:Union{Insulating,Inviscid}, PT<:Helmholtz,T}
+    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_uj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Union{Insulating,Inviscid,Viscous}, Tj<:Union{Insulating,Inviscid,Viscous}, T0<:Union{Insulating,Inviscid,Viscous}, PT<:Helmholtz,T}
     l0,m0,n0 = B0.lmn
     for ni in nrangefi(bbi, li)
         # for nj in nrangefj(bbj, lj)
