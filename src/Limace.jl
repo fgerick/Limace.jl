@@ -31,6 +31,7 @@ include("forces/coriolis.jl")
 include("forces/diffusion.jl")
 include("forces/induction.jl")
 include("forces/lorentz.jl")
+include("forces/bc.jl")
 
 # bases
 

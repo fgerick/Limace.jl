@@ -5,7 +5,7 @@ using Wigxjpf
 using ForwardDiff
 using DocStringExtensions
 
-export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, p, _∂ll, D, innert, inners
+export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, p, _∂ll, D, innert, inners, _∂ll_m1, _∂ll_p1
 
 
 #only for dev, initiate wigner symbols temporary working arrays.
@@ -167,13 +167,14 @@ $(TYPEDSIGNATURES)
 
 Equation (25) in Ivers & Phillips (2008).
 """
-function _∂ll(f,l,l1,r) 
-    @assert l1 ∈ (l-1, l+1)
+@inline function _∂ll(f,l,l1,r)
+    # @assert l1 ∈ (l-1, l+1)
     if l1 == l-1
         return ∂(f,r) + (l+1)/r*f(r) 
     elseif l1 == l+1
         return ∂(f,r)-l/r*f(r)
     end
+    return 0.0
 end
 
 """
@@ -188,7 +189,7 @@ $(TYPEDSIGNATURES)
 
 Equation (xx) in Ivers & Phillips (2008).
 """
-@inline function innert(t,t2, l, r) 
+@inline function innert(t::T1,t2::T2, l::Int, r::Tr) where {T1,T2,Tr}
     return l*(l+1)*t(r)*t2(r)
 end
 

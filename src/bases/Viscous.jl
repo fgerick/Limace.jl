@@ -35,12 +35,12 @@ $(TYPEDSIGNATURES)
 
 Chen et al. (2018) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
-@inline function s(::Type{Basis{Viscous}}, V::Volume, l,m,n,r)
+@inline function s(::Type{Basis{Viscous}}, V::Volume, l,m,n,r::T) where T
     c1 = 2l+4n+1
     c2 = -2(2l+4n+3)
     c3 = 2l+4n+5
-    fac = 1/(sqrt(2l*(1 + l)*(1 + 2*l + 4*n)*(3 + 2*l + 4*n)*(5 + 2*l + 4*n)))
-    return fac*r^l*(c1*jacobi(n+1,0,l+1/2,2r^2-1) + c2*jacobi(n,0,l+1/2,2r^2-1) + c3*jacobi(n-1,0,l+1/2,2r^2-1)  ) 
+    fac = 1/(sqrt(T(2l*(1 + l)*(1 + 2*l + 4*n)*(3 + 2*l + 4*n)*(5 + 2*l + 4*n))))
+    return fac*r^l*(c1*jacobi(n+1,zero(T),l+one(T)/2,2r^2-1) + c2*jacobi(n,zero(T),l+one(T)/2,2r^2-1) + c3*jacobi(n-1,zero(T),l+one(T)/2,2r^2-1)  ) 
 end
 
 @inline _nrange_p(b::Basis{Viscous},l) = 1:((b.N-l+1)÷2-1)
