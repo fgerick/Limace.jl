@@ -4,7 +4,9 @@ using Limace: s, t, lmn_p, lmn_t
 using ..Bases
 using ..Bases: Sphere
 using ..Poly: dylmdθ, dylmdϕ, ∂, ylm
+using ..Quadrature
 using StaticArrays
+using SHTns
 
 
 function poloidal_discretize(::Type{Basis{T}}, V::Volume, l, m, n, r, θ, ϕ) where {T}
@@ -47,9 +49,55 @@ function discretize(bs, r, θ, ϕ, V::Volume=Sphere())
     return mapreduce(b -> b.factor * discretize(b, r, θ, ϕ, V), +, bs)
 end
 
-function discretize(αs::Vector{T}, u::TU, r, θ, ϕ) where {T<:Number,TU<:Basis}
+# function discretize(αs::Vector{T}, u::TU, r, θ, ϕ) where {T<:Number,TU<:Basis}
+#     @assert length(αs) == length(u)
+#     nr = length(r)
+#     nθ = length(θ)
+#     nϕ = length(ϕ)
+
+#     lmnp_u = lmn_p(u)
+#     lmnt_u = lmn_t(u)
+
+#     ur = zeros(ComplexF64, nr, nθ, nϕ)
+#     uθ = zeros(ComplexF64, nr, nθ, nϕ)
+#     uϕ = zeros(ComplexF64, nr, nθ, nϕ)
+
+#     _np = length(lmnp_u)
+#     αsp = @view αs[1:_np]
+#     αst = @view αs[_np+1:end]
+
+#     lck = ReentrantLock()
+
+#     Threads.@threads for _i in eachindex(lmnp_u)
+#         (l, m, n) , α= lmnp_u[_i], αsp[_i]
+#         @inbounds for (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ), (i,r) in enumerate(r)
+#             _ur,_uθ,_uϕ = poloidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
+#             Threads.lock(lck) do
+#                 ur[i, j, k] += α*_ur
+#                 uθ[i, j, k] += α*_uθ
+#                 uϕ[i, j, k] += α*_uϕ
+#             end
+#         end
+#     end
+#     Threads.@threads for _i in eachindex(lmnt_u)
+#         (l, m, n) ,α = lmnt_u[_i], αst[_i]
+#         @inbounds for (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ), (i,r) in enumerate(r)
+#             _ur,_uθ,_uϕ = toroidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
+#             Threads.lock(lck) do
+#                 ur[i, j, k] += α*_ur
+#                 uθ[i, j, k] += α*_uθ
+#                 uϕ[i, j, k] += α*_uϕ
+#             end
+#         end
+#     end
+
+
+#     return ur, uθ, uϕ
+# end
+
+function discretize(αs::Vector{T}, u::TU, rs, θ, ϕ) where {T<:Number,TU<:Basis}
     @assert length(αs) == length(u)
-    nr = length(r)
+    nr = length(rs)
     nθ = length(θ)
     nϕ = length(ϕ)
 
@@ -64,28 +112,20 @@ function discretize(αs::Vector{T}, u::TU, r, θ, ϕ) where {T<:Number,TU<:Basis
     αsp = @view αs[1:_np]
     αst = @view αs[_np+1:end]
 
-    lck = ReentrantLock()
 
-    Threads.@threads for _i in eachindex(lmnp_u)
-        (l, m, n) , α= lmnp_u[_i], αsp[_i]
-        @inbounds for (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ), (i,r) in enumerate(r)
+    Threads.@threads for i in eachindex(rs)
+        r = rs[i]
+        for ((l, m, n) , α) in zip(lmnp_u,αsp), (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ)
             _ur,_uθ,_uϕ = poloidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
-            Threads.lock(lck) do
-                ur[i, j, k] += α*_ur
-                uθ[i, j, k] += α*_uθ
-                uϕ[i, j, k] += α*_uϕ
-            end
+            ur[i, j, k] += α*_ur
+            uθ[i, j, k] += α*_uθ
+            uϕ[i, j, k] += α*_uϕ
         end
-    end
-    Threads.@threads for _i in eachindex(lmnt_u)
-        (l, m, n) ,α = lmnt_u[_i], αst[_i]
-        @inbounds for (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ), (i,r) in enumerate(r)
+        for ((l,m,n), α) in zip(lmnt_u, αst), (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ)
             _ur,_uθ,_uϕ = toroidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
-            Threads.lock(lck) do
-                ur[i, j, k] += α*_ur
-                uθ[i, j, k] += α*_uθ
-                uϕ[i, j, k] += α*_uϕ
-            end
+            ur[i, j, k] += α*_ur
+            uθ[i, j, k] += α*_uθ
+            uϕ[i, j, k] += α*_uϕ
         end
     end
 
@@ -263,73 +303,210 @@ function discretization_map(u::Basis, b::Basis, r, θ, ϕ)
 end
 
 
-# function coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb, lmnpu, lmntu, lmnpb, lmntb, coeffs, sht, r)
+function coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb, lmnpu, lmntu, lmnpb, lmntb, coeffs, sht, u::TU, b::TB, r) where {TU<:Basis, TB<:Basis}
+
+	npu = length(lmnpu)
+	ntu = length(lmntu)
+	nu = npu+ntu
+	npb = length(lmnpb)
+	ntb = length(lmntb)
+
+    # @show length(coeffs)
+    # @show nu + npb + ntb
+    # @assert length(coeffs) == nu + npb +ntb
+
+	#velocity
+
+	for (c,(l,m,n)) in zip(@views(coeffs[1:npu]),lmnpu)
+		@inline p = r-> s(TU,u.V,l,m,n,r)
+		Qlmu[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
+		Slmu[SHTns.LM_cplx(sht,l,m)] += c/r*∂(r->r*p(r),r)
+
+	end
+	for (c,(l,m,n)) in zip(@views(coeffs[npu+1:npu+ntu]),lmntu)
+		Tlmu[SHTns.LM_cplx(sht,l,m)] += c*t(TU,u.V,l,m,n,r)
+	end
+
+	#magnetic field
+
+	for (c,(l,m,n)) in zip(@views(coeffs[nu+1:nu+npb]),lmnpb)
+		@inline p = r-> s(TB,b.V,l,m,n,r)
+		Qlmb[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
+		Slmb[SHTns.LM_cplx(sht,l,m)] += c/r*∂(@inline(r->r*p(r)),r)
+
+	end
+	for (c,(l,m,n)) in zip(@views(coeffs[nu+npb+1:nu+npb+ntb]),lmntb)
+		Tlmb[SHTns.LM_cplx(sht,l,m)] += c*t(TB,b.V,l,m,n,r)
+	end
+
+	return nothing
+
+end
+
+function coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, lmnpu, lmntu, coeffs, sht, u::TU, r) where {TU<:Basis}
+
+	npu = length(lmnpu)
+	ntu = length(lmntu)
+	nu = npu+ntu
+    @assert length(coeffs) == nu
+
+	#velocity
+
+	for (c,(l,m,n)) in zip(@views(coeffs[1:npu]),lmnpu)
+		@inline p = r-> s(TU,u.V,l,m,n,r)
+		Qlmu[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
+		Slmu[SHTns.LM_cplx(sht,l,m)] += c/r*∂(r->r*p(r),r)
+
+	end
+	for (c,(l,m,n)) in zip(@views(coeffs[npu+1:npu+ntu]),lmntu)
+		Tlmu[SHTns.LM_cplx(sht,l,m)] += c*t(TU,u.V,l,m,n,r)
+	end
+
+	return nothing
+
+end
+
+function discretizationsetup(L::Int, V::Volume)
 	
-# 	npu = length(lmnpu)
-# 	ntu = length(lmntu)
-# 	nu = npu+ntu
-# 	npb = length(lmnpb)
-# 	ntb = length(lmntb)
+	nr = 2L
+	sht = SHTnsCfg(L)
+	lats, lons = SHTns.grid(sht; colat=true)
+	rgrid, _ = Quadrature.rquad(nr,V.r0, V.r1)
+	return sht, rgrid, lats, lons
+end
 
-# 	#velocity
+function discretizationsetup(L::Int, V::Volume, nr, nlat, nlon; mmax=L)
+	
+	sht = SHTnsCfg(L, mmax, 1, nlat, nlon)
+	lats, lons = SHTns.grid(sht; colat=true)
+	rgrid, _ = Quadrature.rquad(nr,V.r0, V.r1)
+	return sht, rgrid, lats, lons
+end
 
-# 	for (c,(l,m,n)) in zip(@views(coeffs[1:npu]),lmnpu)
-# 		@inline p = r-> Limace.DiscretePart.s_in(l,m,n,r)
-# 		Qlmu[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
-# 		Slmu[SHTns.LM_cplx(sht,l,m)] += c/r*Limace.DiscretePart.∂(r->r*p(r),r)
+function discretizationsetup(L::Int, nlat, nlon; mmax=L)
+	sht = SHTnsCfg(L, mmax, 1, nlat, nlon)
+	lats, lons = SHTns.grid(sht; colat=true)
+	return sht, lats, lons
+end
 
-# 	end
-# 	for (c,(l,m,n)) in zip(@views(coeffs[npu+1:npu+ntu]),lmntu)
-# 		Tlmu[SHTns.LM_cplx(sht,l,m)] += c*Limace.DiscretePart.t_in(l,m,n,r)
-# 	end
+function setup_coeffs_to_SHTnSlmTlm(sht, u::TU, b::TB) where {TU<:Basis, TB<:Basis}
+	lmnpu = lmn_p(u)
+	lmntu = lmn_t(u)
+	lmnpb = lmn_p(b)
+	lmntb = lmn_t(b)
+	
 
-# 	#magnetic field
+	#velocity
+	Qlmu = zeros(ComplexF64,sht.nlm_cplx)
+	Slmu = zeros(ComplexF64,sht.nlm_cplx)
+	Tlmu = zeros(ComplexF64,sht.nlm_cplx)
 
-# 	for (c,(l,m,n)) in zip(@views(coeffs[nu+1:nu+npb]),lmnpb)
-# 		@inline p = r-> Limace.DiscretePart.s_mf(l,m,n,r)
-# 		Qlmb[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
-# 		Slmb[SHTns.LM_cplx(sht,l,m)] += c/r*Limace.DiscretePart.∂(@inline(r->r*p(r)),r)
+	#magnetic field
+	Qlmb = zeros(ComplexF64,sht.nlm_cplx)
+	Slmb = zeros(ComplexF64,sht.nlm_cplx)
+	Tlmb = zeros(ComplexF64,sht.nlm_cplx)
 
-# 	end
-# 	for (c,(l,m,n)) in zip(@views(coeffs[nu+npb+1:nu+npb+ntb]),lmntb)
-# 		Tlmb[SHTns.LM_cplx(sht,l,m)] += c*Limace.DiscretePart.t_mf(l,m,n,r)
-# 	end
+	return lmnpu, lmntu, lmnpb, lmntb, Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb
+	
 
-# 	return nothing
+end
 
-# end
+function setup_coeffs_to_SHTnSlmTlm(sht, u::TU) where {TU<:Basis}
+	lmnpu = lmn_p(u)
+	lmntu = lmn_t(u)
+	
+	Qlmu = zeros(ComplexF64,sht.nlm_cplx)
+	Slmu = zeros(ComplexF64,sht.nlm_cplx)
+	Tlmu = zeros(ComplexF64,sht.nlm_cplx)
 
-# function _spectospat_shtns(coeffs, N, sht, rgrid; ms = -N:N)
-# 	T = ComplexF64
-# 	nr = length(rgrid)
-# 	nϕ = sht.nphi
-# 	nθ = sht.nlat
-# 	ur = zeros(T,nr,nθ,nϕ)
-# 	uθ = zeros(T,nr,nθ,nϕ)
-# 	uϕ = zeros(T,nr,nθ,nϕ)
-# 	br = zeros(T,nr,nθ,nϕ)
-# 	bθ = zeros(T,nr,nθ,nϕ)
-# 	bϕ = zeros(T,nr,nθ,nϕ)
-# 	_ur = zeros(T,nθ,nϕ)
-# 	_uθ, _uϕ, _br, _bϕ, _bθ = similar(_ur), similar(_ur), similar(_ur), similar(_ur), similar(_ur)
-# 	lmnpu, lmntu, lmnpb, lmntb, Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb = setup_coeffs_to_SHTnSlmTlm(N, sht; ms)
-# 	for (ir, r) in enumerate(rgrid)
-# 		coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb, lmnpu, lmntu, lmnpb, lmntb, coeffs, sht, r)
-# 		SHTns.synth!(sht, Qlmu, Slmu, Tlmu, _ur, _uθ, _uϕ)
-# 		SHTns.synth!(sht, Qlmb, Slmb, Tlmb, _br, _bθ, _bϕ)
+	return lmnpu, lmntu, Qlmu, Slmu, Tlmu
+	
+
+end
+
+function _spectospat_shtns(coeffs::Vector{T}, sht, rgrid, u::TU) where {TU<:Basis, T<:ComplexF64}
+	nr = length(rgrid)
+	nϕ = sht.nphi
+	nθ = sht.nlat
+	ur = zeros(T,nr,nθ,nϕ)
+	uθ = zeros(T,nr,nθ,nϕ)
+	uϕ = zeros(T,nr,nθ,nϕ)
+	_ur = zeros(T,nθ,nϕ)
+	_uθ, _uϕ = similar(_ur), similar(_ur)
+	lmnpu, lmntu, Qlmu, Slmu, Tlmu = setup_coeffs_to_SHTnSlmTlm(sht, u)
+	for (ir, r) in enumerate(rgrid)
+		coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, lmnpu, lmntu, coeffs, sht, u, r)
+		SHTns.synth!(sht, Qlmu, Slmu, Tlmu, _ur, _uθ, _uϕ)
 		
-# 		for j in axes(_ur,2), i in axes(_ur,1)
-# 			ur[ir,i,j] = _ur[i,j]
-# 			uθ[ir,i,j] = _uθ[i,j]
-# 			uϕ[ir,i,j] = _uϕ[i,j]
-# 			br[ir,i,j] = _br[i,j]
-# 			bθ[ir,i,j] = _bθ[i,j]
-# 			bϕ[ir,i,j] = _bϕ[i,j]
-# 		end
-# 		@. Qlmu = Slmu = Tlmu = Qlmb = Slmb = Tlmb = 0.0
-# 	end
-# 	return ur,uθ,uϕ, br,bθ,bϕ
+		@inbounds for j in axes(_ur,2), i in axes(_ur,1)
+			ur[ir,i,j] = _ur[i,j]
+			uθ[ir,i,j] = _uθ[i,j]
+			uϕ[ir,i,j] = _uϕ[i,j]
+		end
+		@. Qlmu = Slmu = Tlmu = 0.0
+	end
+	return ur,uθ,uϕ
 
-# end
+end
+
+function _spectospat_shtns(coeffs::Vector{T}, sht, rgrid, u::TU, b::TB) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
+	nr = length(rgrid)
+	nϕ = sht.nphi
+	nθ = sht.nlat
+	ur = zeros(T,nr,nθ,nϕ)
+	uθ = zeros(T,nr,nθ,nϕ)
+	uϕ = zeros(T,nr,nθ,nϕ)
+	br = zeros(T,nr,nθ,nϕ)
+	bθ = zeros(T,nr,nθ,nϕ)
+	bϕ = zeros(T,nr,nθ,nϕ)
+	_ur = zeros(T,nθ,nϕ)
+	_uθ, _uϕ, _br, _bϕ, _bθ = similar(_ur), similar(_ur), similar(_ur), similar(_ur), similar(_ur)
+	lmnpu, lmntu, lmnpb, lmntb, Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb = setup_coeffs_to_SHTnSlmTlm(sht, u, b)
+	for (ir, r) in enumerate(rgrid)
+		coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb, lmnpu, lmntu, lmnpb, lmntb, coeffs, sht, u, b, r)
+		SHTns.synth!(sht, Qlmu, Slmu, Tlmu, _ur, _uθ, _uϕ)
+		SHTns.synth!(sht, Qlmb, Slmb, Tlmb, _br, _bθ, _bϕ)
+		
+		for j in axes(_ur,2), i in axes(_ur,1)
+			ur[ir,i,j] = _ur[i,j]
+			uθ[ir,i,j] = _uθ[i,j]
+			uϕ[ir,i,j] = _uϕ[i,j]
+			br[ir,i,j] = _br[i,j]
+			bθ[ir,i,j] = _bθ[i,j]
+			bϕ[ir,i,j] = _bϕ[i,j]
+		end
+		@. Qlmu = Slmu = Tlmu = Qlmb = Slmb = Tlmb = 0.0
+	end
+	return ur,uθ,uϕ, br,bθ,bϕ
+
+end
+
+function spectospat(coeffs::Vector{T}, u::TU, nr::Int, nθ::Int, nϕ::Int) where {TU<:Basis, T<:ComplexF64}
+    sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m))
+    ur,uθ,uϕ = _spectospat_shtns(coeffs, sht, r, u)
+    return ur,uθ,uϕ, r,θ,ϕ
+end
+
+
+function spectospat(coeffs::Vector{T}, u::TU, r::Float64, nθ::Int, nϕ::Int) where {TU<:Basis, T<:ComplexF64}
+    sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
+    ur,uθ,uϕ = _spectospat_shtns(coeffs, sht, r, u)
+    return ur,uθ,uϕ, θ,ϕ
+end
+
+function spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
+    sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m))
+    ur,uθ,uϕ, br,bθ,bϕ = _spectospat_shtns(coeffs, sht, r, u, b)
+    return ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ
+end
+
+
+function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Float64, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
+    sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
+    ur,uθ,uϕ, br,bθ,bϕ = _spectospat_shtns(coeffs, sht, r, u, b)
+    return ur,uθ,uϕ, br,bθ,bϕ, θ,ϕ
+end
+
+
 
 end #module
