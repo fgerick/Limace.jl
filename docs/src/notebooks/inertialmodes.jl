@@ -147,10 +147,10 @@ _uϕ = real.(reshape(Mϕ*u[:,imode],nθ,nϕ));
 # ╔═╡ d1617efb-f212-443f-b8e7-cd26d2769741
 _uθ = real.(reshape(Mθ*u[:,imode],nθ,nϕ));
 
-# ╔═╡ be42ca26-5c35-429a-ab7b-dd995378278b
+# ╔═╡ 35c4fc9f-e3df-4e0b-9a7d-13db65d5a706
 begin
 	f = Figure(size=100.0.*(6,2), backgroundcolor = :transparent)
-	ax = GeoAxis(f[1,1], dest="proj=moll", xticks=false, yticks=false)
+	ax = GeoAxis(f[1,1], dest="proj=moll", yticklabelsvisible=false, xticklabelsvisible=false)
 end;
 
 # ╔═╡ 07c55e43-1ce7-4549-b0ec-129512da7dd6
@@ -202,5 +202,5 @@ end
 # ╟─6cecaf42-a8c7-40d5-94e5-7a34465d2bdf
 # ╟─a61b77a4-3e0b-4906-b0c5-fb4d69eada08
 # ╟─d1617efb-f212-443f-b8e7-cd26d2769741
-# ╟─be42ca26-5c35-429a-ab7b-dd995378278b
+# ╟─35c4fc9f-e3df-4e0b-9a7d-13db65d5a706
 # ╟─07c55e43-1ce7-4549-b0ec-129512da7dd6
