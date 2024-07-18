@@ -67,5 +67,7 @@ include("bases/ViscousShell.jl")
 
 include("forces/specializations.jl")
 
+include("Processing.jl")
+using .Processing
 
 end

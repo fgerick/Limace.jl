@@ -771,7 +771,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; e
 
     npbi = length(lmn2k_p_bi)
     npbj = length(lmn2k_p_bj)
-    for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
+    @sync for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
             E = elsasser(l0, lj, li, m0, mj, mi)
@@ -782,7 +782,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; e
         end
     end
 
-    for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
+    @sync for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             A = adamgaunt(l0,lj,li, m0, mj, mi)

@@ -257,4 +257,9 @@ s(b::BasisElement{T,Poloidal}, V::Volume, r) where T = s(T,V,b.lmn..., r)
 t(b::BasisElement{T,Toroidal}, V::Volume, r) where T = t(T,V,b.lmn..., r)
 
 
+import Base: +,-,*
+
+-(u::BasisElement{TB,PT}) where {TB<:Basis, PT<:Helmholtz} = BasisElement(TB,PT,u.lmn,-u.factor)
+*(x::Number,u::BasisElement{TB,PT}) where {TB<:Basis, PT<:Helmholtz} = BasisElement(TB,PT,u.lmn,x*u.factor)
+
 end #module

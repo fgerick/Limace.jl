@@ -19,6 +19,7 @@ SHTns = "5dc4ea12-f621-4038-8458-a22eae100703"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Wigxjpf = "af901252-fd8a-4391-8647-10b4fde07a1e"
 
 [compat]

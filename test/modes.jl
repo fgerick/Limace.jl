@@ -38,7 +38,7 @@ end
         RHS = Limace.coriolis(u; Ω)
         if Ω2 != 0.0
             Limace.Poly.__wiginit(N)
-            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 2sqrt(2pi/15))
+            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), sqrt(2pi/15))
             RHSadv = -Ω2*Limace.lorentz(u, u, U0) #advection term is the same as Lorentz term
             RHS += RHSadv
         end
@@ -47,7 +47,7 @@ end
     N = 3
     for m = -3:3
         λ = eigvals(Matrix(assembleU0uniHydro(N,m)))
-        λu0 = eigvals(Matrix(assembleU0uniHydro(N,m; Ω=0.0, Ω2 = 1.0))) .+ m*im
+        λu0 = eigvals(Matrix(assembleU0uniHydro(N,m; Ω=0.0, Ω2 = 2.0))) .+ m*im
 
         @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))] 
     end
