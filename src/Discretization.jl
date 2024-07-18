@@ -501,23 +501,11 @@ function spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int
 end
 
 
-function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Float64, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
+function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Tr, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64, Tr<:Union{AbstractVector{Float64},Float64}}
     sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
     ur,uθ,uϕ, br,bθ,bϕ = _spectospat_shtns(coeffs, sht, r, u, b)
     return ur,uθ,uϕ, br,bθ,bϕ, θ,ϕ
 end
-
-function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Vector{Float64}, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
-    sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
-    nr = length(r)
-    ur = zeros(ComplexF64, nr, nθ, nϕ)
-    for (i,r) in enumerate(r)
-        ur[i,:,:],uθ[i,:,:],uϕ[i,:,:], br[i,:,:],bθ[i,:,:],bϕ[i,:,:] = _spectospat_shtns(coeffs, sht, r, u, b)
-    end
-    
-    return ur,uθ,uϕ, br,bθ,bϕ, θ,ϕ
-end
-
 
 
 end #module
