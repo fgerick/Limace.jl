@@ -13,6 +13,9 @@ using ..Poly
 using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, Sphere
 import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s, nrange_p_bc, nrange_t_bc, bcs_p, bcs_t
 
+import ..Limace: inertial, _inertial_ss, _inertial_tt
+import ..Quadrature: rquad
+
 export ThinWall
 
 struct ThinWall; end
@@ -51,6 +54,38 @@ end
 
 lpmax(b::Basis{ThinWall}) = b.N
 ltmax(b::Basis{ThinWall}) = b.N
+
+function inertial(b::Basis{ThinWall}, ::Type{T}=Float64; external=false) where {T<:Number}
+
+    is, js, aijs = Int[], Int[], Complex{T}[]
+    lmn2k_p = lmn2k_p_dict(b)
+    lmn2k_t = lmn2k_t_dict(b)
+    _np = np(b)
+    r, wr = rquad(b.N + 5, b.V)
+    nu = length(b)
+
+    #m == m2 and only l==l2 needs to be considered.
+    @inbounds for l in 1:lpmax(b)
+        for m in intersect(b.m, -l:l)
+            for n in nrange_p_bc(b,l)
+                aij = _inertial_ss(b, (l,m,n), (l,m,n), r,wr; external)
+                appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n)], aij)
+            end
+        end
+    end
+
+    @inbounds for l in 1:ltmax(b)
+        for m in intersect(b.m, -l:l)
+            for n in nrange_t_bc(b,l)
+                aij = _inertial_tt(b, (l,m,n), (l,m,n), r,wr)
+                appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n)] + _np, aij)
+            end
+        end
+    end
+
+
+    return sparse(is, js, aijs, nu, nu)
+end
 
 
 end
