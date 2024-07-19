@@ -8,11 +8,9 @@ $(TYPEDSIGNATURES)
     lmn2k_p = lmn2k_p_dict(b)
     lmn2k_t = lmn2k_t_dict(b)
     _np = np(b)
-    r, wr = rquad(b.N + 5, b.V)
     nbasis = length(b)
 
     #m == m2 and only l==l2 needs to be considered.
-    # k=1
     for l in 1:lpmax(b)
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC()) 

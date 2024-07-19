@@ -20,7 +20,7 @@ function poloidal_discretize(::Type{Basis{T}}, V::Volume, l, m, n, r, θ, ϕ) wh
         sc = s(Basis{T}, V, l, m, n, V.r1)
         ur = l * sc * ylm(l, m, θ, ϕ) * (l + 1) * r^(-l - 2)
         uθ = -l / r * sc * r^(-l - 1) * dylmdθ(l, m, θ, ϕ)
-        uϕ = -l / (r * sin(θ)) * sc * dylmdϕ(l, m, θ, ϕ)
+        uϕ = -l / (r * sin(θ)) * r^(-l -1) * sc * dylmdϕ(l, m, θ, ϕ)
         return SVector(ur, uθ, uϕ)
     end
 end

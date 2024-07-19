@@ -649,24 +649,26 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; e
 
     npb = length(lmn2k_p_bi)
     npu = length(lmn2k_p_uj)
-    for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
+    @sync for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(buj))
             E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
-                _induction_spt!(bbi, buj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj,E; external)
+                # _induction_spt!(bbi, buj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj,E; external)
+                _crossterm!(bbi, buj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj, nrange_p_bc, nrange_p, _induction_sTS, E)
             end
         end
     end
 
-    for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
+    @sync for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(buj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
-                _induction_tpt!(bbi, buj, B0, is[id], js[id], aijs[id], npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj,A)
+                # _induction_tpt!(bbi, buj, B0, is[id], js[id], aijs[id], npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj,A)
+                _crossterm!(bbi, buj, B0, is[id], js[id], aijs[id], npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj, nrange_t_bc, nrange_p, _induction_sTT, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
@@ -674,7 +676,8 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; e
             E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
-                _induction_tqt!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj,E)
+                # _induction_tqt!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj,E)
+                _crossterm!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj, nrange_t_bc, nrange_t, _induction_tTT, E)
             end
         end
     end
@@ -710,7 +713,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; e
 
     npbi = length(lmn2k_p_bi)
     npbj = length(lmn2k_p_bj)
-    for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
+    @sync for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             A = adamgaunt(l0,lj,li, m0, mj, mi)
@@ -729,7 +732,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; e
         end
     end
 
-    for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
+    @sync for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             A = adamgaunt(l0,lj,li, m0, mj, mi)
