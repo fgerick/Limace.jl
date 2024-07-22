@@ -135,7 +135,7 @@ end
                 bcf = bcs_p(b) #tuple of evaluation functions
                 npmax = last(nrange_p(b,l))
                 for (i,f) in enumerate(bcf)
-                    A[lmn2k_p[(l,m,npmax-i+1)], :] = 0
+                    A[lmn2k_p[(l,m,npmax-i+1)], :] .= 0
                 end
             end
         end
@@ -147,7 +147,7 @@ end
                 bcf = bcs_t(b) #tuple of evaluation functions
                 ntmax = last(nrange_t(b,l))
                 for (i,f) in enumerate(bcf)
-                    A[lmn2k_t[(l,m,ntmax-i+1)] + _np, :] = 0
+                    A[lmn2k_t[(l,m,ntmax-i+1)] + _np, :] .= 0
                 end
             end
         end
