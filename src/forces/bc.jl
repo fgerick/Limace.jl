@@ -118,8 +118,6 @@ $(TYPEDSIGNATURES)
         end
     end
 
-    dropzeros!(A)
-
 
     return nothing
 end
