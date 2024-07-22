@@ -43,6 +43,8 @@ end
     getlk1(20, 4, Limace.InsulatingNoBC; external=true)
     getlk1(20, 4, Limace.InsulatingNoBC; external=false)
 
+    getlk1(20, 4, Limace.ThinWallBC.ThinWall; external=true)
+    getlk1(20, 4, Limace.ThinWallBC.ThinWall; external=false)
 end
 
 
@@ -68,13 +70,13 @@ end
 
 		B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
 
-		LHS = blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b)))
+		LHS = blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial_threaded(b; external=false)))
 
 		# @time begin
 		RHSc = Limace.coriolis(u)/Le
 		RHSl = Limace.lorentz_threaded(u,b,B0)
-		RHSi = Limace.induction_threaded(b,u,B0)
-		RHSd = Limace.diffusion_threaded(b)/Lu
+		RHSi = Limace.induction_threaded(b,u,B0; external=false)
+		RHSd = Limace.diffusion_threaded(b;external=false)/Lu
 		# end
 
 		RHS = [RHSc RHSl
