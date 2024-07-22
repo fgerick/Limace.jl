@@ -231,6 +231,24 @@ function lmn_t(b::Basis)
     end
 end
 
+function lmn_p_bc(b::Basis)
+    N,ms,ns = b.N, b.m, b.n
+    if ns != 0:0
+        return [(l,m,n) for l in 1:lpmax(b) for m in ms for n in ns if abs(m)<=l]
+    else
+        return [(l,m,n) for l in 1:lpmax(b) for m in ms for n in nrange_p_bc(b,l) if abs(m)<=l] 
+    end
+end
+
+function lmn_t_bc(b::Basis)
+    N,ms,ns = b.N, b.m, b.n
+    if ns != 0:0
+        return [(l,m,n) for l in 1:ltmax(b) for m in ms for n in ns if abs(m)<=l]
+    else
+        return [(l,m,n) for l in 1:ltmax(b) for m in ms for n in nrange_t_bc(b,l) if abs(m)<=l] 
+    end
+end
+
 abstract type Helmholtz end
 struct Poloidal <: Helmholtz; end
 struct Toroidal <: Helmholtz; end
