@@ -60,7 +60,7 @@ include("bases/ViscousNoBC.jl")
 @reexport using .ViscousBasisNoBC
 
 include("bases/ThinWall.jl")
-using .ThinWallBC
+using .ThinWallBasis
 
 include("bases/ViscousShell.jl")
 @reexport using .ViscousShellBasis

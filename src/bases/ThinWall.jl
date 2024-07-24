@@ -1,4 +1,4 @@
-module ThinWallBC
+module ThinWallBasis
 
 using SparseArrays
 using LinearAlgebra
