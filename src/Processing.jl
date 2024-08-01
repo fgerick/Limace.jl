@@ -62,7 +62,7 @@ function getindices(u0,u1)
 	indst = findall(in(lmntnew),lmnt0).+np0
 	indsu_bc = vcat(indsp,indst) 
 
-	return vcat(indsu_bc, indsb_bc), vcat(indsu,indsb)
+	return indsu_bc, indsu
 end
 
 function getindices_nobc(u,b)
