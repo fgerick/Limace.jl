@@ -46,6 +46,25 @@ function getindices(u0,b0, u1,b1)
 end
 
 
+function getindices(u0,u1)
+	lmnp0 = lmn_p(u0)
+	lmnt0 = lmn_t(u0)
+	np0 = length(lmnp0)
+	lmnpnew = lmn_p(u1)
+	lmntnew = lmn_t(u1)
+	indsp = findall(in(lmnpnew),lmnp0)
+	indst = findall(in(lmntnew),lmnt0).+np0
+	indsu = vcat(indsp,indst) 
+
+	lmnpnew = lmn_p_bc(u1)
+	lmntnew = lmn_t_bc(u1)
+	indsp = findall(in(lmnpnew),lmnp0)
+	indst = findall(in(lmntnew),lmnt0).+np0
+	indsu_bc = vcat(indsp,indst) 
+
+	return vcat(indsu_bc, indsb_bc), vcat(indsu,indsb)
+end
+
 function getindices_nobc(u,b)
 
 	lmnpu = lmn_p_bc(u)

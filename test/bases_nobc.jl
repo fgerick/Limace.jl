@@ -43,8 +43,8 @@ end
     getlk1(20, 4, Limace.InsulatingNoBC; external=true)
     getlk1(20, 4, Limace.InsulatingNoBC; external=false)
 
-    getlk1(20, 4, Limace.ThinWallBC.ThinWall; external=true)
-    getlk1(20, 4, Limace.ThinWallBC.ThinWall; external=false)
+    getlk1(20, 4, Limace.ThinWallBasis.ThinWall; external=true)
+    getlk1(20, 4, Limace.ThinWallBasis.ThinWall; external=false)
 end
 
 
