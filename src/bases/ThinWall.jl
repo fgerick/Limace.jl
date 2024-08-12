@@ -20,8 +20,8 @@ export ThinWall
 
 struct ThinWall; end
 
-function ThinWall(N; σw=1.0, σf = 1.0, h = 0.0, kwargs...)
-    params=Dict(:σw => σw, :σf => σf, :h => h)
+function ThinWall(N; σw=1.0, σf = 1.0, h = 0.0, μr = 1.0, kwargs...)
+    params=Dict(:σw => σw, :σf => σf, :h => h, :μr => μr)
     return Basis{ThinWall}(;N, V=Sphere(), BC=NoBC(), params,  kwargs...)
 end
 
@@ -35,9 +35,9 @@ t(::Type{Basis{ThinWall}}, V::Volume, l,m,n,r) = t(Basis{Unconstrained}, V, l,m,
 @inline function bcs_p(b::Basis{ThinWall}) 
     @inline _s = (l,n,r) -> r*s(Basis{ThinWall}, b.V, l, 0, n, r)
     (; r1) = b.V 
-    h, σf, σw = b.params[:h], b.params[:σf], b.params[:σw]
+    h, σf, σw, μr = b.params[:h], b.params[:σf], b.params[:σw], b.params[:μr]
     fs = (
-          @inline((l,n) -> σw*h/σf*(∂(r->∂(r->_s(l,n,r),r), r1) - l*(l+1)/r1^2*_s(l,n,r1)) + _s(l,n,r1)*l/r1 + ∂(r->_s(l,n,r),r1)*(1 + l*h/r1)), 
+          @inline((l,n) -> σw*h/σf*(∂(r->∂(r->_s(l,n,r),r), r1) - l*(l+1)/r1^2*_s(l,n,r1)) + _s(l,n,r1)*l/r1 + ∂(r->_s(l,n,r),r1)*(1 + l*μr*h/r1)), 
           )
     return fs
 end
@@ -47,7 +47,7 @@ end
     @inline _t = (l,n,r) -> t(Basis{ThinWall}, b.V, l, 0, n, r)
     (; r1) = b.V 
     h, σf, σw = b.params[:h], b.params[:σf], b.params[:σw]
-    fs = (@inline((l,n) -> σw/σf*h*∂(r->_t(l,n,r),r1) + _t(l,n,r1)), )
+    fs = (@inline((l,n) -> σw*h/σf*∂(r->_t(l,n,r),r1) + _t(l,n,r1)), )
     return fs
 end
 
