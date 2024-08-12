@@ -4,7 +4,7 @@
     for ni in nrangefi(bbi, li)
         njs_all = nrangefj(bbj,lj)
         for nj in max(ni-(n0+1)-l0,first(njs_all)):min(ni+n0+1+l0,last(njs_all))
-            r, wr = rwrs[min((bbi.N,bbj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+            r, wr = rwrs[min(max(bbi.N,bbj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
             aij = indf(Basis{T0}, Basis{Tj}, Basis{Ti}, bbi.V, U0.lmn, lmnj, lmni, r, wr; kwargs...)*EA
