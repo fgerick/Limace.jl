@@ -21,7 +21,7 @@ end
         # for nj in nrangefj(bbj, lj)
         njs_all = nrangefj(buj,lj)
         for nj in max(ni-(n0+1)-l0,first(njs_all)):min(ni+n0+1+l0,last(njs_all)) #bandedness
-            r, wr = rwrs[min(max(bbi.N,bbj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+            r, wr = rwrs[min(max(bbi.N,buj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
             aij = indf(Basis{Tj}, Basis{T0}, Basis{Ti}, bbi.V, lmnj, B0.lmn, lmni, r, wr; kwargs...)*EA
