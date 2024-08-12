@@ -234,7 +234,7 @@ Fallback functions for `_crossterm` term for `U0`. Write specialized function to
     l0,m0,n0 = B0.lmn
     for ni in nrangefi(bi, li)
         for nj in nrangefj(bj, lj)
-            r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+            r, wr = rwrs[min(max(bi.N,bj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
             aij = indf(T0, TJ, TI, bi.V, B0.lmn, lmnj, lmni, r, wr; kwargs...)*EA
@@ -254,7 +254,7 @@ Fallback functions for `_crossterm!` term for `B0`. Write specialized function t
     l0,m0,n0 = B0.lmn
     for ni in nrangefi(bi, li)
         for nj in nrangefj(bj, lj)
-            r, wr = rwrs[min(bi.N, li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+            r, wr = rwrs[min(max(bi.N,bj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
             lmni = (li, mi, ni)
             lmnj = (lj, mj, nj)
             aij = indf(TJ, T0, TI, bi.V, lmnj, B0.lmn, lmni, r, wr; kwargs...)*EA
