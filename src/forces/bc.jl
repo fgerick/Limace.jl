@@ -15,10 +15,13 @@ $(TYPEDSIGNATURES)
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC()) 
                 bcf = bcs_p(b) #tuple of evaluation functions
-                npmax = last(nrange_p(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-                    bij = f(l,n2)
-                    appendit!(is, js, aijs, lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)], bij)
+                ns = nrange_p(b,l)
+                if length(ns)>0
+                    npmax = last(ns)
+                    for (i,f) in enumerate(bcf), n2 in ns
+                        bij = f(l,n2)
+                        appendit!(is, js, aijs, lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)], bij)
+                    end
                 end
             end
         end
@@ -28,10 +31,13 @@ $(TYPEDSIGNATURES)
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC())
                 bcf = bcs_t(b) #tuple of evaluation functions
-                ntmax = last(nrange_t(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-                    bij = f(l,n2)
-                    appendit!(is, js, aijs, lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np, bij)
+                ns = nrange_t(b,l)
+                if length(ns)>0
+                    ntmax = last(ns)
+                    for (i,f) in enumerate(bcf), n2 in ns 
+                        bij = f(l,n2)
+                        appendit!(is, js, aijs, lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np, bij)
+                    end
                 end
             end
         end
@@ -57,10 +63,13 @@ $(TYPEDSIGNATURES)
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC()) 
                 bcf = bcs_p(b) #tuple of evaluation functions
-                npmax = last(nrange_p(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-                    bij = f(l,n2)
-                    A[lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)]] = bij
+                ns = nrange_p(b,l)
+                if length(ns)>0
+                    npmax = last(ns)
+                    for (i,f) in enumerate(bcf), n2 in ns
+                        bij = f(l,n2)
+                        A[lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)]] = bij
+                    end
                 end
             end
         end
@@ -70,10 +79,13 @@ $(TYPEDSIGNATURES)
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC())
                 bcf = bcs_t(b) #tuple of evaluation functions
-                ntmax = last(nrange_t(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-                    bij = f(l,n2)
-                    A[lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np] = bij
+                ns = nrange_t(b,l)
+                if length(ns)>0
+                    ntmax = last(ns)
+                    for (i,f) in enumerate(bcf), n2 in ns
+                        bij = f(l,n2)
+                        A[lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np] = bij
+                    end
                 end
             end
         end
@@ -98,9 +110,12 @@ $(TYPEDSIGNATURES)
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC()) 
                 bcf = bcs_p(b) #tuple of evaluation functions
-                npmax = last(nrange_p(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-                    A[lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)]] = 0
+                ns = nrange_p(b,l)
+                if length(ns)>0
+                    npmax = last(ns)
+                    for (i,f) in enumerate(bcf), n2 in ns
+                        A[lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)]] = 0
+                    end
                 end
             end
         end
@@ -110,9 +125,12 @@ $(TYPEDSIGNATURES)
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC())
                 bcf = bcs_t(b) #tuple of evaluation functions
-                ntmax = last(nrange_t(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-                    A[lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np] = 0
+                ns = nrange_t(b,l)
+                if length(ns)>0
+                    ntmax = last(ns)
+                    for (i,f) in enumerate(bcf), n2 in ns
+                        A[lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np] = 0
+                    end
                 end
             end
         end
@@ -133,9 +151,12 @@ end
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC()) 
                 bcf = bcs_p(b) #tuple of evaluation functions
-                npmax = last(nrange_p(b,l))
-                for (i,f) in enumerate(bcf)
-                    A[lmn2k_p[(l,m,npmax-i+1)], :] .= 0
+                ns = nrange_p(b,l)
+                if length(ns)>0
+                    npmax = last(ns)
+                    for (i,f) in enumerate(bcf)
+                        A[lmn2k_p[(l,m,npmax-i+1)], :] .= 0
+                    end
                 end
             end
         end
@@ -145,9 +166,12 @@ end
         for m in intersect(b.m, -l:l)
             if (b.BC == NoBC())
                 bcf = bcs_t(b) #tuple of evaluation functions
-                ntmax = last(nrange_t(b,l))
-                for (i,f) in enumerate(bcf)
-                    A[lmn2k_t[(l,m,ntmax-i+1)] + _np, :] .= 0
+                ns = nrange_t(b,l)
+                if length(ns)>0
+                    ntmax = last(ns)
+                    for (i,f) in enumerate(bcf)
+                        A[lmn2k_t[(l,m,ntmax-i+1)] + _np, :] .= 0
+                    end
                 end
             end
         end
