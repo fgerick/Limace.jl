@@ -28,8 +28,8 @@ end
 s(::Type{Basis{ThinWall}}, V::Volume, l,m,n,r) = s(Basis{Unconstrained}, V, l,m,n,r) 
 t(::Type{Basis{ThinWall}}, V::Volume, l,m,n,r) = t(Basis{Unconstrained}, V, l,m,n,r) 
 
-@inline _nrange_p(b::Basis{ThinWall},l) = 0:((b.N-l+1)÷2)+1
-@inline _nrange_t(b::Basis{ThinWall},l) = 0:((b.N-l)÷2)+1
+@inline _nrange_p(b::Basis{ThinWall},l) = 0:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{ThinWall},l) = 0:((b.N-l)÷2)
 
 #10.1103/PhysRevE.88.053010
 @inline function bcs_p(b::Basis{ThinWall}) 

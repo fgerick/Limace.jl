@@ -12,7 +12,7 @@
     RHS = Limace.coriolis(u)
     evals = eigvals(Matrix(RHS))
 
-    u_nobc = Limace.InviscidNoBC(N+3)
+    u_nobc = Limace.InviscidNoBC(N+2)
     RHS_nobc = Limace.coriolis(u_nobc)
 	Limace.boundarycondition!(RHS_nobc,u_nobc)
 	LHS_nobc = Limace.inertial(u_nobc)
@@ -97,13 +97,11 @@ end
 
     lj22_n350 = -0.0065952461 - 1.0335959942im
 
-	# e1 = compute(Inviscid, Insulating; N=50)
-	e2 = compute(Inviscid, Limace.InsulatingNoBC; N=60)
+	e = compute(Inviscid, Limace.InsulatingNoBC; N=60)
+	@test e ≈ lj22_n350 atol=2e-4
 
-	# @test e1 ≈ e2 atol=2e-4
-	@test e2 ≈ lj22_n350 atol=2e-4
-
-    # @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
+	e = compute(Inviscid, Limace.ThinWall; N=60)
+	@test e ≈ lj22_n350 atol=2e-4
 
 
 end

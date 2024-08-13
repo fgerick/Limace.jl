@@ -416,10 +416,6 @@ end
     u = Inviscid(N; m)
     b = Insulating(N; m)
 
-    struct LJ22; end
-
-    Limace.Bases.s(::Type{Basis{LJ22}}, V::Volume, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
-
     B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
 
     LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
