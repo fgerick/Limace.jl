@@ -44,7 +44,7 @@ end
 
 #10.1103/PhysRevE.88.053010
 @inline function bcs_t(b::Basis{ThinWall}) 
-    @inline _t = (l,n,r) -> t(Basis{ThinWall}, b.V, l, 0, n, r)
+    @inline _t = (l,n,r) -> r*t(Basis{ThinWall}, b.V, l, 0, n, r)
     (; r1) = b.V 
     h, σf, σw = b.params[:h], b.params[:σf], b.params[:σw]
     fs = (@inline((l,n) -> σw*h/σf*∂(r->_t(l,n,r),r1) + _t(l,n,r1)), )
