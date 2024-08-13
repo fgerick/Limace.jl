@@ -66,14 +66,14 @@ $(TYPEDSIGNATURES)
                 # k+=1
                 appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
             end
-            if (b.BC == NoBC()) && applyBC
-                bcf = bcs_p(b) #tuple of evaluation functions
-                npmax = last(nrange_p(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-                    bij = f(l,n2)
-                    appendit!(is, js, aijs, lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)], bij)
-                end
-            end
+            # if (b.BC == NoBC()) && applyBC
+            #     bcf = bcs_p(b) #tuple of evaluation functions
+            #     npmax = last(nrange_p(b,l))
+            #     for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
+            #         bij = f(l,n2)
+            #         appendit!(is, js, aijs, lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)], bij)
+            #     end
+            # end
         end
     end
 
@@ -83,14 +83,14 @@ $(TYPEDSIGNATURES)
                 aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
                 appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
             end
-            if (b.BC == NoBC()) && applyBC
-                bcf = bcs_t(b) #tuple of evaluation functions
-                ntmax = last(nrange_t(b,l))
-                for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-                    bij = f(l,n2)
-                    appendit!(is, js, aijs, lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np, bij)
-                end
-            end
+            # if (b.BC == NoBC()) && applyBC
+            #     bcf = bcs_t(b) #tuple of evaluation functions
+            #     ntmax = last(nrange_t(b,l))
+            #     for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
+            #         bij = f(l,n2)
+            #         appendit!(is, js, aijs, lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np, bij)
+            #     end
+            # end
         end
     end
 
@@ -123,14 +123,14 @@ $(TYPEDSIGNATURES)
                         aij = _diffusion_ss(b, (l,m,n), (l,m,n2), r,wr; external)
                         appendit!(is[id], js[id], aijs[id], lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
                     end
-                    if (b.BC == NoBC()) && applyBC
-                        bcf = bcs_p(b) #tuple of evaluation functions
-                        npmax = last(nrange_p(b,l))
-                        for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-                            bij = f(l,n2)
-                            appendit!(is[id], js[id], aijs[id], lmn2k_p[(l,m,npmax)]-i+1, lmn2k_p[(l,m,n2)], bij)
-                        end
-                    end
+                    # if (b.BC == NoBC()) && applyBC
+                    #     bcf = bcs_p(b) #tuple of evaluation functions
+                    #     npmax = last(nrange_p(b,l))
+                    #     for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
+                    #         bij = f(l,n2)
+                    #         appendit!(is[id], js[id], aijs[id], lmn2k_p[(l,m,npmax)]-i+1, lmn2k_p[(l,m,n2)], bij)
+                    #     end
+                    # end
                 end
             end
         end
@@ -143,14 +143,14 @@ $(TYPEDSIGNATURES)
                         aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
                         appendit!(is[id], js[id], aijs[id], lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
                     end
-                    if (b.BC == NoBC()) && applyBC
-                        bcf = bcs_t(b) #tuple of evaluation functions
-                        ntmax = last(nrange_t(b,l))
-                        for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-                            bij = f(l,n2)
-                            appendit!(is[id], js[id], aijs[id], lmn2k_t[(l,m,ntmax)]-i+1 + _np, lmn2k_t[(l,m,n2)] + _np, bij)
-                        end
-                    end
+                    # if (b.BC == NoBC()) && applyBC
+                    #     bcf = bcs_t(b) #tuple of evaluation functions
+                    #     ntmax = last(nrange_t(b,l))
+                    #     for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
+                    #         bij = f(l,n2)
+                    #         appendit!(is[id], js[id], aijs[id], lmn2k_t[(l,m,ntmax)]-i+1 + _np, lmn2k_t[(l,m,n2)] + _np, bij)
+                    #     end
+                    # end
                 end
             end
         end

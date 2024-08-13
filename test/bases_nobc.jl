@@ -14,6 +14,7 @@
 
     u_nobc = Limace.InviscidNoBC(N+3)
     RHS_nobc = Limace.coriolis(u_nobc)
+	Limace.boundarycondition!(RHS_nobc,u_nobc)
 	LHS_nobc = Limace.inertial(u_nobc)
     evals_nobc = eigvals(Matrix(RHS_nobc),Matrix(LHS_nobc))
 
@@ -32,6 +33,7 @@ end
         b = TB(Nmax; m=0)
         LHS = Limace.inertial(b; external)
         RHS = Limace.diffusion(b; external)
+		Limace.boundarycondition!(RHS,b)
         _evals = eigvals(Matrix(RHS),Matrix(LHS))
         for l = 1:lmax, k = 1:lmax÷2
             @test any(isapprox(λfd(l,k)), _evals)
@@ -77,6 +79,7 @@ end
 		RHSl = Limace.lorentz_threaded(u,b,B0)
 		RHSi = Limace.induction_threaded(b,u,B0; external=false)
 		RHSd = Limace.diffusion_threaded(b;external=false)/Lu
+		Limace.boundarycondition!(RHSd,b)
 		# end
 
 		RHS = [RHSc RHSl

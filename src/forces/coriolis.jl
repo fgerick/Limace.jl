@@ -88,14 +88,14 @@ function _coriolis_poloidal_poloidal!(b::T, is, js, aijs, lmn2k_p, l, m, r, wr, 
         appendit!(is, js, aijs, lmn2k_p[(l, m, n)], lmn2k_p[(l, m, n2)], aij)
     end
 
-    if (b.BC == NoBC()) && applyBC
-        bcf = bcs_p(b) #tuple of evaluation functions
-        npmax = last(nrange_p(b,l))
-        for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-            bij = f(l,n2)
-            appendit!(is, js, aijs, lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)], bij)
-        end
-    end
+    # if (b.BC == NoBC()) && applyBC
+    #     bcf = bcs_p(b) #tuple of evaluation functions
+    #     npmax = last(nrange_p(b,l))
+    #     for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
+    #         bij = f(l,n2)
+    #         appendit!(is, js, aijs, lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)], bij)
+    #     end
+    # end
     return nothing
 end
 
@@ -113,14 +113,14 @@ function _coriolis_toroidal_toroidal!(b::T, is, js, aijs, _np, lmn2k_t, l, m, r,
         aij = _coriolis_tt(b, (l, m, n), (l, m, n2), r, wr; Ω)
         appendit!(is, js, aijs, lmn2k_t[(l, m, n)] + _np, lmn2k_t[(l, m, n2)] + _np, aij)
     end
-    if (b.BC == NoBC()) && applyBC
-        bcf = bcs_t(b) #tuple of evaluation functions
-        ntmax = last(nrange_t(b,l))
-        for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-            bij = f(l,n2)
-            appendit!(is, js, aijs, lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np, bij)
-        end
-    end
+    # if (b.BC == NoBC()) && applyBC
+    #     bcf = bcs_t(b) #tuple of evaluation functions
+    #     ntmax = last(nrange_t(b,l))
+    #     for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
+    #         bij = f(l,n2)
+    #         appendit!(is, js, aijs, lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np, bij)
+    #     end
+    # end
     return nothing
 end
 
