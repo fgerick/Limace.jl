@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Induction · Limace.jl</title><meta name="title" content="Induction · Limace.jl"/><meta property="og:title" content="Induction · Limace.jl"/><meta property="twitter:title" content="Induction · Limace.jl"/><meta name="description" content="Documentation for Limace.jl."/><meta property="og:description" content="Documentation for Limace.jl."/><meta property="twitter:description" content="Documentation for Limace.jl."/><meta property="og:url" content="https://fgerick.github.io/Limace.jl/forces/induction/"/><meta property="twitter:url" content="https://fgerick.github.io/Limace.jl/forces/induction/"/><link rel="canonical" href="https://fgerick.github.io/Limace.jl/forces/induction/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Limace.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../poly/">Poly</a></li><li><span class="tocitem">Bases</span><ul><li><a class="tocitem" href="../../bases/bases/">Basis definition</a></li><li><a class="tocitem" href="../../bases/insulating/">InsulatingBasis</a></li><li><a class="tocitem" href="../../bases/inviscid/">InviscidBasis</a></li><li><a class="tocitem" href="../../bases/viscous/">ViscousBasis</a></li></ul></li><li><span class="tocitem">Forces</span><ul><li><a class="tocitem" href="../">Summary</a></li><li><a class="tocitem" href="../coriolis/">Coriolis</a></li><li><a class="tocitem" href="../diffusion/">Diffusion</a></li><li class="is-active"><a class="tocitem" href>Induction</a></li><li><a class="tocitem" href="../inertial/">Inertia</a></li><li><a class="tocitem" href="../lorentz/">Lorentz</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../notebooks/inertialmodes/">Inviscid inertial modes</a></li></ul></li><li><a class="tocitem" href="../../misc/">Misc</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Forces</a></li><li class="is-active"><a href>Induction</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Induction</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/fgerick/Limace.jl/blob/main/docs/src/forces/induction.md#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._crossterm!-Union{Tuple{T}, Tuple{PT}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, PT, T}, TJ, Vararg{Any, 16}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, PT&lt;:Helmholtz, T}" href="#Limace._crossterm!-Union{Tuple{T}, Tuple{PT}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, PT, T}, TJ, Vararg{Any, 16}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, PT&lt;:Helmholtz, T}"><code>Limace._crossterm!</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_crossterm!(
+    bi::Basis,
+    B0::BasisElement{T0&lt;:Basis, PT&lt;:Helmholtz, T},
+    bj::Basis,
+    is,
+    js,
+    aijs,
+    i0,
+    j0,
+    li,
+    mi,
+    lj,
+    mj,
+    rwrs,
+    lmn2k_bi,
+    lmn2k_bj,
+    nrangefi,
+    nrangefj,
+    indf,
+    EA;
+    kwargs...
+)
+</code></pre><p>Fallback functions for <code>_crossterm</code> term for <code>U0</code>. Write specialized function to include e.g. bandedness in <code>n</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L227">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._crossterm!-Union{Tuple{T}, Tuple{PT}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, PT, T}, Vararg{Any, 16}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, PT&lt;:Helmholtz, T}" href="#Limace._crossterm!-Union{Tuple{T}, Tuple{PT}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, PT, T}, Vararg{Any, 16}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, PT&lt;:Helmholtz, T}"><code>Limace._crossterm!</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_crossterm!(
+    bi::Basis,
+    bj::Basis,
+    B0::BasisElement{T0&lt;:Basis, PT&lt;:Helmholtz, T},
+    is,
+    js,
+    aijs,
+    i0,
+    j0,
+    li,
+    mi,
+    lj,
+    mj,
+    rwrs,
+    lmn2k_bi,
+    lmn2k_bj,
+    nrangefi,
+    nrangefj,
+    indf,
+    EA;
+    kwargs...
+)
+</code></pre><p>Fallback functions for <code>_crossterm!</code> term for <code>B0</code>. Write specialized function to include e.g. bandedness in <code>n</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L247">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._induction_sSS-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}" href="#Limace._induction_sSS-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}"><code>Limace._induction_sSS</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_induction_sSS(
+    ::Type{TA&lt;:Basis},
+    ::Type{TB&lt;:Basis},
+    ::Type{TC&lt;:Basis},
+    V::Volume,
+    lmna,
+    lmnb,
+    lmnc,
+    r,
+    wr;
+    external
+) -&gt; Any
+</code></pre><p>Computes radial integral of ∫Sᵢ⋅∇×(pⱼ×Sₖ) dV. Surface integral is given by Adam-Gaunt variable.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L5">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._induction_sST-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}" href="#Limace._induction_sST-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}"><code>Limace._induction_sST</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_induction_sST(
+    _::Type{TA&lt;:Basis},
+    _::Type{TB&lt;:Basis},
+    _::Type{TC&lt;:Basis},
+    V::Volume,
+    lmna,
+    lmnb,
+    lmnc,
+    r,
+    wr
+) -&gt; Any
+</code></pre><p>Computes radial integral of ∫Tᵢ⋅∇×(pⱼ×Sₖ) dV. Surface integral is given by Elsasser variable.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L84">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._induction_sTS-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}" href="#Limace._induction_sTS-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}"><code>Limace._induction_sTS</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_induction_sTS(
+    _::Type{TA&lt;:Basis},
+    _::Type{TB&lt;:Basis},
+    _::Type{TC&lt;:Basis},
+    V::Volume,
+    lmna,
+    lmnb,
+    lmnc,
+    r,
+    wr
+) -&gt; Any
+</code></pre><p>Computes radial integral of ∫Sᵢ⋅∇×(pⱼ×Tₖ) dV. Surface integral is given by Elsasser variable.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L30">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._induction_sTT-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}" href="#Limace._induction_sTT-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}"><code>Limace._induction_sTT</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_induction_sTT(
+    _::Type{TA&lt;:Basis},
+    _::Type{TB&lt;:Basis},
+    _::Type{TC&lt;:Basis},
+    V::Volume,
+    lmna,
+    lmnb,
+    lmnc,
+    r,
+    wr
+) -&gt; Any
+</code></pre><p>Computes radial integral of ∫Tᵢ⋅∇×(pⱼ×Tₖ) dV. Surface integral is given by Adam-Gaunt variable.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L110">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._induction_tSS-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}" href="#Limace._induction_tSS-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}"><code>Limace._induction_tSS</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_induction_tSS(
+    ::Type{TA&lt;:Basis},
+    ::Type{TB&lt;:Basis},
+    ::Type{TC&lt;:Basis},
+    V::Volume,
+    lmna,
+    lmnb,
+    lmnc,
+    r,
+    wr;
+    external
+) -&gt; Any
+</code></pre><p>Computes radial integral of ∫Sᵢ⋅∇×(qⱼ×Sₖ) dV. Surface integral is given by Elsasser variable.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L49">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._induction_tST-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}" href="#Limace._induction_tST-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}"><code>Limace._induction_tST</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_induction_tST(
+    _::Type{TA&lt;:Basis},
+    _::Type{TB&lt;:Basis},
+    _::Type{TC&lt;:Basis},
+    V::Volume,
+    lmna,
+    lmnb,
+    lmnc,
+    r,
+    wr
+) -&gt; Any
+</code></pre><p>Computes radial integral of ∫Tᵢ⋅∇×(qⱼ×Sₖ) dV. Surface integral is given by Adam-Gaunt variable.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L134">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace._induction_tTT-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}" href="#Limace._induction_tTT-Union{Tuple{TC}, Tuple{TB}, Tuple{TA}, Tuple{Type{TA}, Type{TB}, Type{TC}, Volume, Vararg{Any, 5}}} where {TA&lt;:Basis, TB&lt;:Basis, TC&lt;:Basis}"><code>Limace._induction_tTT</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">_induction_tTT(
+    _::Type{TA&lt;:Basis},
+    _::Type{TB&lt;:Basis},
+    _::Type{TC&lt;:Basis},
+    V::Volume,
+    lmna,
+    lmnb,
+    lmnc,
+    r,
+    wr
+) -&gt; Any
+</code></pre><p>Computes radial integral of ∫Tᵢ⋅∇×(qⱼ×Tₖ) dV. Surface integral is given by Adam-Gaunt variable.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L158">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.adamgaunt_ljs-NTuple{4, Any}" href="#Limace.adamgaunt_ljs-NTuple{4, Any}"><code>Limace.adamgaunt_ljs</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">adamgaunt_ljs(li, l0, mj, lmax) -&gt; Any
+</code></pre><p>For a combination of <code>li</code>, <code>l0</code> and <code>lj</code> only the even <code>lj</code> that satisfy <code>|l0-li|≤lj≤l0+li</code> are nonzero for the Adam-Gaunt variables.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L190">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.adamgaunt_mjs-Tuple{Any, Any}" href="#Limace.adamgaunt_mjs-Tuple{Any, Any}"><code>Limace.adamgaunt_mjs</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">adamgaunt_mjs(mi, m0) -&gt; Any
+</code></pre><p>For a combination of <code>mi</code>, <code>m0</code> and <code>mj</code> only <code>mj=mi-m0</code> is nonzero for the Adam-Gaunt variables.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L183">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.elsasser_ljs-NTuple{4, Any}" href="#Limace.elsasser_ljs-NTuple{4, Any}"><code>Limace.elsasser_ljs</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">elsasser_ljs(li, l0, mj, lmax) -&gt; Any
+</code></pre><p>For a combination of <code>li</code>, <code>l0</code> and <code>lj</code> only the odd <code>lj</code> that satisfy <code>|l0-li|≤lj≤l0+li</code> are nonzero for the Elsasser variables.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L212">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.elsasser_mjs-Tuple{Any, Any}" href="#Limace.elsasser_mjs-Tuple{Any, Any}"><code>Limace.elsasser_mjs</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">elsasser_mjs(mi, m0) -&gt; Any
+</code></pre><p>For a combination of <code>mi</code>, <code>m0</code> and <code>mj</code> only <code>mj=mi-m0</code> is nonzero for the Elsasser variables.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L205">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction(
+    bbi::Basis,
+    U0::BasisElement{T0&lt;:Basis, Poloidal, T},
+    bbj::Basis;
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Computes the induction term for a poloidal background velocity <code>U0</code>, a magnetic field basis <code>bbi</code> and a magnetic field basis <code>bbj</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L459">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Toroidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Toroidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction(
+    bbi::Basis,
+    U0::BasisElement{T0&lt;:Basis, Toroidal, T},
+    bbj::Basis;
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Computes the induction term for a toroidal background velocity <code>U0</code>, a magnetic field basis <code>bbi</code> and a magnetic field basis <code>bbj</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L508">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Poloidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Poloidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction(
+    bbi::Basis,
+    buj::Basis,
+    B0::BasisElement{T0&lt;:Basis, Poloidal, T};
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Computes the induction term for a poloidal background magnetic field <code>B0</code>, a magnetic field basis <code>bbi</code> and a velocity basis <code>buj</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L353">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Toroidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Toroidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction(
+    bbi::Basis,
+    buj::Basis,
+    B0::BasisElement{T0&lt;:Basis, Toroidal, T};
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Computes the induction term for a toroidal background magnetic field <code>B0</code>, a magnetic field basis <code>bbi</code> and a velocity basis <code>buj</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L407">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction_threaded</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction_threaded(
+    bbi::Basis,
+    U0::BasisElement{T0&lt;:Basis, Poloidal, T},
+    bbj::Basis;
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Threaded version of <a href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}">induction</a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L691">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Toroidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Toroidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction_threaded</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction_threaded(
+    bbi::Basis,
+    U0::BasisElement{T0&lt;:Basis, Toroidal, T},
+    bbj::Basis;
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Threaded version of <a href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}">induction</a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L752">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Poloidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Poloidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction_threaded</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction_threaded(
+    bbi::Basis,
+    buj::Basis,
+    B0::BasisElement{T0&lt;:Basis, Poloidal, T};
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Threaded version of <a href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}">induction</a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L557">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Toroidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}" href="#Limace.induction_threaded-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, TJ, BasisElement{T0, Toroidal, T}}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}"><code>Limace.induction_threaded</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">induction_threaded(
+    bbi::Basis,
+    buj::Basis,
+    B0::BasisElement{T0&lt;:Basis, Toroidal, T};
+    external
+) -&gt; SparseArrays.SparseMatrixCSC{Tv, Int64} where Tv
+</code></pre><p>Threaded version of <a href="#Limace.induction-Union{Tuple{T}, Tuple{T0}, Tuple{TJ}, Tuple{TI}, Tuple{TI, BasisElement{T0, Poloidal, T}, TJ}} where {TI&lt;:Basis, TJ&lt;:Basis, T0&lt;:Basis, T}">induction</a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/fgerick/Limace.jl/blob/efd8d5ea5c4643ee50adc69940b75e19ecbb74ef/src/forces/induction.jl#L627">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion/">« Diffusion</a><a class="docs-footer-nextpage" href="../inertial/">Inertia »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 5 September 2024 19:22">Thursday 5 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
