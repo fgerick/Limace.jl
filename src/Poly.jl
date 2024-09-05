@@ -20,8 +20,6 @@ function __wiginit_thread(N)
 end
 
 #convenience for half-integer notation.
-wigner9j(j1,j2,j3,j4,j5,j6,j7,j8,j9) = wig9jj(2j1,2j2,2j3,2j4,2j5,2j6,2j7,2j8,2j9)
-wigner6j(j1,j2,j3,j4,j5,j6) = wig6jj(2j1,2j2,2j3,2j4,2j5,2j6)
 wigner3j(j1,j2,j3,j4,j5,j6) = wig3jj(2j1,2j2,2j3,2j4,2j5,2j6)
 
 """
@@ -81,42 +79,6 @@ end
 
 
 const ∂ =  ForwardDiff.derivative
-
-#derivatives of Jacobi polynomials ∂/∂r(jacobi(n,a,b, x = 2r^2-1)).
-@inline djacobidr(n,a,b,r) = 2(1+a+b+n)*r*jacobi(n-1,1+a,1+b,2r^2-1)
-@inline djacobid2r(n,a,b,r) = 2(1+a+b+n)*jacobi(n-1,1+a,1+b,2r^2-1) + 2*(1+a+b+n)*r*djacobidr(n-1,a+1,b+1,r) 
-@inline djacobid3r(n,a,b,r) = 2(1+a+b+n)*djacobidr(n-1,1+a,1+b,r) + 2*(1+a+b+n)*djacobidr(n-1,a+1,b+1,r) + 2*(1+a+b+n)*r*djacobid2r(n-1,a+1,b+1,r)
-
-@inline function djacobi(n,a,b,x,k)
-    exp(loggamma(a+b+n+1+k)-loggamma(a+b+n+1))/2^k*jacobi(n-k,a+k,b+k,x)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Jacobi polynomials \$J_n^{(a,b)}(2r^2-1)\$ and derivatives in \$r\$ up to third order for all degrees \$n \\in [0,N]\$, evaluated at a given grid `rgrid` of values in \$r\$.
-"""
-function jacobis(N,a,b,rgrid)
-    nr = length(rgrid)
-    js = zeros(eltype(rgrid),4,N+1,nr) 
-    @inbounds for n in 0:N, i=1:nr
-        r = rgrid[i]
-        js[1,n+1,i] = jacobi(n,a,b, 2r^2-1)
-        js[2,n+1,i] = djacobidr(n,a,b,r)
-        js[3,n+1,i] = djacobid2r(n,a,b,r)
-        js[4,n+1,i] = djacobid3r(n,a,b,r)
-    end
-    return js   
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Jacobi polynomials \$J_n^{(a,l+1/2)}(2r^2-1)\$ and derivatives in \$r\$ up to third order for all degrees \$n \\in [0,N]\$ and \$l \\in [1,N]\$. Default is `a=0.0`.
-"""
-function jacobis_l(N,r,a=0.0)
-    return [jacobis(N,a,l+1/2,r) for l in 1:N] 
-end
 
 """
 $(TYPEDSIGNATURES)

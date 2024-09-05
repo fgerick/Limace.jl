@@ -180,17 +180,21 @@ function inner_b0norm(lmn_p, lmn_t)
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
-        _inner_ss!(is,js,aijs,i,i, T(l),T(n),T(n))
+        aij = _inertial_ss(l,n,n)
+        appendit!(is,js,aijs,i,i,aij)
         aijs[end]/=unitspherenorm(l,n)^2
         if n>1
-            _inner_ss!(is,js,aijs,i,i-1, T(l),T(n),T(n-1))
+            aij = _inertial_ss(l,n,n-1)
+            appendit!(is,js,aijs,i,i-1,aij)
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
-        _inner_tt!(is,js,aijs, i+np,i+np, T(l),T(n),T(n))
+        aij = _inertial_tt(l,n,n)
+        appendit!(is,js,aijs,i+np,i+np,aij)
         if n>1
-            _inner_tt!(is,js,aijs, i+np,i-1+np, T(l),T(n),T(n-1))
+            aij = _inertial_tt(l,n,n-1)
+            appendit!(is,js,aijs,i+np,i-1+np,aij)
         end
     end
 
