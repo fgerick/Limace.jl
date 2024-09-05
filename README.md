@@ -28,7 +28,7 @@ A = Limace.coriolis(basis) #assemble Coriolis operator matrix (sparse)
 ```
 Note, the `Inviscid` basis is orthonormal, so that we do not need to calculate an operator associated with inertia.
 
-We can check against analytical values available from the literature (Zhang et al. 2008):
+We can check against analytical values available from the literature [Zhang et al. 2001](https://doi.org/10.1017/S0022112001004049):
 ```julia
 function zhang(m, N) 
 	sm = sign(m)

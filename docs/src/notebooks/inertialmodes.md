@@ -26,10 +26,10 @@
     # This information is used for caching.
     [PlutoStaticHTML.State]
     input_sha = "b975016780911957cc9a8ec992bfdee1c489198a6262e734970679974a9b095c"
-    julia_version = "1.10.4"
+    julia_version = "1.10.5"
 -->
 
-<div class="markdown"><h1>Inviscid inertial modes in the sphere</h1><p>The evolution equation of the velocity <span class="tex">$\mathbf{u}$</span> is given by the momentum equation</p><p class="tex">$$\frac{\partial\mathbf{u}}{\partial t} + 2\Omega \mathbf{e}_z\times\mathbf{u} = -\frac{1}{\rho}\nabla p,$$</p><p>satisfying <span class="tex">$\mathbf{u}\cdot\mathbf{n} = 0$</span> at <span class="tex">$r=1$</span> (the surface of the sphere).</p><p>By projecting this equation onto poloidal and toroidal basis vectors, we eliminate the pressure <span class="tex">$p$</span>.</p><p>Assuming <span class="tex">$\mathbf{u}(\mathbf{r},t) = \mathbf{u}(\mathbf{r}) \exp(\lambda t)$</span>, the momentum equation reduces to an eigen problem</p><p class="tex">$$\lambda \mathbf{B}\mathbf{x} = \mathbf{A}\mathbf{x},$$</p><p>where the eigen vector <span class="tex">$\mathbf{x}$</span> contain the spectral coefficients of the basis elements and</p><p class="tex">$$B_{ij} = \int \mathbf{u}_i \cdot \mathbf{u}_j\,\mathrm{d}V,$$</p><p>and</p><p class="tex">$$A_{ij} = \int \mathbf{u}_i \cdot \left(2\Omega\mathbf{e}_z\times\mathbf{u}_j\right)\,\mathrm{d}V.$$</p><p>For moderate polynomial degrees we can quickly solve this.</p></div>
+<div class="markdown"><h1>Inviscid inertial modes in the sphere</h1><p>The evolution equation of the velocity <span class="tex">\(\mathbf{u}\)</span> is given by the momentum equation</p><p class="tex">$$\frac{\partial\mathbf{u}}{\partial t} + 2\Omega \mathbf{e}_z\times\mathbf{u} = -\frac{1}{\rho}\nabla p,$$</p><p>satisfying <span class="tex">\(\mathbf{u}\cdot\mathbf{n} = 0\)</span> at <span class="tex">\(r=1\)</span> (the surface of the sphere).</p><p>By projecting this equation onto poloidal and toroidal basis vectors, we eliminate the pressure <span class="tex">\(p\)</span>.</p><p>Assuming <span class="tex">\(\mathbf{u}(\mathbf{r},t) = \mathbf{u}(\mathbf{r}) \exp(\lambda t)\)</span>, the momentum equation reduces to an eigen problem</p><p class="tex">$$\lambda \mathbf{B}\mathbf{x} = \mathbf{A}\mathbf{x},$$</p><p>where the eigen vector <span class="tex">\(\mathbf{x}\)</span> contain the spectral coefficients of the basis elements and</p><p class="tex">$$B_{ij} = \int \mathbf{u}_i \cdot \mathbf{u}_j\,\mathrm{d}V,$$</p><p>and</p><p class="tex">$$A_{ij} = \int \mathbf{u}_i \cdot \left(2\Omega\mathbf{e}_z\times\mathbf{u}_j\right)\,\mathrm{d}V.$$</p><p>For moderate polynomial degrees we can quickly solve this.</p></div>
 
 
 
@@ -60,7 +60,7 @@
 <pre class="code-output documenter-example-output" id="var-basis">Basis{Inviscid}(8, -8:8, 0:0, InviscidBC(), Limace.Bases.Volume(0.0, 1.0), Dict{Symbol, Float64}())</pre>
 
 
-<div class="markdown"><p>Assemble the matrix <span class="tex">$\mathbf{A}$</span> of the Coriolis operator.</p></div>
+<div class="markdown"><p>Assemble the matrix <span class="tex">\(\mathbf{A}\)</span> of the Coriolis operator.</p></div>
 
 <pre class='language-julia'><code class='language-julia'>A = Limace.coriolis(basis)</code></pre>
 <pre class="code-output documenter-example-output" id="var-A">276×276 SparseMatrixCSC{ComplexF64, Int64} with 632 stored entries:
