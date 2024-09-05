@@ -4,24 +4,30 @@ authors = ["Felix <felixgerick@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
+ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
+Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 DistributedArrays = "aaf54ef3-cdf8-58ed-94cc-d582ad619b94"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SHTns = "5dc4ea12-f621-4038-8458-a22eae100703"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Wigxjpf = "af901252-fd8a-4391-8647-10b4fde07a1e"
 
 [compat]
 julia = "1"
 
 [extras]
-ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
 FunctionZeros = "b21f74c0-b399-568f-9643-d20f4fa2c814"
-LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "ArnoldiMethod", "FunctionZeros", "LinearMaps"]
+test = ["Test", "FunctionZeros"]

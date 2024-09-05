@@ -1,3 +1,10 @@
+module Quadrature
+
+using FastGaussQuadrature
+using ..Bases: Volume
+
+export rquad, ∫dr
+
 # ∫₀¹ f(r) r² dr
 function rquad(nr) 
 	# _r, _wr = gaussjacobi(nr,0.0,2.0) 
@@ -18,6 +25,7 @@ function rquad(nr,a,b)
 	return _r, _wr
 end
 
+rquad(nr, V::Volume) = rquad(nr, V.r0, V.r1)
 
 function ∫dr(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
 	out = zero(ComplexF64)
@@ -28,10 +36,5 @@ function ∫dr(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
 end
 
 
-function ∫dr_pre(f::F,r::Vector{T},wr::Vector{T})::Complex{T} where {F,T}
-	out = zero(ComplexF64)
-	@inbounds for i in eachindex(r,wr)
-		out+=f(i)*r[i]^2*wr[i]
-	end
-	return out
-end
+
+end #module

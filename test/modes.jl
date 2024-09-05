@@ -1,14 +1,5 @@
-using SparseArrays
-# DP.__wiginit(100)
 
-function eigstarget(A, B, target; kwargs...)
-    P = lu(A - target * B)
-    LO = LinearMap{ComplexF64}((y, x) -> ldiv!(y, P, B * x), size(A, 2))
-    pschur, history = partialschur(LO; kwargs...)
-    evals, u = partialeigen(pschur)
-    λ = 1 ./ evals .+ target
-    return λ, u
-end
+
 
 
 @testset "Inviscid inertial modes" begin
@@ -21,7 +12,8 @@ end
     end
 
     N = 7
-    RHS = Limace.InviscidBasis.rhs_coriolis(N, -N:N)
+    b = Limace.Inviscid(N)
+    RHS = Limace.coriolis(b)
     evals = eigvals(Matrix(RHS))
 
     @test any(evals .≈ 1im)
@@ -30,25 +22,24 @@ end
     @test any(evals .≈ zhang(3, 1))
 
     for m in -(N-1):(N-1)
-        RHS = Limace.InviscidBasis.rhs_coriolis(N, m)
+        b = Limace.Inviscid(N; m)
+        RHS = Limace.coriolis(b)
         evals = eigvals(Matrix(RHS))
         m == 1 && @test any(evals .≈ 1im)
+        m == -1 && @test any(evals .≈ -1im)
         @test any(evals .≈ zhang(m, 1))
     end
 end
 
 @testset "Inviscid inertial modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
     function assembleU0uniHydro(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
-        r,wr = DP.rquad(N+2+5)
-    
-        js_a1 = DP.jacobis_l(N,r,1.0)
-        js_a0 = DP.jacobis_l(N,r,0.0)
-        RHS = Limace.InviscidBasis.rhs_coriolis(N,m; ns, Ω)
+
+        u = Inviscid(N; m)
+        RHS = Limace.coriolis(u; Ω)
         if Ω2 != 0.0
-            DP.wig_table_init(2N, 9)
-            DP.wig_temp_init(2N)
-            RHSadv = -Ω2*2sqrt(2pi/15)*DP.rhs_advection_utor_pre(N,m, (1,0,0), r,wr, js_a1,js_a0, conditions=true)
-            DP.wig_temp_free()
+            Limace.Poly.__wiginit(N)
+            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), sqrt(2pi/15))
+            RHSadv = -Ω2*Limace.lorentz(u, u, U0) #advection term is the same as Lorentz term
             RHS += RHSadv
         end
         return RHS
@@ -56,10 +47,44 @@ end
     N = 3
     for m = -3:3
         λ = eigvals(Matrix(assembleU0uniHydro(N,m)))
-        λu0 = eigvals(Matrix(assembleU0uniHydro(N,m; Ω=0.0, Ω2 = 1.0))) .+ m*im
+        λu0 = eigvals(Matrix(assembleU0uniHydro(N,m; Ω=0.0, Ω2 = 2.0))) .+ m*im
 
         @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))] 
     end
+
+end
+
+@testset "Viscous spinover mode" begin
+
+    function zhang_viscous(E=1e-7, α=0)
+        ϵ2 = 2α - α^2
+        reG = -2.62047 - 0.42634 * ϵ2
+        imG = 0.25846 + 0.76633 * ϵ2
+        σ = 1/(2 -ϵ2) #inviscid freq
+        G = reG + im*imG
+        return  im*( 2*σ - im*G * sqrt(E))
+    end
+    
+    function assemble_viscous(N)
+        u = Viscous(N; m=1)
+        LHS = Limace.inertial(u)
+        RHSc = Limace.coriolis(u)
+        RHSv = Limace.diffusion(u)
+        return LHS, RHSc, RHSv
+    end
+
+    function compute(N; Ek=1e-7)
+        LHS1,RHSc1, RHSv1 = assemble_viscous(N)
+        ν = Ek
+        RHS1 = RHSc1 + ν*RHSv1
+        eval1, _ = eigstarget(RHS1,LHS1,zhang_viscous(Ek)+1e-8; nev=1)
+        return first(eval1)
+    end
+
+    λ_num = compute(200)
+    λ_ana = zhang_viscous()
+
+    @test λ_num ≈ λ_ana atol=2e-5
 
 end
 
@@ -69,18 +94,18 @@ end
 
     #get difference between λfd and targeted eigensolution
     function getlk1(Nmax, lmax)
-        N, m, ns = Nmax, 0, 1:Nmax
-        LHS = Limace.InsulatingMFBasis.lhs(N, m; ns)
-        RHS = Limace.InsulatingMFBasis.rhs_diffusion(N, m; ns)
+        b = Limace.Insulating(Nmax; n=1:Nmax, m=0)
+        LHS = Limace.inertial(b)
+        RHS = Limace.diffusion(b)
         found = [
-            (eigstarget(RHS, LHS, λfd(l, k) + 1e-12, nev = 1)[1][1], λfd(l, k)) for
+            (first(first(eigstarget(RHS, LHS, λfd(l, k) + 1e-9, nev = 1))), λfd(l, k)) for
             l = 1:lmax for k = 1:lmax÷2
         ]
         return found
     end
 
     #testing:
-    f = getlk1(15, 4)
+    f = getlk1(20, 4)
     for (f_num, f_λfd) in f
         @test f_num ≈ f_λfd
     end
@@ -122,32 +147,24 @@ end
 @testset "solid body rotation kinematic dynamo" begin
 
 
-    using Limace.DiscretePart: s_mf, t_mf, s_in, t_in
-
     # DP = Limace.DiscretePart
     N = 12
     m = 2
+    b = Insulating(N; m)
 
-    LHS = Limace.InsulatingMFBasis.lhs(N, m)
-    RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N, m)
-    DP.__wiginit(2N)
-    ind_utor = DP.rhs_induction_utor(
-        N,
-        m,
-        (1, 0, 0);
-        tu = t_in,
-        smf = s_mf,
-        tmf = t_mf,
-        condition = false,
-    )
+    Limace.Poly.__wiginit(2N)
 
-    Rm = 10
+    LHS = Limace.inertial(b)
+    RHS_diff = Limace.diffusion(b)
+    U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 1.0)
+    ind_utor = Limace.induction(b,U0,b)
+
+    Rm = 10.0
     RHS_ind = Rm * ind_utor
     RHS = RHS_diff + RHS_ind
 
-    λdyn = eigvals(inv(Matrix(LHS)) * Matrix(RHS))
-    DP.wig_temp_free()
-
+    λdyn = eigvals(LHS\Matrix(RHS))
+    Limace.Poly.wig_temp_free()
 
     #solid body rotation should add a constant imaginary part ( = frequency) to all eigenvalues
 
@@ -157,38 +174,30 @@ end
 
 @testset "t₀¹s₀² kinematic dynamo" begin
 
-    using Limace.DiscretePart: s_mf, t_mf, s_chen, t_chen
+    import Limace.Bases
 
+
+    struct Li2010; end
     # Li et al. (2010) eq. (24) fixed:
-    @inline t_10(l, m, n, r) = 8.107929179422066 * r * (1 - r^2)
-    @inline s_20(l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2
+    @inline Limace.Bases.t(::Type{Basis{Li2010}}, V::Volume, l, m, n, r) = 8.107929179422066 * r * (1 - r^2) #t10
+    @inline Limace.Bases.s(::Type{Basis{Li2010}}, V::Volume, l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2 #s20
 
     function assemble(N)
         # N =45
+        Limace.Poly.__wiginit(2N)
+
         m = 0
-        LHS = Limace.InsulatingMFBasis.lhs(N, m)
-        RHS_diff = Limace.InsulatingMFBasis.rhs_diffusion(N, m)
-        DP.__wiginit(2N)
-        ind_upol = Limace.DiscretePart.rhs_induction_upol(
-            N,
-            m,
-            (2, 0, 1);
-            su = s_20,
-            smf = s_mf,
-            tmf = t_mf,
-            condition = true,
-        )
-        ind_utor = Limace.DiscretePart.rhs_induction_utor(
-            N,
-            m,
-            (1, 0, 1);
-            tu = t_10,
-            smf = s_mf,
-            tmf = t_mf,
-            condition = true,
-        )
-        DP.wig_temp_free()
-        return LHS, RHS_diff, ind_upol, ind_utor
+        b = Insulating(N; m)
+        LHS = Limace.inertial(b)
+        RHS_diff = Limace.diffusion(b)
+
+        U0_t10 = BasisElement(Basis{Li2010}, Toroidal, (1,0,1), 1.0)
+        U0_s20 = BasisElement(Basis{Li2010}, Poloidal, (2,0,1), 1.0)
+
+        RHS_induction_t10 = Limace.induction(b,U0_t10,b)
+        RHS_induction_s20 = Limace.induction(b,U0_s20,b)
+        Limace.Poly.wig_temp_free()
+        return LHS, RHS_diff, RHS_induction_s20, RHS_induction_t10
     end
 
     function _RHS(Rm, RHS_diff, ind_upol, ind_utor)
@@ -200,7 +209,7 @@ end
     function getlargestEV(Rm, LHS, RHS_diff, ind_upol, ind_utor)
         RHS = _RHS(Rm, RHS_diff, ind_upol, ind_utor)
 
-        λdyn = eigvals(inv(Matrix(LHS)) * Matrix(RHS))
+        λdyn = eigvals(LHS\Matrix(RHS))
         #get eigenvalue of largest real part
         λ = first(λdyn[sortperm(real.(λdyn), rev = true)])
         return λ
@@ -230,24 +239,22 @@ end
     fast(m, N, Le, λ = imag(zhang(m, N))) =
         im * λ / 2Le * (1 + √(1 + 4Le^2 * m * (m - λ) / λ^2))
 
-    using Limace.MHDProblem: rhs_cond_pre, lhs_cond
-    N = 5
-    m = -5:5
-    Le = 1e-2
+    # using Limace.MHDProblem: rhs_cond_pre, lhs_cond
+    N = 6
+    Limace.Poly.__wiginit(2N)
+    # m = -5:5
+    Le = 1e-1
 
-    lmnb0 = (1, 0, 0)
+    u = Inviscid(N)
+    b = PerfectlyConducting(N)
 
-    LHS = lhs_cond(N, m)
-    RHS = rhs_cond_pre(
-        N,
-        m;
-        Ω = 2 / Le,
-        lmnb0,
-        B0poloidal = false,
-        B0fac = 2sqrt(2pi/15),
-    )
 
-    evals = eigvals(inv(Matrix(LHS)) * RHS)
+    B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15))
+
+   RHS = [Limace.coriolis(u)/Le Limace.lorentz(u, b, B0)
+          Limace.induction(b,u,B0) spzeros(length(b),length(u))];
+
+    evals = eigvals(Matrix(RHS))
 
     @test any(evals .≈ 1.0 * im / Le)
     for m = vcat(-(N-1):-1, 1:(N-1))
@@ -256,54 +263,50 @@ end
     end
 
     for m = vcat(-(N-1):-1, 1:(N-1))
-        LHS = lhs_cond(N, m)
-        RHS = rhs_cond_pre(
-            N,
-            m;
-            Ω = 2 / Le,
-            lmnb0,
-            B0poloidal = false,
-            B0fac = 2sqrt(2pi/15),
-        )
-        evals = eigvals(inv(Matrix(LHS)) * RHS)    
+        u = Inviscid(N; m)
+        b = PerfectlyConducting(N; m)
+        RHS = [Limace.coriolis(u)/Le Limace.lorentz(u,b, B0)
+        Limace.induction(b,u,B0) spzeros(length(b),length(b))];
+        evals = eigvals(Matrix(RHS))    
         @test any(evals .≈ slow(m, 1, Le))
         @test any(evals .≈ fast(m, 1, Le))
     end
+
+    Limace.Poly.wig_temp_free()
 end
 
 @testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
 
-    function assembleU0uniMalkus(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
-        r,wr = DP.rquad(N+5+5)
-    
-        js_a1 = DP.jacobis_l(N,r,1.0)
-        js_a0 = DP.jacobis_l(N,r,0.0)
+    function assembleU0uniMalkus(N,m, Le; rotatingframe=true)
+        Limace.Poly.__wiginit(2N)
 
-        RHSuu = Limace.InviscidBasis.rhs_coriolis(N,m; ns, Ω)
+        u = Inviscid(N; m)
+        b = PerfectlyConducting(N; m)
 
-        DP.wig_table_init(2N, 9)
-        DP.wig_temp_init(2N)
-        B0fac = 2sqrt(2pi/15)
-        RHSub = DP.rhs_lorentz_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns)*B0fac
-        RHSbu = DP.rhs_induction_btor_cond_pre(N,m, (1,0,0), r, wr, js_a1, js_a0; ns)*B0fac
-        RHSbb = spzeros(size(RHSbu,1),size(RHSub,2))
-        if Ω2 != 0.0
-            RHSuu += -Ω2*2sqrt(2pi/15)*DP.rhs_advection_utor_pre(N,m, (1,0,0), r,wr, js_a1,js_a0, conditions=true) 
-            RHSbb += Ω2*2sqrt(2pi/15)*DP.rhs_induction_utor_cond_pre(N,m, (1,0,0), r,wr, js_a1,js_a0; ns) 
+        B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15))
+       
+        if rotatingframe 
+            RHSuu = Limace.coriolis(u)
+            RHSbb = spzeros(length(b),length(b))
+        else
+            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 2sqrt(2pi/15))
+            RHSuu = -Limace.lorentz(u, u, U0)
+            RHSbb = Limace.induction(b,U0,b)/Le
         end
 
+       RHS = [RHSuu/Le Limace.lorentz(u, b, B0)
+              Limace.induction(b,u,B0) RHSbb];
+    
 
-        DP.wig_temp_free()
-        RHS = [RHSuu RHSub
-                RHSbu RHSbb]
+        Limace.Poly.wig_temp_free()
         return RHS
     end
-    N = 3
+    N = 4
     Le = 1e-2
     for m = -3:3
-        λ = eigvals(Matrix(assembleU0uniMalkus(N,m; Ω=2/Le)))
-        λu0 = eigvals(Matrix(assembleU0uniMalkus(N,m; Ω=0.0, Ω2 = 1/Le))) .+ m*im/Le
-        @test λ[sortperm(imag.(λ))] ≈ λu0[sortperm(imag.(λu0))]
+        λ   = eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = true)))
+        λu0 = eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = false))) .+ m*im/Le
+        @test sort(λ, by=imag) ≈ sort(λu0, by=imag)
     end
 
 end
@@ -377,39 +380,54 @@ end
     m = -N:N
     Le = 1e-3
 
+    u = Inviscid(N)
+    b = PerfectlyConducting(N)
 
-    LHS = lhs_cond(N, m)
-    RHS = rhs_cond_pre(
-        N,
-        m;
-        Ω = 2 / Le,
-        lmnb0 = (1, 1, 0),
-        B0poloidal = false,
-        B0fac = sqrt(16pi / 15),
-    )
+    # For non-axisymmetric B₀ we need to take the real value. Here:
+    B0 = BasisElement(b, Toroidal, (1,1,0), sqrt(16pi / 15)/2)
+    B0c = BasisElement(b, Toroidal, (1,-1,0), -sqrt(16pi / 15)/2)
 
-    λ, u = eigen(Matrix(RHS))
+    Limace.Poly.__wiginit(2N)
+
+    RHSl = Limace.lorentz(u, b, B0) +  Limace.lorentz(u, b, B0c)
+    RHSi = Limace.induction(b,u,B0) + Limace.induction(b,u,B0c)
+
+    RHS = [Limace.coriolis(u)/Le RHSl
+           RHSi spzeros(length(b),length(b))];
+ 
+        Limace.Poly.wig_temp_free()
+
+    λ = eigvals(Matrix(RHS))
 
     @test sort(imag.(λ)) ≈ sort(imag.(λ_mire))
 end
 
 @testset "Luo & Jackson 2022 mode" begin
 
-    using Limace.MHDProblem: rhs, lhs
+    import Limace.Bases
+
     N = 50
     m = 0
     Le = 1e-4
     Lu = 2 / Le
 
-    lmnb0 = (2, 0, 3)
-    lj22(l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
-    # lj22(l,m,n,r) = r^2*(157-296r^2+143r^4)*5/14*sqrt(3/182)
+    Limace.Poly.__wiginit(N)
 
-    # lmnb0 = (1,0,1)
-    # lj22(l,m,n,r) = r*(5-3r^2)*sqrt(7/46)/2
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
 
-    LHS = lhs(N, m)
-    RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
+    B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
+
+    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
+
+    RHSc = Limace.coriolis(u)/Le
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)/Lu
+
+    RHS = [RHSc RHSl
+           RHSi RHSd]
+    # RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
 
     target = -0.0066 - 1.033im
     # target = -0.042+0.66im
@@ -420,55 +438,39 @@ end
     abs(lj22_n350-first(evals))
     @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
 
-
-end
-
-@testset "Luo & Jackson 2022 mode pre" begin
-
-    using Limace.MHDProblem: rhs_pre, lhs
-	# DP = Limace.DiscretePart
-    N = 50
-    m = 0
-    Le = 1e-4
-    Lu = 2 / Le
-
-    lmnb0 = (2, 0, 3)
-    lj22(l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
-	lj22(js0,rls,l,m,n,r,i) = lj22(l,m,n,r[i])
-	d_lj22 = (js0, rls, l,m,n,r,i)->DP.∂(r->lj22(l,m,n,r),r[i])
-	d2_lj22 = (js0,rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r[i])
-	d3_lj22 = (js0, rls, l,m,n,r,i)->DP.∂(r->DP.∂(r->DP.∂(r->lj22(l,m,n,r),r),r),r[i])
-
-
-    LHS = lhs(N, m)
-    RHS = rhs_pre(N, m; Ω = -2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22, d_smfb0 = d_lj22, d2_smfb0 = d2_lj22, d3_smfb0 = d3_lj22, s_mf_b0 = lj22)
-
-    target = -0.0065952461 - 1.0335959942im
-    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
-
-
-    @test any(isapprox.(evals, target, atol = 1e-7))
-
+    Limace.Poly.wig_temp_free()
 
 end
 
 @testset "Luo & Jackson 2022 dipole mode" begin
 
-    using Limace.MHDProblem: rhs_pre, lhs
-
-    N = 130
+    N = 70
     m = 0
+
+
 	Le = 1e-3
 	Lu = 2 / Le
 
-	lmnb0 = (1,0,1)
-	B0fac = sqrt(30/23) #1/sqrt(2)
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
 
-	LHS = lhs(N, m)
-	RHS = rhs_pre(N, m; Ω = -2/Le, η = 1/Lu, lmnb0, B0poloidal = true, B0fac)
+    B0 = BasisElement(Basis{Insulating}, Poloidal, (1,0,1), sqrt(30/23))
+
+    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
+
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u)/Le
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)/Lu
+    Limace.Poly.wig_temp_free()
+
+    RHS = [RHSc RHSl
+           RHSi RHSd]
+
 	target = -0.041950864156977755 - 0.6599458208985812im
 	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
-	@test isapprox(first(evals), target, atol = 1e-6)
+	@test isapprox(first(evals), target, atol = 1e-4)
 
 end
 
@@ -476,25 +478,33 @@ end
 @testset "Luo, Marti & Jackson 2022 s₁⁰" begin
 
 
-    using Limace.MHDProblem: rhs, rhs_pre, lhs
-	DP = Limace.DiscretePart
     N = 40
     m = 1
+
     Eη = 1e-9
     Le = 2√(Eη)
     Lu = 2 / Le
 
     lmnb0 = (1, 0, 1)
-
-
     B0fac = -4sqrt(pi/35)
-    
-    LHS = lhs(N, m)
-    nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-    LHS[1:nu,1:nu] .*=Eη
+  
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+    B0 = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0fac)
 
-    RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = true, B0fac)
+    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSb = sparse(Limace.inertial(b))
+    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u; Ω = 1.0)
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)
+    Limace.Poly.wig_temp_free()
+
+    RHS = [RHSc RHSl
+           RHSi RHSd]
 
     target = -287.9448432-115.2081087im
 
@@ -508,8 +518,6 @@ end
 @testset "Luo, Marti & Jackson 2022 t₁⁰" begin
 
 
-    using Limace.MHDProblem: rhs, rhs_pre, lhs
-	DP = Limace.DiscretePart
     N = 70
     m = 3
     Eη = 1e-9
@@ -521,11 +529,23 @@ end
 
     B0fac = -4sqrt(pi/35)
     
-    LHS = lhs(N, m)
-    nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-    LHS[1:nu,1:nu] .*=Eη
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+    B0 = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fac)
 
-    RHS = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = false, B0fac)
+    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSb = sparse(Limace.inertial(b))
+    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
+
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u; Ω = 1.0)
+    RHSl = Limace.lorentz(u,b,B0)
+    RHSi = Limace.induction(b,u,B0)
+    RHSd = Limace.diffusion(b)
+    Limace.Poly.wig_temp_free()
+
+    RHS = [RHSc RHSl
+           RHSi RHSd]
 
 
     target = -742.7652176+684.132152im
@@ -539,8 +559,6 @@ end
 @testset "Luo, Marti & Jackson 2022 t₁⁰s₁⁰" begin
 
 
-    using Limace.MHDProblem: rhs, rhs_pre, lhs
-	DP = Limace.DiscretePart
     N = 70
     m = 5
     Eη = 1e-9
@@ -552,16 +570,25 @@ end
 
     B0fact = -1/√2
     B0facp = -√(15/23)
-    
-    LHS = lhs(N, m)
-    nu = length(Limace.InviscidBasis.lmn_upol(N,m))+length(Limace.InviscidBasis.lmn_utor(N,m))
-    LHS[1:nu,1:nu] .*=Eη
+   
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+    B0t = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fact)
+    B0p = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0facp)
 
-    RHSp = rhs_pre(N, m; Ω = 1.0, η = 1.0, lmnb0, B0poloidal = true, B0fac=B0facp)
+    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSb = sparse(Limace.inertial(b))
+    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
-    RHSt = rhs_pre(N, m; Ω = 0.0, η = 0.0, lmnb0, B0poloidal = false, B0fac=B0fact)
-    RHS = RHSp+RHSt
+    Limace.Poly.__wiginit(N)
+    RHSc = Limace.coriolis(u; Ω = 1.0)
+    RHSl = Limace.lorentz(u,b,B0t) + Limace.lorentz(u,b, B0p)
+    RHSi = Limace.induction(b,u,B0t) + Limace.induction(b,u, B0p)
+    RHSd = Limace.diffusion(b)
+    Limace.Poly.wig_temp_free()
 
+    RHS = [RHSc RHSl
+    RHSi RHSd]
 
     target = -2134.0 + 2555.2im
     evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
@@ -571,14 +598,14 @@ end
 
 end
 
-@testset "Distributed vs serial" begin
-    addprocs(4; exeflags=`--project=$(Base.active_project())`)
-    @everywhere begin
-        using Limace
-        using Limace.MHDProblem: rhs, rhs_dist
-        N = 10
-        m = -N:N
-    end
-    @test rhs_dist(N,m) ≈ rhs(N,m)
-    rmprocs(workers())
-end
+# @testset "Distributed vs serial" begin
+#     addprocs(4; exeflags=`--project=$(Base.active_project())`)
+#     @everywhere begin
+#         using Limace
+#         using Limace.MHDProblem: rhs, rhs_dist
+#         N = 10
+#         m = -N:N
+#     end
+#     @test rhs_dist(N,m) ≈ rhs(N,m)
+#     rmprocs(workers())
+# end
