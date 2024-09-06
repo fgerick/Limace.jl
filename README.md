@@ -59,7 +59,7 @@ u = Inviscid(N; m=1)
 ```
 all $m \in [-l,l]$ with $l \in [1,N]$ are included. In the case of the Malkus field, this is not necessary, but in general (when $\mathbf{B}_0$ consist not only of $m=0$ components) we couple all $m$.
 
-The background magnetic field $\mathbf{B}_0 = s \mathbf{e}_z$ is defined and we choose our characteristic time scale as the Alfven time, so that our nondimensional parameter is the Lehnert number.
+The background magnetic field $\mathbf{B}_0 = s \mathbf{e}_z$ is defined and we choose our characteristic time scale as the Alfvén time, so that our nondimensional parameter is the Lehnert number.
 ```julia
 B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_z
 Le = 1e-2
