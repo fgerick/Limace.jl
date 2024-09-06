@@ -5,3 +5,4 @@
 /dev/
 /Manifest.toml
 /coverage
+.DS_Store
