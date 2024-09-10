@@ -727,7 +727,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; e
             E = elsasser(l0, lj, li, m0, mj, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
-                _induction_spt!(bbi, U0, bbj, is[id], js[id], aijs[id], 0, npbj, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_t_bj,E; external)
+                _induction_spt!(bbi, U0, bbj, is[id], js[id], aijs[id], 0, npbj, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_t_bj,E)
             end
         end
     end
