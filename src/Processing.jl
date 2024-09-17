@@ -201,8 +201,45 @@ function spectrum(evecs, u, b; lmn=1)
     return specup, specut, specbp, specbt
 end
 
+# function spec_ub_all_lmn(evecs, u, b; lmn=1)
+#     N = max(u.N, b.N)
+#     _N = N + 1
+#     nev = size(evecs, 2)
+
+#     specup, specut = zeros(nev,_N), zeros(nev,_N)
+#     specbp, specbt = zeros(nev,_N), zeros(nev,_N)
+
+#     lmnpu = lmn_p(u)
+#     np = length(lmnpu)
+#     lmntu = lmn_t(u)
+#     nt = length(lmntu)
+#     lmnpb = lmn_p(b)
+#     npb = length(lmnpb)
+#     lmntb = lmn_t(b)	
+#     nu = np + nt
+
+#     for i in axes(evecs,2)
+#         k = 1
+#         for k in axes(evecs,1)
+#             α = abs(evecs[k,i])^2
+#             if k<=np
+#                 specup[i,abs(lmnpu[k][lmn])+1]+=α
+#             elseif k<=nu
+#                 specut[i,abs(lmntu[k-np][lmn])+1]+=α
+#             elseif k<=nu+npb
+#                 specbp[i,abs(lmnpb[k-nu][lmn])+1]+=α
+#             else
+#                 specbt[i,abs(lmntb[k-nu-npb][lmn])+1]+=α
+#             end
+#         end
+#     end
+
+#     return specup, specut, specbp, specbt
+# end
+
 """
 lmn_n(u,b)
+
 	Get all `(l,m,n)` that correspond to the poloidal and toroidal component of `u` and `b` basis at each Cartesian
 	degree `ñ ∈ 1:N`.
 """
@@ -221,6 +258,11 @@ end
 
 findn(lmn, lmnns) = findfirst(x -> lmn ∈ x, lmnns)
 
+"""
+spectrum_cartesian(evecs, u, b)
+
+	Compute poloidal/toroidal kinetic/magnetic spectra of `evecs` as a function of max. Cartesian monomial degree.
+"""
 function spectrum_cartesian(evecs, u, b)
     N = max(u.N, b.N)
     nev = size(evecs, 2)
@@ -263,6 +305,7 @@ end
 
 """
 epeak_etrunc_cartesian(evecs, u, b)
+
 	Compute the ratio of peak energy to energy at truncation degree
 	(max between two last Cartesian degrees) in toroidal/poloidal kinetic/magnetic energy.
 """
@@ -277,6 +320,12 @@ function epeak_etrunc_cartesian(evecs, u, b)
     return ratios
 end
 
+"""
+eigenvalue_filter(evals1, evals2; λtol=1e-3)
+
+	Find all indices of `evals1` and `evals2` for which `findall(y->any(x->isapprox(x,y; rtol=λtol), evals2),evals1)`.
+	Multithreaded.
+"""
 function eigenvalue_filter(evals1, evals2; λtol=1e-3)
     nt = Threads.nthreads()
     is1 = [Int[] for _ in 1:nt]
@@ -302,6 +351,9 @@ function numerical_filter(evecs1, evecs2, evals1, evals2, u1, u2, b1, b2;
     kwargs...
 	)
 
+	@assert size(evecs1,1) == length(u1)+length(b1)
+	@assert size(evecs2,1) == length(u2)+length(b2)
+
     is1, is2 = eigenvalue_filter(evals1, evals2; λtol)
 
     ratios1 = maximum(epeak_etrunc_cartesian(@views(evecs1[:, is1]), u1, b1), dims=1)[:]
@@ -314,13 +366,59 @@ function numerical_filter(evecs1, evecs2, evals1, evals2, u1, u2, b1, b2;
 
 	if threshc > 0.0
 		tval = Val(threads)
-		@views is1, is2 = usectionrev(tval, evals1[_is1], evals2[_is2], evecs1[:, _is1], evecs2[:, _is2], u1, b1, u2, b2; threshc, kwargs...)
+		@views is1, is2 = usection(tval, evals1[_is1], evals2[_is2], evecs1[:, _is1], evecs2[:, _is2], u1, b1, u2, b2; threshc, kwargs...)
 
 		_is1 = _is1[is1]
 		_is2 = _is2[is2]
 	end
 
     return _is1, _is2
+end
+
+function peak_degree_lmn(evals, evecs, u, b; lmn=1, ub_pt=:up)
+    degrees = zeros(Int,length(evals))
+	if ub_pt == :up
+		specid=1
+	elseif ub_pt == :ut
+		specid=2
+	elseif ub_pt == :bp
+		specid=3
+	elseif ub_pt == :bt
+		specid=4
+	else
+		error("specid must be :up, :ut, :bp, or :bt !")
+	end
+   spec = spectrum(evecs, u, b; lmn)[specid]
+	@assert length(evals) == size(evecs,2)
+    for i in axes(evecs,2)
+        specs = @views spec[:,i]
+        peak = findmax(specs)[2]
+        degrees[i]=peak
+    end
+    return degrees
+end
+
+
+function observability_filter(evals, evecs, u, b;
+	ωlow = 0.57, 
+	ωhigh = 12.6, 
+	Qlow = 1.0,
+	lthresh = 17
+	)
+	
+	@inline Q(f) = abs(imag(f)/2real(f))
+	ω = imag.(evals)
+	_ωfilter = @.(ωlow < abs(ω) < ωhigh)
+	_Qfilter = Q.(evals) .> Qlow
+	is = eachindex(evals)[_ωfilter .& _Qfilter]
+	
+	@views peakl = peak_degree_lmn(evals[is], evecs[:, is], u, b, lmn=1, ub_pt=:bp)
+	@views peakm = peak_degree_lmn(evals[is], evecs[:, is], u, b, lmn=2, ub_pt=:bp)
+	@views peakn = peak_degree_lmn(evals[is], evecs[:, is], u, b, lmn=3, ub_pt=:bp)
+	_lfilter = (peakl.<=lthresh) .& (peakm .<= lthresh) .& (peakn .<= lthresh÷2)
+	
+	is = is[_lfilter]
+	return is
 end
 
 
