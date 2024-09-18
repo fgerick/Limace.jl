@@ -66,8 +66,6 @@ Le = 1e-2
 ```
 Then, we compute our projection operators for the Coriolis force, the Lorentz force and the induction term. In the ideal limit here, no diffusive term is included.
 ```julia
-Limace.Poly.__wiginit(2N) # we initialize arrays for Wigner symbols through Wigxjpf.jl
-#this is needed for the Adam-Gaunt and Elsasser variables occuring in the lorentz and induction terms.
 RHSc = Limace.coriolis(u)
 RHSl = Limace.lorentz(u, b, B0)
 RHSi = Limace.induction(b,u,B0)

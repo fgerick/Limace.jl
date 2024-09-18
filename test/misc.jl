@@ -34,3 +34,43 @@ end
 
 
 end
+
+
+@testset "serial vs threaded" begin
+
+    N = 10
+    m = -N:N
+
+    u = Inviscid(N; m)
+    b = Insulating(N; m)
+
+    B0s = [BasisElement(Basis{Insulating}, Poloidal, (1,0,1), 1.0), BasisElement(Basis{Insulating}, Toroidal, (1,0,1), 1.0)]
+	U0s = [BasisElement(Basis{Inviscid}, Poloidal, (1,0,1), 1.0), BasisElement(Basis{Inviscid}, Toroidal, (1,0,1), 1.0)]
+
+	@test Limace.diffusion(u) ≈ Limace.diffusion_threaded(u)
+	@test Limace.diffusion(b) ≈ Limace.diffusion_threaded(b; external=true)
+
+	@test Limace.inertial(u) ≈ Limace.inertial_threaded(u)
+	@test Limace.inertial(b) ≈ Limace.inertial_threaded(b; external=true)
+
+	@test Limace.coriolis(u) ≈ Limace.coriolis_threaded(u)
+
+
+	for B0 in B0s
+		RHSl = Limace.lorentz(u,b,B0)
+		RHSi = Limace.induction(b,u,B0)
+		RHSlt = Limace.lorentz_threaded(u,b,B0)
+		RHSit = Limace.induction_threaded(b,u,B0)
+		@test RHSl ≈ RHSlt
+		@test RHSi ≈ RHSit
+	end
+	for U0 in U0s
+		RHSl = Limace.lorentz(u,u,U0)
+		RHSi = Limace.induction(b,U0,b)
+		RHSlt = Limace.lorentz_threaded(u,u,U0)
+		RHSit = Limace.induction_threaded(b,U0,b)
+		@test RHSl ≈ RHSlt
+		@test RHSi ≈ RHSit
+	end
+
+end

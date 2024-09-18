@@ -320,6 +320,11 @@ git-tree-sha1 = "d1d712be3164d61d1fb98e7ce9bcbc6cc06b45ed"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 version = "1.10.8"
 
+[[deps.HalfIntegers]]
+git-tree-sha1 = "9c3149243abb5bc0bad0431d6c4fcac0f4443c7c"
+uuid = "f0d1745a-41c9-11e9-1dd9-e5d34d218721"
+version = "1.6.0"
+
 [[deps.HarfBuzz_ICU_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "HarfBuzz_jll", "ICU_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg"]
 git-tree-sha1 = "6ccbc4fdf65c8197738c2d68cc55b74b19c97ac2"
@@ -403,6 +408,15 @@ git-tree-sha1 = "e16271d212accd09d52ee0ae98956b8a05c4b626"
 uuid = "1d63c593-3942-5779-bab2-d838dc0a180e"
 version = "17.0.6+0"
 
+[[deps.LRUCache]]
+git-tree-sha1 = "b3cc6698599b10e652832c2f23db3cab99d51b59"
+uuid = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
+version = "1.6.1"
+weakdeps = ["Serialization"]
+
+    [deps.LRUCache.extensions]
+    SerializationExt = ["Serialization"]
+
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "70c5da094887fd2cae843b8db33920bac4b6f07d"
@@ -482,7 +496,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.40.1+0"
 
 [[deps.Limace]]
-deps = ["ArnoldiMethod", "Dagger", "Distributed", "DistributedArrays", "DocStringExtensions", "FastGaussQuadrature", "ForwardDiff", "LinearAlgebra", "LinearMaps", "Random", "Reexport", "SHTns", "SparseArrays", "SpecialFunctions", "StaticArrays", "Statistics", "Wigxjpf"]
+deps = ["ArnoldiMethod", "Dagger", "Distributed", "DistributedArrays", "DocStringExtensions", "FastGaussQuadrature", "ForwardDiff", "LinearAlgebra", "LinearMaps", "Random", "Reexport", "SHTns", "SparseArrays", "SpecialFunctions", "StaticArrays", "Statistics", "WignerSymbols"]
 path = ".."
 uuid = "586a1cab-6cd8-47f7-be84-7810086014ba"
 version = "0.1.0"
@@ -752,6 +766,11 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
+[[deps.RationalRoots]]
+git-tree-sha1 = "e5f5db699187a4810fda9181b34250deeedafd81"
+uuid = "308eb6b3-cc68-5ff3-9e97-c3c4da4fa681"
+version = "0.2.1"
+
 [[deps.RecipesBase]]
 deps = ["PrecompileTools"]
 git-tree-sha1 = "5c3d09cc4f31f5fc6af001c250bf1278733100ff"
@@ -988,17 +1007,11 @@ git-tree-sha1 = "6331ac3440856ea1988316b46045303bef658278"
 uuid = "013be700-e6cd-48c3-b4a1-df204f14c38f"
 version = "0.2.1"
 
-[[deps.Wigxjpf]]
-deps = ["Wigxjpf_jll"]
-git-tree-sha1 = "b99dfff00f4ed01d3cd785a629f950bc902ab173"
-uuid = "af901252-fd8a-4391-8647-10b4fde07a1e"
-version = "0.1.0"
-
-[[deps.Wigxjpf_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "e9801c64a247146e73e66a8c29375243b0a72002"
-uuid = "236017c9-faef-5401-ab52-d2664edfb5d0"
-version = "1.11.0+0"
+[[deps.WignerSymbols]]
+deps = ["HalfIntegers", "LRUCache", "Primes", "RationalRoots"]
+git-tree-sha1 = "960e5f708871c1d9a28a7f1dbcaf4e0ee34ee960"
+uuid = "9f57e263-0b3d-5e2e-b1be-24f2bb48858b"
+version = "2.0.0"
 
 [[deps.XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Zlib_jll"]

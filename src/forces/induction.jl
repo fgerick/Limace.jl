@@ -582,16 +582,16 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; e
     for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(buj))
-            A = adamgaunt(lj,l0,li, mj, m0, mi)
             Threads.@spawn begin
+                A = adamgaunt(lj,l0,li, mj, m0, mi)
                 id = Threads.threadid()
                 _induction_sps!(bbi, buj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj, A; external)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(buj))
-            E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
+                E = elsasser(lj, l0, li, mj, m0, mi)
                 id = Threads.threadid()
                 _induction_sqs!(bbi, buj, B0, is[id], js[id], aijs[id], 0, npu, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_t_uj, E; external)
             end
@@ -601,16 +601,16 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; e
     for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(buj))
-            A = adamgaunt(lj,l0,li, mj, m0, mi)
             Threads.@spawn begin
+                A = adamgaunt(lj,l0,li, mj, m0, mi)
                 id = Threads.threadid()
                 _induction_tqs!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(buj))
-            E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
+                E = elsasser(lj, l0, li, mj, m0, mi)
                 id = Threads.threadid()
                 _induction_tps!(bbi, buj, B0, is[id], js[id], aijs[id], npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj, E)
             end
@@ -652,9 +652,9 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; e
     @sync for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(buj))
-            E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                E = elsasser(lj, l0, li, mj, m0, mi)
                 # _induction_spt!(bbi, buj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj,E; external)
                 _crossterm!(bbi, buj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj, nrange_p_bc, nrange_p, _induction_sTS, E)
             end
@@ -664,18 +664,18 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; e
     @sync for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(buj))
-            A = adamgaunt(lj,l0,li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                A = adamgaunt(lj,l0,li, mj, m0, mi)
                 # _induction_tpt!(bbi, buj, B0, is[id], js[id], aijs[id], npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj,A)
                 _crossterm!(bbi, buj, B0, is[id], js[id], aijs[id], npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj, nrange_t_bc, nrange_p, _induction_sTT, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(buj))
-            E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                E = elsasser(lj, l0, li, mj, m0, mi)
                 # _induction_tqt!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj,E)
                 _crossterm!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj, nrange_t_bc, nrange_t, _induction_tTT, E)
             end
