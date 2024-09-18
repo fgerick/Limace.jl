@@ -4,5 +4,7 @@
 /docs/build/
 /dev/
 /Manifest.toml
+/docs/Manifest.toml
+/docs/src/notebooks/Manifest.toml
 /coverage
 .DS_Store
