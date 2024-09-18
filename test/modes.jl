@@ -37,7 +37,6 @@ end
         u = Inviscid(N; m)
         RHS = Limace.coriolis(u; Ω)
         if Ω2 != 0.0
-            Limace.Poly.__wiginit(N)
             U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), sqrt(2pi/15))
             RHSadv = -Ω2*Limace.lorentz(u, u, U0) #advection term is the same as Lorentz term
             RHS += RHSadv
@@ -152,7 +151,6 @@ end
     m = 2
     b = Insulating(N; m)
 
-    Limace.Poly.__wiginit(2N)
 
     LHS = Limace.inertial(b)
     RHS_diff = Limace.diffusion(b)
@@ -164,7 +162,6 @@ end
     RHS = RHS_diff + RHS_ind
 
     λdyn = eigvals(LHS\Matrix(RHS))
-    Limace.Poly.wig_temp_free()
 
     #solid body rotation should add a constant imaginary part ( = frequency) to all eigenvalues
 
@@ -184,7 +181,6 @@ end
 
     function assemble(N)
         # N =45
-        Limace.Poly.__wiginit(2N)
 
         m = 0
         b = Insulating(N; m)
@@ -196,7 +192,6 @@ end
 
         RHS_induction_t10 = Limace.induction(b,U0_t10,b)
         RHS_induction_s20 = Limace.induction(b,U0_s20,b)
-        Limace.Poly.wig_temp_free()
         return LHS, RHS_diff, RHS_induction_s20, RHS_induction_t10
     end
 
@@ -241,7 +236,6 @@ end
 
     # using Limace.MHDProblem: rhs_cond_pre, lhs_cond
     N = 6
-    Limace.Poly.__wiginit(2N)
     # m = -5:5
     Le = 1e-1
 
@@ -272,13 +266,11 @@ end
         @test any(evals .≈ fast(m, 1, Le))
     end
 
-    Limace.Poly.wig_temp_free()
 end
 
 @testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
 
     function assembleU0uniMalkus(N,m, Le; rotatingframe=true)
-        Limace.Poly.__wiginit(2N)
 
         u = Inviscid(N; m)
         b = PerfectlyConducting(N; m)
@@ -298,7 +290,6 @@ end
               Limace.induction(b,u,B0) RHSbb];
     
 
-        Limace.Poly.wig_temp_free()
         return RHS
     end
     N = 4
@@ -387,7 +378,6 @@ end
     B0 = BasisElement(b, Toroidal, (1,1,0), sqrt(16pi / 15)/2)
     B0c = BasisElement(b, Toroidal, (1,-1,0), -sqrt(16pi / 15)/2)
 
-    Limace.Poly.__wiginit(2N)
 
     RHSl = Limace.lorentz(u, b, B0) +  Limace.lorentz(u, b, B0c)
     RHSi = Limace.induction(b,u,B0) + Limace.induction(b,u,B0c)
@@ -395,7 +385,6 @@ end
     RHS = [Limace.coriolis(u)/Le RHSl
            RHSi spzeros(length(b),length(b))];
  
-        Limace.Poly.wig_temp_free()
 
     λ = eigvals(Matrix(RHS))
 
@@ -411,7 +400,6 @@ end
     Le = 1e-4
     Lu = 2 / Le
 
-    Limace.Poly.__wiginit(N)
 
     u = Inviscid(N; m)
     b = Insulating(N; m)
@@ -438,7 +426,6 @@ end
     abs(lj22_n350-first(evals))
     @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
 
-    Limace.Poly.wig_temp_free()
 
 end
 
@@ -458,12 +445,10 @@ end
 
     LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
 
-    Limace.Poly.__wiginit(N)
     RHSc = Limace.coriolis(u)/Le
     RHSl = Limace.lorentz(u,b,B0)
     RHSi = Limace.induction(b,u,B0)
     RHSd = Limace.diffusion(b)/Lu
-    Limace.Poly.wig_temp_free()
 
     RHS = [RHSc RHSl
            RHSi RHSd]
@@ -496,12 +481,10 @@ end
     LHSb = sparse(Limace.inertial(b))
     LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
-    Limace.Poly.__wiginit(N)
     RHSc = Limace.coriolis(u; Ω = 1.0)
     RHSl = Limace.lorentz(u,b,B0)
     RHSi = Limace.induction(b,u,B0)
     RHSd = Limace.diffusion(b)
-    Limace.Poly.wig_temp_free()
 
     RHS = [RHSc RHSl
            RHSi RHSd]
@@ -537,12 +520,10 @@ end
     LHSb = sparse(Limace.inertial(b))
     LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
-    Limace.Poly.__wiginit(N)
     RHSc = Limace.coriolis(u; Ω = 1.0)
     RHSl = Limace.lorentz(u,b,B0)
     RHSi = Limace.induction(b,u,B0)
     RHSd = Limace.diffusion(b)
-    Limace.Poly.wig_temp_free()
 
     RHS = [RHSc RHSl
            RHSi RHSd]
@@ -580,12 +561,10 @@ end
     LHSb = sparse(Limace.inertial(b))
     LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
-    Limace.Poly.__wiginit(N)
     RHSc = Limace.coriolis(u; Ω = 1.0)
     RHSl = Limace.lorentz(u,b,B0t) + Limace.lorentz(u,b, B0p)
     RHSi = Limace.induction(b,u,B0t) + Limace.induction(b,u, B0p)
     RHSd = Limace.diffusion(b)
-    Limace.Poly.wig_temp_free()
 
     RHS = [RHSc RHSl
     RHSi RHSd]

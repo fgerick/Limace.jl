@@ -63,7 +63,6 @@ end
 		Le = 1e-4
 		Lu = 2 / Le
 
-		Limace.Poly.__wiginit(N)
 
 		u = UT(N; m)
 		b = BT(N; m)
@@ -85,7 +84,6 @@ end
 		RHS = [RHSc RHSl
 			RHSi RHSd]
 
-		Limace.Poly.wig_temp_free()
 		# RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
 
 		target = -0.0066 - 1.033im

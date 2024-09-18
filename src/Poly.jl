@@ -1,26 +1,15 @@
 module Poly
 
 using SpecialFunctions
-using Wigxjpf
+using WignerSymbols
 using ForwardDiff
 using DocStringExtensions
 
-export wigner3j, wigner6j, wigner9j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, p, _∂ll, D, innert, inners, _∂ll_m1, _∂ll_p1
+export wigner3j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, p, _∂ll, D, innert, inners, _∂ll_m1, _∂ll_p1
 
-
-#only for dev, initiate wigner symbols temporary working arrays.
-function __wiginit(N)
-    wig_table_init(2N, 9)
-    wig_temp_init(2N)
-end
-
-function __wiginit_thread(N)
-    wig_table_init(2N, 9)
-    wig_thread_temp_init(2N)
-end
 
 #convenience for half-integer notation.
-wigner3j(j1,j2,j3,j4,j5,j6) = wig3jj(2j1,2j2,2j3,2j4,2j5,2j6)
+# wigner3j(j1,j2,j3,j4,j5,j6) = wigner3j(Float64,2j1,2j2,2j3,2j4,2j5,2j6)
 
 """
 $(TYPEDSIGNATURES)
@@ -28,7 +17,7 @@ $(TYPEDSIGNATURES)
 Adam-Gaunt integral \$ A_{abc} = ...\$.
 """
 @inline function adamgaunt(la,lb,lc,ma,mb,mc)::ComplexF64
-    return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(Int(la), Int(lb), Int(lc), 0, 0, 0)*wigner3j(Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc))
+    return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(Float64,Int(la), Int(lb), Int(lc), 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc))
 end
 
 @inline _Δ(la,lb,lc) = sqrt((la+lb+lc+2)*(la+lb+lc+4)/(4*(la+lb+lc+3)))*sqrt(complex((la+lb-lc+1)*(la-lb+lc+1)*(-la+lb+lc+1)))
@@ -39,7 +28,7 @@ $(TYPEDSIGNATURES)
 Elsasser variable \$ E_{abc} = ...\$.
 """
 @inline function elsasser(la,lb,lc,ma,mb,mc)::ComplexF64
-    return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*_Δ(la,lb,lc)*wigner3j(Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
+    return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*_Δ(la,lb,lc)*wigner3j(Float64,Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
 end
 
 """

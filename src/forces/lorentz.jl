@@ -288,52 +288,50 @@ function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) whe
     npu = length(lmn2k_p_ui)
     npb = length(lmn2k_p_bj)
 
-    @sync begin
-        for li in 1:lpmax(bui), mi in intersect(bui.m, -li:li)
-            mj = adamgaunt_mjs(mi, m0)
-            for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
+    @sync for li in 1:lpmax(bui), mi in intersect(bui.m, -li:li)
+        mj = adamgaunt_mjs(mi, m0)
+        for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
+            Threads.@spawn begin
+                id = Threads.threadid()
                 A = adamgaunt(lj,l0,li, mj, m0, mi)
-                Threads.@spawn begin
-                    id = Threads.threadid()
-                    _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
-                end
-                A = adamgaunt(l0,lj,li, m0, mj, mi)
-                Threads.@spawn begin
-                    id = Threads.threadid()
-                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
-                end
+                _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
             end
-            mj = elsasser_mjs(mi, m0)
-            for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
-                E = elsasser(l0, lj, li, m0, mj, mi)
-                Threads.@spawn begin
-                    id = Threads.threadid()
-                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
-                end
+            Threads.@spawn begin
+				A = adamgaunt(l0,lj,li, m0, mj, mi)
+                id = Threads.threadid()
+                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
             end
         end
-
-        for li in 1:ltmax(bui), mi in intersect(bui.m, -li:li)
-            mj = adamgaunt_mjs(mi, m0)
-            for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
-                A = adamgaunt(l0,lj,li, m0, mj, mi)
-                Threads.@spawn begin
-                    id = Threads.threadid()
-                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
-                end
-            end
-            mj = elsasser_mjs(mi, m0)
-            for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
-                E = elsasser(lj, l0, li, mj, m0, mi)
-                Threads.@spawn begin
-                    id = Threads.threadid()
-                    _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
-                end
+        mj = elsasser_mjs(mi, m0)
+        for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
+            Threads.@spawn begin
+                id = Threads.threadid()
                 E = elsasser(l0, lj, li, m0, mj, mi)
-                Threads.@spawn begin
-                    id = Threads.threadid()
-                    _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
-                end
+                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
+            end
+        end
+    end
+
+    @sync for li in 1:ltmax(bui), mi in intersect(bui.m, -li:li)
+        mj = adamgaunt_mjs(mi, m0)
+        for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
+            Threads.@spawn begin
+                id = Threads.threadid()
+                A = adamgaunt(l0,lj,li, m0, mj, mi)
+                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
+            end
+        end
+        mj = elsasser_mjs(mi, m0)
+        for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
+            Threads.@spawn begin
+                id = Threads.threadid()
+                E = elsasser(lj, l0, li, mj, m0, mi)
+                _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+            end
+            Threads.@spawn begin
+                id = Threads.threadid()
+                E = elsasser(l0, lj, li, m0, mj, mi)
+                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
             end
         end
     end
@@ -371,22 +369,22 @@ function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) whe
     @sync for li in 1:lpmax(bui), mi in intersect(bui.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
-            A = adamgaunt(lj,l0,li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                A = adamgaunt(lj,l0,li, mj, m0, mi)
                 _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
             end
-            A = adamgaunt(l0,lj,li, m0, mj, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                A = adamgaunt(l0,lj,li, m0, mj, mi)
                 _crossterm!(bui, B0, bbj, is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
-            E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                E = elsasser(lj, l0, li, mj, m0, mi)
                 _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_STs, E)
             end
         end
@@ -395,21 +393,21 @@ function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) whe
     @sync for li in 1:ltmax(bui), mi in intersect(bui.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
-            A = adamgaunt(lj,l0,li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                A = adamgaunt(lj,l0,li, mj, m0, mi)
                 _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_STt, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
-            E = elsasser(lj, l0, li, mj, m0, mi)
             Threads.@spawn begin
                 id = Threads.threadid()
+                E = elsasser(lj, l0, li, mj, m0, mi)
                 _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
             end
-            E = elsasser(l0, lj, li, m0, mj, mi)
             Threads.@spawn begin
+                E = elsasser(l0, lj, li, m0, mj, mi)
                 id = Threads.threadid()
                 _crossterm!(bui, B0, bbj, is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
             end
