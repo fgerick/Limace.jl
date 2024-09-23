@@ -498,7 +498,7 @@ function induction(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=t
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             A = adamgaunt(l0,lj,li, m0, mj, mi)
             # _induction_tpt!(bbi, U0, bbj, is, js, aijs, npbi, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_bj,A)
-            _crossterm!(bbi, U0, bbj, is, js, aijs, npbi, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t_bc, nrange_t, _induction_sTT, A)
+            _crossterm!(bbi, U0, bbj, is, js, aijs, npbi, npbj, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t_bc, nrange_t, _induction_sTT, A)
         end
         mj = elsasser_mjs(mi,m0)
         for lj in elsasser_ljs(li,l0,mj, lpmax(bbj))
@@ -749,7 +749,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; e
             Threads.@spawn begin
                 id = Threads.threadid()
                 # _induction_tpt!(bbi, U0, bbj, is[id], js[id], aijs[id], npbi, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_bj,A)
-                _crossterm!(bbi, U0, bbj, is[id], js[id], aijs[id], npbi, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t_bc, nrange_t, _induction_sTT, A)
+                _crossterm!(bbi, U0, bbj, is[id], js[id], aijs[id], npbi, npbj, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t_bc, nrange_t, _induction_sTT, A)
             end
         end
         mj = elsasser_mjs(mi,m0)
