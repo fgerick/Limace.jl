@@ -4,7 +4,7 @@ using LinearAlgebra
 using SparseArrays
 using Statistics
 using ..Bases
-using ..Bases: lmn_p, lmn_t, lmn_p_bc, lmn_t_bc, lmn2k_p_dict, lmn2k_t_dict
+using ..Bases: lmn_p, lmn_t, lmn_p_bc, lmn_t_bc, lmn2k_p_dict, lmn2k_t_dict, _lmn2cdeg_p, _lmn2cdeg_t
 
 
 
@@ -256,7 +256,6 @@ function lmn_n(u::Basis{TU}, b::Basis{TB}) where {TU, TB}
     return Ns, lmnpu, lmntu, lmnpb, lmntb
 end
 
-@inline findn(l,m,n) = l+2n+1
 
 """
 spectrum_cartesian(evecs, u, b)
@@ -281,13 +280,13 @@ function spectrum_cartesian(evecs, u, b)
     j = 1
     @inbounds for k in axes(evecs, 1)
         if k <= np
-            j = findn(lmnpu[k]...) 
+            j = _lmn2cdeg_p(u,lmnpu[k]...) 
         elseif k <= nu
-            j = findn(lmntu[k-np]...) + N 
+            j = _lmn2cdeg_t(u,lmntu[k-np]...) + N 
         elseif k <= nu + npb
-            j = findn(lmnpb[k-nu]...) + 2N 
+            j = _lmn2cdeg_p(b,lmnpb[k-nu]...) + 2N 
         else
-            j = findn(lmntb[k-nu-npb]...) + 3N 
+            j = _lmn2cdeg_t(b,lmntb[k-nu-npb]...) + 3N 
         end
         for i in axes(evecs, 2)
             α = abs(evecs[k, i])^2
