@@ -256,7 +256,7 @@ function lmn_n(u::Basis{TU}, b::Basis{TB}) where {TU, TB}
     return Ns, lmnpu, lmntu, lmnpb, lmntb
 end
 
-findn(lmn, lmnns) = findfirst(x -> lmn ∈ x, lmnns)
+@inline findn(lmn, lmnns) = findfirst(x -> lmn ∈ x, lmnns)
 
 """
 spectrum_cartesian(evecs, u, b)
@@ -280,7 +280,7 @@ function spectrum_cartesian(evecs, u, b)
 
     nu = np + nt
     j = 1
-    for k in axes(evecs, 1)
+    @inbounds for k in axes(evecs, 1)
         if k <= np
             j = findn(lmnpu[k], lmnpun)
         elseif k <= nu
