@@ -256,7 +256,7 @@ function lmn_n(u::Basis{TU}, b::Basis{TB}) where {TU, TB}
     return Ns, lmnpu, lmntu, lmnpb, lmntb
 end
 
-@inline findn(lmn, lmnns) = findfirst(x -> lmn ∈ x, lmnns)
+@inline findn(l,m,n) = l+2n+1
 
 """
 spectrum_cartesian(evecs, u, b)
@@ -266,7 +266,6 @@ spectrum_cartesian(evecs, u, b)
 function spectrum_cartesian(evecs, u, b)
     N = max(u.N, b.N)
     nev = size(evecs, 2)
-    Ns, lmnpun, lmntun, lmnpbn, lmntbn = lmn_n(u, b)
     spec = zeros(4N, nev)
     spec_fac = zeros(Int, 4N)
 
@@ -282,13 +281,13 @@ function spectrum_cartesian(evecs, u, b)
     j = 1
     @inbounds for k in axes(evecs, 1)
         if k <= np
-            j = findn(lmnpu[k], lmnpun)
+            j = findn(lmnpu[k]...) 
         elseif k <= nu
-            j = findn(lmntu[k-np], lmntun) + N
+            j = findn(lmntu[k-np]...) + N 
         elseif k <= nu + npb
-            j = findn(lmnpb[k-nu], lmnpbn) + 2N
+            j = findn(lmnpb[k-nu]...) + 2N 
         else
-            j = findn(lmntb[k-nu-npb], lmntbn) + 3N
+            j = findn(lmntb[k-nu-npb]...) + 3N 
         end
         for i in axes(evecs, 2)
             α = abs(evecs[k, i])^2
