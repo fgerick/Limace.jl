@@ -27,6 +27,29 @@ if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
     build()
 end
 
+pages= [
+    "Home" => "index.md",
+    "Poly" => "poly.md",
+    "Bases" => ["Basis definition" => "bases/bases.md", 
+                "InsulatingBasis" => "bases/insulating.md",
+                "InviscidBasis" => "bases/inviscid.md",
+                "ViscousBasis" => "bases/viscous.md",
+    ],
+    "Forces" => ["Summary" => "forces/index.md", 
+                "Coriolis" => "forces/coriolis.md",
+                "Diffusion" => "forces/diffusion.md",
+                "Induction" => "forces/induction.md",
+                "Inertia" => "forces/inertial.md",
+                "Lorentz" => "forces/lorentz.md",
+    ],
+    "Examples" => [
+        "Inviscid inertial modes" => "notebooks/inertialmodes.md",
+        "Torsional Alfvén modes" => "notebooks/torsionalmodes.md"
+    ],
+    "Misc" => "misc.md"
+]
+
+
 makedocs(;
     modules=[Limace],
     authors="Felix <felixgerick@gmail.com> and contributors",
@@ -39,26 +62,9 @@ makedocs(;
         canonical="https://fgerick.github.io/Limace.jl",
         edit_link="main",
         assets=String[],
+        size_threshold_ignore = collect(values(Dict(Dict(pages)["Examples"])))
     ),
-    pages=[
-        "Home" => "index.md",
-        "Poly" => "poly.md",
-        "Bases" => ["Basis definition" => "bases/bases.md", 
-                    "InsulatingBasis" => "bases/insulating.md",
-                    "InviscidBasis" => "bases/inviscid.md",
-                    "ViscousBasis" => "bases/viscous.md",
-        ],
-        "Forces" => ["Summary" => "forces/index.md", 
-                    "Coriolis" => "forces/coriolis.md",
-                    "Diffusion" => "forces/diffusion.md",
-                    "Induction" => "forces/induction.md",
-                    "Inertia" => "forces/inertial.md",
-                    "Lorentz" => "forces/lorentz.md",
-        ],
-        "Examples" => ["Inviscid inertial modes" => "notebooks/inertialmodes.md",
-        ],
-        "Misc" => "misc.md"
-    ],
+    pages,
 )
 
 deploydocs(;
