@@ -39,6 +39,8 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Compute the Galerkin projection matrix of basis `b` onto itself, i.e. the inner products. 
+Also known as the mass matrix.
 """
 @inline function inertial(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
 

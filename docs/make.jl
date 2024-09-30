@@ -29,32 +29,20 @@ end
 
 pages= [
     "Home" => "index.md",
-    "Poly" => "poly.md",
-    "Bases" => ["Basis definition" => "bases/bases.md", 
-                "InsulatingBasis" => "bases/insulating.md",
-                "InviscidBasis" => "bases/inviscid.md",
-                "ViscousBasis" => "bases/viscous.md",
-    ],
-    "Forces" => ["Summary" => "forces/index.md", 
-                "Coriolis" => "forces/coriolis.md",
-                "Diffusion" => "forces/diffusion.md",
-                "Induction" => "forces/induction.md",
-                "Inertia" => "forces/inertial.md",
-                "Lorentz" => "forces/lorentz.md",
-    ],
     "Examples" => [
         "Inviscid inertial modes" => "notebooks/inertialmodes.md",
         "Torsional Alfvén modes" => "notebooks/torsionalmodes.md"
     ],
-    "Misc" => "misc.md"
+    "Bases" => "bases.md",
+    "Forces" => "forces.md",
+    "Poly" => "poly.md",
+    # "Misc" => "misc.md"
 ]
 
 
 makedocs(;
     modules=[Limace],
-    authors="Felix <felixgerick@gmail.com> and contributors",
     repo="https://github.com/fgerick/Limace.jl/blob/{commit}{path}#{line}",
-    
     sitename="Limace.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",

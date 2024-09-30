@@ -49,6 +49,8 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Compute the Galerkin projection matrix of the basis `b` onto the vector Laplacian. When keyword `external=true`, 
+the integral is computed over all space, assuming continuity of the poloidal field and a scalar potential in the exterior domain.
 """
 @inline function diffusion(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
 

@@ -222,7 +222,11 @@ end
     return vcat(is...), vcat(js...), vcat(aijs...)
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Compute the sparse Galerkin projection matrix, by projecting the basis `b` onto the Coriolis operator.
+"""
 function coriolis(b::TB; Ω::T=2.0) where {TB<:Basis,T}
     nu = length(b)
 
