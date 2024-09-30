@@ -170,7 +170,7 @@ end
 #     end
 # end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         njs_all = nrange_p(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -193,7 +193,7 @@ function _coriolis_poloidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l)
         njs_all = nrange_t(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -228,7 +228,7 @@ end
     return -ν*((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Viscous}; ν::T=1.0, applyBC=true) where T
+function diffusion(b::Basis{Viscous}; ν::T=1.0) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 

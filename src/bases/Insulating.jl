@@ -138,7 +138,7 @@ end
     return -η*((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Insulating}; η::T=1.0, applyBC=true, external=true) where T
+function diffusion(b::Basis{Insulating}; η::T=1.0, external=true) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
