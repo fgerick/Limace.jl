@@ -396,6 +396,29 @@ function peak_degree_lmn(evals, evecs, u, b; lmn=1, ub_pt=:up)
     return degrees
 end
 
+function energydiff(evecs, u, b, cutoff; thresh=1e-2, lmn=1, ub_pt=:up)
+    ediff = zeros(Bool,size(evecs,2))
+	if ub_pt == :up
+		specid=1
+	elseif ub_pt == :ut
+		specid=2
+	elseif ub_pt == :bp
+		specid=3
+	elseif ub_pt == :bt
+		specid=4
+	else
+		error("specid must be :up, :ut, :bp, or :bt !")
+	end
+   spec = spectrum(evecs, u, b; lmn)[specid]
+    for i in axes(evecs,2)
+        spec_large = @views spec[1:(cutoff+1),i]
+        spec_small = @views spec[(cutoff+2):end,i]
+        if mean(spec_small)/mean(spec_large) < thresh
+            ediff[i] = true
+        end
+    end
+    return ediff
+end
 
 function observability_filter(evals, evecs, u, b;
 	ωlow = 0.57, 
@@ -411,11 +434,33 @@ function observability_filter(evals, evecs, u, b;
 	is = eachindex(evals)[_ωfilter .& _Qfilter]
 	
 	@views peakl = peak_degree_lmn(evals[is], evecs[:, is], u, b, lmn=1, ub_pt=:bp)
-	@views peakm = peak_degree_lmn(evals[is], evecs[:, is], u, b, lmn=2, ub_pt=:bp)
+	# @views peakm = peak_degree_lmn(evals[is], evecs[:, is], u, b, lmn=2, ub_pt=:bp)
 	@views peakn = peak_degree_lmn(evals[is], evecs[:, is], u, b, lmn=3, ub_pt=:bp)
-	_lfilter = (peakl.<=lthresh) .& (peakm .<= lthresh) .& (peakn .<= lthresh÷2)
+	_lfilter = (peakl.<=lthresh) .& (peakn .<= lthresh÷2)
 	
 	is = is[_lfilter]
+	return is
+end
+
+function observability_filter_ediff(evals, evecs, u, b;
+	ωlow = 0.57, 
+	ωhigh = 12.6, 
+	Qlow = 1.0,
+	lthresh = 17,
+    thresh= 1e-2
+	)
+	
+	@inline Q(f) = abs(imag(f)/2real(f))
+	ω = imag.(evals)
+	_ωfilter = @.(ωlow < abs(ω) < ωhigh)
+	_Qfilter = Q.(evals) .> Qlow
+	is = eachindex(evals)[_ωfilter .& _Qfilter]
+	
+	@views ediff_l = energydiff(evecs[:, is], u, b, lthresh; thresh, lmn=1, ub_pt=:bp)
+	@views ediff_n = energydiff(evecs[:, is], u, b, lthresh÷2; thresh, lmn=3, ub_pt=:bp)
+	# _lfilter = (peakl.<=lthresh) .& (peakn .<= lthresh÷2)
+	
+	is = is[ediff_l .& ediff_n]
 	return is
 end
 
