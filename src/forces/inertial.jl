@@ -42,7 +42,7 @@ $(TYPEDSIGNATURES)
 Compute the Galerkin projection matrix of basis `b` onto itself, i.e. the inner products. 
 Also known as the mass matrix.
 """
-@inline function inertial(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
+@inline function inertial(b::Basis, ::Type{T}=Float64; external=false) where {T<:Number}
 
     is, js, aijs = Int[], Int[], Complex{T}[]
     lmn2k_p = lmn2k_p_dict(b)
@@ -74,7 +74,7 @@ Also known as the mass matrix.
     return sparse(is, js, aijs, nu, nu)
 end
 
-function inertial_threaded(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
+function inertial_threaded(b::Basis, ::Type{T}=Float64; external=false) where {T<:Number}
 
     _nt = Threads.nthreads()
     is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]

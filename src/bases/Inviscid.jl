@@ -23,7 +23,7 @@ Inviscid(N; kwargs...) = Basis{Inviscid}(;N, BC=InviscidBC(), V=Sphere(), kwargs
 """
 $(TYPEDSIGNATURES)
 
-https://homepages.see.leeds.ac.uk/~earpwl/Galerkin/Galerkin.html (5.1), normalized to unit energy ∫u⋅u dV = 1.
+[livermore_compendium_2014](@citet) (5.1), normalized to unit energy ∫u⋅u dV = 1.
 """
 @inline function t(::Type{Basis{Inviscid}}, V::Volume, l,m,n,r)
     fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
@@ -33,7 +33,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-https://homepages.see.leeds.ac.uk/~earpwl/Galerkin/Galerkin.html (5.6), normalized to unit energy ∫u⋅u dV = 1. 
+[livermore_compendium_2014](@citet) (5.6), normalized to unit energy ∫u⋅u dV = 1. 
 """
 @inline function s(::Type{Basis{Inviscid}}, V::Volume, l,m,n,r)
     fac = sqrt(5+2l+4n)/sqrt(4l*(l+1)*(n+1)^2)

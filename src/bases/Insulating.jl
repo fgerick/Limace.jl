@@ -21,11 +21,21 @@ struct Insulating; end
 
 Insulating(N; kwargs...) = Basis{Insulating}(;N, BC=InsulatingBC(), V=Sphere(), kwargs...)
 
+"""
+$(TYPEDSIGNATURES)
+
+[gerick_interannual_2024](@citet) (A7)
+"""
 @inline function t(::Type{Basis{Insulating}}, V::Volume, l,m,n,r) 
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
     return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+[gerick_interannual_2024](@citet) (A6)
+"""
 @inline function s(::Type{Basis{Insulating}}, V::Volume, l,m,n,r) 
     fac = 1/(sqrt(2l*(1 + l)*(-3 + 2*l + 4*n)*(-1 + 2*l + 4*n)*(1 + 2*l + 4*n)))
     return fac * r^l * ( (2*l + 4*n - 3) * jacobi(n,0,l+1/2,2*r^2-1) - 2*(2*l + 4*n - 1)*jacobi(n-1,0,l+1/2,2*r^2-1) +(2*l + 4*n + 1)*jacobi(n-2,0,l+1/2,2*r^2-1))

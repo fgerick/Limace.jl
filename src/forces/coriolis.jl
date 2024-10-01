@@ -1,7 +1,7 @@
 """
 $(TYPEDSIGNATURES)
 
-Equation (113) in Ivers & Phillips (2008).
+Equation (113) in [ivers_scalar_2008](@citet).
 """
 @inline function C(l, m)
     return (l^2 - 1) * √((l^2 - m^2) / (4l^2 - 1))
@@ -34,7 +34,7 @@ end
 $(TYPEDSIGNATURES)
 
 Fallback for Coriolis term between poloidal and toroidal component, explicitly calculating the quadrature. 
-Following eq. (114) in Ivers & Phillips (2008).
+Following eq. (114) in [ivers_scalar_2008](@citet).
 """
 function _coriolis_st(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
     la,ma,na = lmna
@@ -60,7 +60,7 @@ end
 $(TYPEDSIGNATURES)
 
 Fallback for Coriolis term between toroidal and poloidal component, explicitly calculating the quadrature.
-Following eq. (112) in Ivers & Phillips (2008).
+Following eq. (112) in [ivers_scalar_2008](@citet).
 """
 function _coriolis_ts(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
     la,ma,na = lmna

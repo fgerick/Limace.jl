@@ -7,7 +7,6 @@ CurrentModule = Limace
 Documentation for [Limace.jl](https://github.com/fgerick/Limace.jl), a linear model based on Galerkin projections to solve for hydromagnetic modes in rotating spheres.
 
 ## Installation
-
 To get started, you will need a working Julia environment, preferrably `>=v1.10`. Then, from the REPL, you can run 
 
 ```julia
@@ -27,3 +26,5 @@ To solve for modes, three steps are needed:
 3) Compute solution(s) of (generalized) eigen problem.
 
 These three steps, with some post-processing, are introduced best through the Examples.
+
+Some [Theoretical background](@ref) is given, as well as some more detailed API information on the [Bases](@ref) and the implemented [Forces](@ref).

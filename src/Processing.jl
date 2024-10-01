@@ -1,5 +1,7 @@
 module Processing
 
+using DocStringExtensions
+
 using LinearAlgebra
 using SparseArrays
 using Statistics
@@ -138,6 +140,12 @@ function usection(::Val{true}, λ, λ2, evecs, evecs2, u0, b0, u1, b1; threshc=0
     return vcat(is...), vcat(is2...)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Compute the kinetic and magnetic energy ratios of all eigenvectors `us`, where `size(us,2)` is the number of eigenvalues. 
+`LHS` is the mass-matrix and `u` the velocity basis used in the calculation of the eigenvectors `us`.
+"""
 function ekinmags(us, LHS, u)
     nu = length(u)
     nm = size(LHS, 1)
@@ -154,10 +162,10 @@ function ekinmags(us, LHS, u)
 end
 
 """
-spectrum(evecs, u, b; lmn=1)
+$(TYPEDSIGNATURES)
 
-	calculate spectrum for all eigenvectors `evecs` comprised of velocity basis `u` and magnetic field basis `b`. 
-	Use keyword `lmn=1,2,3` to select `l=1`, `m=2` or `n=3`.
+calculate spectrum for all eigenvectors `evecs` comprised of velocity basis `u` and magnetic field basis `b`. 
+Use keyword `lmn=1,2,3` to select `l=1`, `m=2` or `n=3`.
 """
 function spectrum(evecs, u, b; lmn=1)
     N = max(u.N, b.N)
@@ -258,9 +266,9 @@ end
 
 
 """
-spectrum_cartesian(evecs, u, b)
+$(TYPEDSIGNATURES)
 
-	Compute poloidal/toroidal kinetic/magnetic spectra of `evecs` as a function of max. Cartesian monomial degree.
+Compute poloidal/toroidal kinetic/magnetic spectra of `evecs` as a function of max. Cartesian monomial degree.
 """
 function spectrum_cartesian(evecs, u, b)
     N = max(u.N, b.N)
@@ -302,10 +310,10 @@ function spectrum_cartesian(evecs, u, b)
 end
 
 """
-epeak_etrunc_cartesian(evecs, u, b)
+$(TYPEDSIGNATURES)
 
-	Compute the ratio of peak energy to energy at truncation degree
-	(max between two last Cartesian degrees) in toroidal/poloidal kinetic/magnetic energy.
+Compute the ratio of peak energy to energy at truncation degree
+(max between two last Cartesian degrees) in toroidal/poloidal kinetic/magnetic energy.
 """
 function epeak_etrunc_cartesian(evecs, u, b)
     ratios = zeros(4, size(evecs, 2))
@@ -319,10 +327,10 @@ function epeak_etrunc_cartesian(evecs, u, b)
 end
 
 """
-eigenvalue_filter(evals1, evals2; λtol=1e-3)
+$(TYPEDSIGNATURES)
 
-	Find all indices of `evals1` and `evals2` for which `findall(y->any(x->isapprox(x,y; rtol=λtol), evals2),evals1)`.
-	Multithreaded.
+Find all indices of `evals1` and `evals2` for which `findall(y->any(x->isapprox(x,y; rtol=λtol), evals2),evals1)`.
+Multithreaded.
 """
 function eigenvalue_filter(evals1, evals2; λtol=1e-3)
     nt = Threads.nthreads()
@@ -341,6 +349,11 @@ function eigenvalue_filter(evals1, evals2; λtol=1e-3)
     return vcat(is1...), vcat(is2...)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Find numerically converged eigensolutions between two resolutions.
+"""
 function numerical_filter(evecs1, evecs2, evals1, evals2, u1, u2, b1, b2;
     threshc=0.95,
     λtol=1e-2,
@@ -420,6 +433,11 @@ function energydiff(evecs, u, b, cutoff; thresh=1e-2, lmn=1, ub_pt=:up)
     return ediff
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Find observationally relevant solutions, based on the poloidal magnetic field.
+"""
 function observability_filter(evals, evecs, u, b;
 	ωlow = 0.57, 
 	ωhigh = 12.6, 

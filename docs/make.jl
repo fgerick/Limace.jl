@@ -1,41 +1,44 @@
 using Limace
 using Documenter, DocStringExtensions
 using Documenter: MathJax3, DocMeta
-using PlutoStaticHTML
-
-const NOTEBOOK_DIR = joinpath(@__DIR__, "src", "notebooks")
-
+using DocumenterCitations
+using Literate
 
 DocMeta.setdocmeta!(Limace, :DocTestSetup, :(using Limace); recursive=true)
 
-"""
-    build()
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "refs.bib");
+    style=:authoryear
+)
 
-Run all Pluto notebooks (".jl" files) in `NOTEBOOK_DIR`.
-"""
-function build()
-    println("Building notebooks in $NOTEBOOK_DIR")
-    oopts = OutputOptions(; append_build_context=false)
-    output_format = documenter_output
-    bopts = BuildOptions(NOTEBOOK_DIR; output_format)
-    build_notebooks(bopts, oopts)
-    return nothing
-end
+const EXAMPLES_DIR = joinpath(@__DIR__, "..", "examples")
+const OUTPUT_DIR   = joinpath(@__DIR__, "src", "examples")
 
-# Build the notebooks; defaults to true.
-if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
-    build()
+examples = [
+    "inertialmodes.jl",
+    "torsionalmodes.jl"
+]
+
+if !(@isdefined LiveServer)
+    for example in examples
+        example_filepath = joinpath(EXAMPLES_DIR, example)
+        Literate.markdown(example_filepath, OUTPUT_DIR)
+        # Literate.notebook(example_filepath, OUTPUT_DIR)
+    end
 end
 
 pages= [
     "Home" => "index.md",
+    "Theoretical background" => "theory.md",
     "Examples" => [
-        "Inviscid inertial modes" => "notebooks/inertialmodes.md",
-        "Torsional Alfvén modes" => "notebooks/torsionalmodes.md"
+        "Inviscid inertial modes" => "examples/inertialmodes.md",
+        "Torsional Alfvén modes" => "examples/torsionalmodes.md"
     ],
     "Bases" => "bases.md",
     "Forces" => "forces.md",
     "Poly" => "poly.md",
+    "Postprocessing" => "processing.md",
+    "References" => "references.md",
     # "Misc" => "misc.md"
 ]
 
@@ -53,6 +56,8 @@ makedocs(;
         size_threshold_ignore = collect(values(Dict(Dict(pages)["Examples"])))
     ),
     pages,
+    plugins=[bib],
+    checkdocs=:exports,
 )
 
 deploydocs(;

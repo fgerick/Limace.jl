@@ -23,7 +23,7 @@ Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
 """
 $(TYPEDSIGNATURES)
 
-Chen et al. (2018) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
+[chen_optimal_2018](@citet) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
 @inline function t(::Type{Basis{Viscous}}, V::Volume, l,m,n,r)
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
@@ -33,7 +33,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Chen et al. (2018) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
+[chen_optimal_2018](@citet) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
 @inline function s(::Type{Basis{Viscous}}, V::Volume, l,m,n,r::T) where T
     c1 = 2l+4n+1
