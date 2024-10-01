@@ -1,37 +1,51 @@
 using Limace
 using Documenter, DocStringExtensions
 using Documenter: MathJax3, DocMeta
-using PlutoStaticHTML
-
-const NOTEBOOK_DIR = joinpath(@__DIR__, "src", "notebooks")
-
+using DocumenterCitations
+using Literate
 
 DocMeta.setdocmeta!(Limace, :DocTestSetup, :(using Limace); recursive=true)
 
-"""
-    build()
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "refs.bib");
+    style=:authoryear
+)
 
-Run all Pluto notebooks (".jl" files) in `NOTEBOOK_DIR`.
-"""
-function build()
-    println("Building notebooks in $NOTEBOOK_DIR")
-    oopts = OutputOptions(; append_build_context=false)
-    output_format = documenter_output
-    bopts = BuildOptions(NOTEBOOK_DIR; output_format)
-    build_notebooks(bopts, oopts)
-    return nothing
+const EXAMPLES_DIR = joinpath(@__DIR__, "..", "examples")
+const OUTPUT_DIR   = joinpath(@__DIR__, "src", "examples")
+
+examples = [
+    "inertialmodes.jl",
+    "torsionalmodes.jl"
+]
+
+if !(@isdefined LiveServer)
+    for example in examples
+        example_filepath = joinpath(EXAMPLES_DIR, example)
+        Literate.markdown(example_filepath, OUTPUT_DIR)
+        # Literate.notebook(example_filepath, OUTPUT_DIR)
+    end
 end
 
-# Build the notebooks; defaults to true.
-if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
-    build()
-end
+pages= [
+    "Home" => "index.md",
+    "Theoretical background" => "theory.md",
+    "Examples" => [
+        "Inviscid inertial modes" => "examples/inertialmodes.md",
+        "Torsional Alfvén modes" => "examples/torsionalmodes.md"
+    ],
+    "Bases" => "bases.md",
+    "Forces" => "forces.md",
+    "Poly" => "poly.md",
+    "Postprocessing" => "processing.md",
+    "References" => "references.md",
+    # "Misc" => "misc.md"
+]
+
 
 makedocs(;
     modules=[Limace],
-    authors="Felix <felixgerick@gmail.com> and contributors",
     repo="https://github.com/fgerick/Limace.jl/blob/{commit}{path}#{line}",
-    
     sitename="Limace.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
@@ -39,26 +53,11 @@ makedocs(;
         canonical="https://fgerick.github.io/Limace.jl",
         edit_link="main",
         assets=String[],
+        size_threshold_ignore = collect(values(Dict(Dict(pages)["Examples"])))
     ),
-    pages=[
-        "Home" => "index.md",
-        "Poly" => "poly.md",
-        "Bases" => ["Basis definition" => "bases/bases.md", 
-                    "InsulatingBasis" => "bases/insulating.md",
-                    "InviscidBasis" => "bases/inviscid.md",
-                    "ViscousBasis" => "bases/viscous.md",
-        ],
-        "Forces" => ["Summary" => "forces/index.md", 
-                    "Coriolis" => "forces/coriolis.md",
-                    "Diffusion" => "forces/diffusion.md",
-                    "Induction" => "forces/induction.md",
-                    "Inertia" => "forces/inertial.md",
-                    "Lorentz" => "forces/lorentz.md",
-        ],
-        "Examples" => ["Inviscid inertial modes" => "notebooks/inertialmodes.md",
-        ],
-        "Misc" => "misc.md"
-    ],
+    pages,
+    plugins=[bib],
+    checkdocs=:exports,
 )
 
 deploydocs(;

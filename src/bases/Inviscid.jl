@@ -9,7 +9,7 @@ using ..Utils
 using ..Poly
 
 using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, Sphere
-import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
+import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s, _lmn2cdeg_p, _lmn2cdeg_t
 import ..Limace: inertial, _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 
 export Inviscid
@@ -23,7 +23,7 @@ Inviscid(N; kwargs...) = Basis{Inviscid}(;N, BC=InviscidBC(), V=Sphere(), kwargs
 """
 $(TYPEDSIGNATURES)
 
-https://homepages.see.leeds.ac.uk/~earpwl/Galerkin/Galerkin.html (5.1), normalized to unit energy ∫u⋅u dV = 1.
+[livermore_compendium_2014](@citet) (5.1), normalized to unit energy ∫u⋅u dV = 1.
 """
 @inline function t(::Type{Basis{Inviscid}}, V::Volume, l,m,n,r)
     fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
@@ -33,7 +33,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-https://homepages.see.leeds.ac.uk/~earpwl/Galerkin/Galerkin.html (5.6), normalized to unit energy ∫u⋅u dV = 1. 
+[livermore_compendium_2014](@citet) (5.6), normalized to unit energy ∫u⋅u dV = 1. 
 """
 @inline function s(::Type{Basis{Inviscid}}, V::Volume, l,m,n,r)
     fac = sqrt(5+2l+4n)/sqrt(4l*(l+1)*(n+1)^2)
@@ -46,6 +46,8 @@ end
 @inline lpmax(b::Basis{Inviscid}) = b.N
 @inline ltmax(b::Basis{Inviscid}) = b.N
 
+_lmn2cdeg_p(u::Basis{Inviscid}, l,m,n) = l+2n+1
+_lmn2cdeg_t(u::Basis{Inviscid}, l,m,n) = l+2n
 
 
 n(N) = (2N^3+9N^2+7N)÷6
@@ -124,7 +126,7 @@ function _coriolis_st(l,l2,m,m2,n,n2; Ω = 2.0)
     return aij
 end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Inviscid}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Inviscid}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         aij = _coriolis_ss(T(l), T(m); Ω)
         appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n)], aij)
@@ -141,7 +143,7 @@ function _coriolis_poloidal_toroidal!(b::Basis{Inviscid}, is, js, aijs, _np, lmn
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Inviscid}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Inviscid}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l)
         aij = _coriolis_tt(T(l), T(m); Ω)
         appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n)] + _np, aij)

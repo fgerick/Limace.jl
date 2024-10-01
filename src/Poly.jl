@@ -116,7 +116,7 @@ $(TYPEDSIGNATURES)
 """
 $(TYPEDSIGNATURES)
 
-Equation (25) in Ivers & Phillips (2008).
+Equation (25) in [ivers_scalar_2008](@citet).
 """
 @inline function _∂ll(f,l,l1,r)
     # @assert l1 ∈ (l-1, l+1)
@@ -131,14 +131,14 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Equation (xx) in Ivers & Phillips (2008).
+Equation (xx) in [ivers_scalar_2008](@citet).
 """
 @inline D(f,l,r) = ∂(r->∂(f,r),r) + 2/r * ∂(f,r) - l*(l+1)/r^2 *f(r)
 
 """
 $(TYPEDSIGNATURES)
 
-Equation (xx) in Ivers & Phillips (2008).
+Equation (xx) in [ivers_scalar_2008](@citet).
 """
 @inline function innert(t::T1,t2::T2, l::Int, r::Tr) where {T1,T2,Tr}
     return l*(l+1)*t(r)*t2(r)
@@ -147,7 +147,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Equation (xx) in Ivers & Phillips (2008).
+Equation (xx) in [ivers_scalar_2008](@citet).
 """
 @inline function inners(s,s2, l, r) 
     return l*(l+1)*(s(r)*s2(r)*l*(l+1)+∂(r->r*s(r),r)*∂(r->r*s2(r),r))/r^2

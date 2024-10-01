@@ -188,6 +188,12 @@ end
 lmn2k_p_dict(b::Basis) = lmn2k_dict(lmn_p(b))
 lmn2k_t_dict(b::Basis) = lmn2k_dict(lmn_t(b))
 
+function _lmn2cdeg_p(b::Basis, l,m,n)
+end
+
+function _lmn2cdeg_t(b::Basis, l,m,n)
+end
+
 # function t(::Type{Basis}, l, m, n, r)
 # end
 

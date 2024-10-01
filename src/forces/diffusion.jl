@@ -1,6 +1,8 @@
 """
 $(TYPEDSIGNATURES)
 
+Diffusion term of the poloidal components. Set `external=true` to include the contribution 
+of an external poloidal magnetic field matching at the surface.
 """
 function _diffusion_ss(b::T, lmna, lmnb, r,wr; external=false) where T<:Basis
     la,ma,na = lmna
@@ -26,6 +28,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Diffusion term of the toroidal components.
 """
 function _diffusion_tt(b::T, lmna, lmnb, r,wr) where T<:Basis
     la,ma,na = lmna
@@ -46,8 +49,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Compute the Galerkin projection matrix of the basis `b` onto the vector Laplacian. When keyword `external=true`, 
+the integral is computed over all space, assuming continuity of the poloidal field and a scalar potential in the exterior domain.
 """
-@inline function diffusion(b::TB, ::Type{T}=Float64; applyBC = true, external=false) where {TB<:Basis,T<:Number}
+@inline function diffusion(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
 
     is, js, aijs = Int[], Int[], Complex{T}[]
     lmn2k_p = lmn2k_p_dict(b)
@@ -62,18 +67,8 @@ $(TYPEDSIGNATURES)
         for m in intersect(b.m, -l:l)
             for n in nrange_p_bc(b,l), n2 in nrange_p(b,l)
                 aij = _diffusion_ss(b, (l,m,n), (l,m,n2), r,wr; external)
-                # k==1 && @show aij
-                # k+=1
                 appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
             end
-            # if (b.BC == NoBC()) && applyBC
-            #     bcf = bcs_p(b) #tuple of evaluation functions
-            #     npmax = last(nrange_p(b,l))
-            #     for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-            #         bij = f(l,n2)
-            #         appendit!(is, js, aijs, lmn2k_p[(l,m,npmax-i+1)], lmn2k_p[(l,m,n2)], bij)
-            #     end
-            # end
         end
     end
 
@@ -83,14 +78,6 @@ $(TYPEDSIGNATURES)
                 aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
                 appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
             end
-            # if (b.BC == NoBC()) && applyBC
-            #     bcf = bcs_t(b) #tuple of evaluation functions
-            #     ntmax = last(nrange_t(b,l))
-            #     for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-            #         bij = f(l,n2)
-            #         appendit!(is, js, aijs, lmn2k_t[(l,m,ntmax-i+1)] + _np, lmn2k_t[(l,m,n2)] + _np, bij)
-            #     end
-            # end
         end
     end
 
@@ -102,7 +89,7 @@ end
 $(TYPEDSIGNATURES)
 
 """
-@inline function diffusion_threaded(b::TB, ::Type{T}=Float64; applyBC = true, external=false) where {TB<:Basis,T<:Number}
+@inline function diffusion_threaded(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
 
     _nt = Threads.nthreads()
     is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
@@ -123,14 +110,6 @@ $(TYPEDSIGNATURES)
                         aij = _diffusion_ss(b, (l,m,n), (l,m,n2), r,wr; external)
                         appendit!(is[id], js[id], aijs[id], lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
                     end
-                    # if (b.BC == NoBC()) && applyBC
-                    #     bcf = bcs_p(b) #tuple of evaluation functions
-                    #     npmax = last(nrange_p(b,l))
-                    #     for (i,f) in enumerate(bcf), n2 in nrange_p(b,l)
-                    #         bij = f(l,n2)
-                    #         appendit!(is[id], js[id], aijs[id], lmn2k_p[(l,m,npmax)]-i+1, lmn2k_p[(l,m,n2)], bij)
-                    #     end
-                    # end
                 end
             end
         end
@@ -143,14 +122,6 @@ $(TYPEDSIGNATURES)
                         aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
                         appendit!(is[id], js[id], aijs[id], lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
                     end
-                    # if (b.BC == NoBC()) && applyBC
-                    #     bcf = bcs_t(b) #tuple of evaluation functions
-                    #     ntmax = last(nrange_t(b,l))
-                    #     for (i,f) in enumerate(bcf), n2 in nrange_t(b,l)
-                    #         bij = f(l,n2)
-                    #         appendit!(is[id], js[id], aijs[id], lmn2k_t[(l,m,ntmax)]-i+1 + _np, lmn2k_t[(l,m,n2)] + _np, bij)
-                    #     end
-                    # end
                 end
             end
         end

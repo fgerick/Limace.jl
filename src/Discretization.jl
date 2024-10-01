@@ -1,5 +1,7 @@
 module Discretization
 
+using DocStringExtensions
+
 using Limace: s, t, lmn_p, lmn_t
 using ..Bases
 using ..Bases: Sphere
@@ -481,26 +483,48 @@ function _spectospat_shtns(coeffs::Vector{T}, sht, rgrid, u::TU, b::TB) where {T
 
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Transform eigenvector containing spectral coefficients to three-dimensional vector field at `nr x nθ x nϕ` grid points.
+Returns `ur,uθ,uϕ, r,θ,ϕ`.
+"""
 function spectospat(coeffs::Vector{T}, u::TU, nr::Int, nθ::Int, nϕ::Int) where {TU<:Basis, T<:ComplexF64}
     sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m))
     ur,uθ,uϕ = _spectospat_shtns(coeffs, sht, r, u)
     return ur,uθ,uϕ, r,θ,ϕ
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Transform eigenvector containing spectral coefficients to two-dimensional vector field at `1 x nθ x nϕ` grid points at radius `r`.
+Returns `ur,uθ,uϕ, θ,ϕ`.
+"""
 function spectospat(coeffs::Vector{T}, u::TU, r::Float64, nθ::Int, nϕ::Int) where {TU<:Basis, T<:ComplexF64}
     sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
     ur,uθ,uϕ = _spectospat_shtns(coeffs, sht, r, u)
     return ur,uθ,uϕ, θ,ϕ
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Transform eigenvector containing spectral coefficients to three-dimensional vector fields at `nr x nθ x nϕ` grid points at radius `r`.
+Returns `ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ`.
+"""
 function spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
     sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m))
     ur,uθ,uϕ, br,bθ,bϕ = _spectospat_shtns(coeffs, sht, r, u, b)
     return ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Transform eigenvector containing spectral coefficients to two-dimensional vector fields at `1 x nθ x nϕ` grid points at radius `r`.
+Returns `ur,uθ,uϕ, br,bθ,bϕ, θ,ϕ`.
+"""
 function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Tr, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64, Tr<:Union{AbstractVector{Float64},Float64}}
     sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
     ur,uθ,uϕ, br,bθ,bϕ = _spectospat_shtns(coeffs, sht, r, u, b)

@@ -1,10 +1,10 @@
 
-# Limace.Processing
+# Postprocessing
 
-A non-exhaustive collection of postprocessing routines.
+A non-exhaustive collection of spectral to spatial discretization and postprocessing routines.
 
-```@index
-Modules = [Limace.Processing]
+```@autodocs
+Modules = [Limace.Discretization]
 ```
 
 ```@autodocs

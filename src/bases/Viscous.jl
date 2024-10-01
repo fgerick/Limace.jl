@@ -23,7 +23,7 @@ Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
 """
 $(TYPEDSIGNATURES)
 
-Chen et al. (2018) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
+[chen_optimal_2018](@citet) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
 @inline function t(::Type{Basis{Viscous}}, V::Volume, l,m,n,r)
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
@@ -33,7 +33,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Chen et al. (2018) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
+[chen_optimal_2018](@citet) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
 @inline function s(::Type{Basis{Viscous}}, V::Volume, l,m,n,r::T) where T
     c1 = 2l+4n+1
@@ -170,7 +170,7 @@ end
 #     end
 # end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         njs_all = nrange_p(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -193,7 +193,7 @@ function _coriolis_poloidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T; applyBC=true) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l)
         njs_all = nrange_t(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -228,7 +228,7 @@ end
     return -ν*((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Viscous}; ν::T=1.0, applyBC=true) where T
+function diffusion(b::Basis{Viscous}; ν::T=1.0) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 

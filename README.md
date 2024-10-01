@@ -3,7 +3,7 @@
 _**L**inear **I**nertial **MA**gneto **C**oriolis **E**igenmodes_
 <!-- _**L**inear **I**nertial **M**agneto **A**rchimedes **C**oriolis **E**igenmodes_ -->
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://fgerick.github.io/Limace.jl/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://fgerick.github.io/Limace.jl/dev/) [![Build Status](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/fgerick/Limace.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/fgerick/Limace.jl)
+[![Docs](https://img.shields.io/badge/documentation-blue.svg)](https://fgerick.github.io/Limace.jl/dev/) [![Build Status](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/fgerick/Limace.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/fgerick/Limace.jl)
 
 <img src="limace_logo.jpg" width="40%">
 
@@ -97,6 +97,6 @@ for m = vcat(-(N-1):-1, 1:(N-1))
 end
 ```
 
-More examples are in the [documentation](https://fgerick.github.io/Limace.jl/stable/) and the `test/modes.jl` file.
+More examples are in the [documentation](https://fgerick.github.io/Limace.jl/dev/) and the `test/modes.jl` file.
 
 ## Citation
