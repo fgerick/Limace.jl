@@ -23,6 +23,14 @@ Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
 """
 $(TYPEDSIGNATURES)
 
+```math
+t_{l,m,n}(r) = f_{l,n}r^l\\left( J_n^{(0,l+1/2)}(2r^2-1) - J_{n-1}^{(0,l+1/2)}(2r^2-1)\\right)
+```
+with
+```math
+f_{l,n}=\\left(l(l+1)/(2l+4n-1)+1/(2l+4n+3)\\right)^{-1/2}
+```
+
 [chen_optimal_2018](@citet) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
 @inline function t(::Type{Basis{Viscous}}, V::Volume, l,m,n,r)
@@ -32,6 +40,14 @@ end
 
 """
 $(TYPEDSIGNATURES)
+
+```math
+s_{l,m,n} = f_{l,n}r^l\\left( (2l+4n+1)J_{n+1}^{(0,l+1/2)}(2r^2-1)-2(2l+4n+3)J_{n}^{(0,l+1/2)}(2r^2-1) + (2l+4n+5)J_{n-1}^{(0,l+1/2)}(2r^2-1) \\right)
+```
+with
+```math
+f_{l,n} = \\left( 2l(l+1)(2l+4n+1)(2l+4n+3)(2l+4n+5) \\right)^{-1/2}
+```
 
 [chen_optimal_2018](@citet) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
@@ -76,7 +92,8 @@ end
     end
 end
 
-function inertial(b::Basis{Viscous}, ::Type{T}=Float64) where {T<:Number}
+function inertial(b::Basis{Viscous})
+    T = typeof(b.V.r1)
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
@@ -147,28 +164,6 @@ function _coriolis_st(l,l2,m,m2,n,n2; Ω::T = 2.0) where T
     aij = -_coriolis_ts(l2,l,m2,m,n2,n; Ω)
     return aij
 end
-# @inline function _coriolis_st(l2,l,m2,m,n2,n; Ω::T = 2.0) where T
-#     @assert m==m2
-#     if (l==l2+1)
-#         if n==n2
-#             return -Ω*((-1 + l^2)*sqrt(((l - m)*(l + m))/(1 - 5*l^2 + 4*l^4)))/l
-#         elseif (n == n2-1)
-#             return Ω*((-1 + l^2)*sqrt(((l - m)*(l + m)*(-1 + 2*l + 4*n)*(7 + 2*l + 4*n))/((1 - 5*l^2 + 4*l^4)*(1 + 2*l + 4*n)*(5 + 2*l + 4*n))))/l/2 
-#         elseif (n == n2+1)
-#             return Ω*((-1 + l^2)*sqrt((l - m)*(l + m))*sqrt(-5 + 2*l + 4*n))/(l*sqrt(((1 - 5*l^2 + 4*l^4)*(-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/(3 + 2*l + 4*n)))/2
-#         end
-#     elseif (l==l2-1)
-#         if n==n2
-#             return Ω*sqrt((l*(2 + l)*(1 + l - m)*(1 + l + m)*(-1 + 2*l + 4*n)*(7 + 2*l + 4*n))/((3 + 4*l*(2 + l))*(1 + 2*l + 4*n)*(5 + 2*l + 4*n)))/(1 + l)/2
-#         elseif n==n2+1
-#             return -Ω*sqrt((l*(2 + l)*(1 + l - m)*(1 + l + m))/(3 + 4*l*(2 + l)))/(1 + l)
-#         elseif n==n2+2
-#             return Ω*(sqrt(l*(2 + l)*(1 + l - m)*(1 + l + m))*sqrt(-5 + 2*l + 4*n))/((1 + l)*sqrt(((3 + 4*l*(2 + l))*(-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/(3 + 2*l + 4*n)))/2
-#         end
-#     else
-#         return zero(T)
-#     end
-# end
 
 function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)

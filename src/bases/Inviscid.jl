@@ -23,7 +23,16 @@ Inviscid(N; kwargs...) = Basis{Inviscid}(;N, BC=InviscidBC(), V=Sphere(), kwargs
 """
 $(TYPEDSIGNATURES)
 
-[livermore_compendium_2014](@citet) (5.1), normalized to unit energy ∫u⋅u dV = 1.
+```math
+t_{l,n,m}(r) = f_{l,n}r^l J_n^{(0,l+1/2)}(2r^2-1)
+```
+with 
+
+```math
+f_{l,n} = \\sqrt{\\frac{3+2l+4n}{l(l+1)}}
+```
+
+[livermore_compendium_2014](@citet) (5.1), normalized to unit energy.
 """
 @inline function t(::Type{Basis{Inviscid}}, V::Volume, l,m,n,r)
     fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
@@ -33,7 +42,16 @@ end
 """
 $(TYPEDSIGNATURES)
 
-[livermore_compendium_2014](@citet) (5.6), normalized to unit energy ∫u⋅u dV = 1. 
+```math
+s_{l,n,m}(r) = f_{l,n}(1-r^2)r^l J_n^{(1,l+1/2)}(2r^2-1)
+```
+
+with
+```math
+f_{l,n} = \\sqrt{\\frac{5+2l+4n}{4l(l+1)(n+1)^2}}
+```
+
+[livermore_compendium_2014](@citet) (5.6), normalized to unit energy. 
 """
 @inline function s(::Type{Basis{Inviscid}}, V::Volume, l,m,n,r)
     fac = sqrt(5+2l+4n)/sqrt(4l*(l+1)*(n+1)^2)
@@ -160,8 +178,8 @@ function _coriolis_toroidal_poloidal!(b::Basis{Inviscid}, is, js, aijs, _np, lmn
 end
 
 
-function inertial(b::Basis{Inviscid}, ::Type{T}=Float64) where T<:Number
-    return one(T)*I
+function inertial(b::Basis{Inviscid})
+    return one(typeof(b.V.r1))*I
 end
 
 end

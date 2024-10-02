@@ -8,13 +8,10 @@ using DocStringExtensions
 export wigner3j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, p, _∂ll, D, innert, inners, _∂ll_m1, _∂ll_p1
 
 
-#convenience for half-integer notation.
-# wigner3j(j1,j2,j3,j4,j5,j6) = wigner3j(Float64,2j1,2j2,2j3,2j4,2j5,2j6)
-
 """
 $(TYPEDSIGNATURES)
 
-Adam-Gaunt integral \$ A_{abc} = ...\$.
+Adam-Gaunt integral \$ A_{abc} = \\oint\\int Y_iY_jY_k\\sin\\theta\\,\\mathrm{d}\\theta\\mathrm{d}\\phi\$.
 """
 @inline function adamgaunt(la,lb,lc,ma,mb,mc)::ComplexF64
     return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(Float64,Int(la), Int(lb), Int(lc), 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc))
@@ -25,7 +22,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Elsasser variable \$ E_{abc} = ...\$.
+Elsasser variable \$ E_{abc} = \\oint\\int Y_k\\left( \\frac{\\partial Y_i}{\\partial \\theta} \\frac{\\partial Y_j}{\\partial \\phi} - \\frac{\\partial Y_i}{\\partial \\phi}\\frac{\\partial Y_j}{\\partial \\theta} \\right)\\,\\mathrm{d}\\theta\\mathrm{d}\\phi\$\$.
 """
 @inline function elsasser(la,lb,lc,ma,mb,mc)::ComplexF64
     return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*_Δ(la,lb,lc)*wigner3j(Float64,Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
@@ -90,7 +87,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Spherical harmonic derivative in \$\\theta\$.
+Derivative of spherical harmonic in \$\\theta\$.
 """
 function dylmdθ(l,m,θ,ϕ)
     return m*cot(θ)*ylm(l,m,θ,ϕ) + sqrt((l-m)*(l+m+1))*exp(-im*ϕ)*ylm(l,m+1,θ,ϕ)  
@@ -98,7 +95,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Spherical harmonic derivative in \$\\phi\$.
+Derivative of spherical harmonic in \$\\phi\$.
 """
 function dylmdϕ(l,m,θ,ϕ)
     return im*m*ylm(l,m,θ,ϕ)
@@ -108,13 +105,20 @@ end
 """
 $(TYPEDSIGNATURES)
 
-\$l(l+1)\$
+\$p(l) = l(l+1)\$ following [ivers_scalar_2008](@citet)
 """
 @inline p(l) = l*(l+1.0)
 
 
 """
 $(TYPEDSIGNATURES)
+
+```math
+\\partial_l^{l_1} = \\begin{cases}
+\\frac{\\partial f}{\\partial r} + \\frac{l+1}{r}f \\quad \\mathrm{if}\\, l_1 = l-1\\\\
+\\frac{\\partial f}{\\partial r} - \\frac{l}{r}f \\quad \\mathrm{if}\\, l_1 = l+1
+\\end{cases}
+```
 
 Equation (25) in [ivers_scalar_2008](@citet).
 """
@@ -131,14 +135,20 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Equation (xx) in [ivers_scalar_2008](@citet).
+```math
+D_l(f) = \\frac{\\partial^2 f}{\\partial r^2} +\\frac{2}{r}\\frac{\\partial f}{\\partial r} - \\frac{l(l+1)}{r^2}f
+```
+
+Below equation (31) in [ivers_scalar_2008](@citet).
 """
 @inline D(f,l,r) = ∂(r->∂(f,r),r) + 2/r * ∂(f,r) - l*(l+1)/r^2 *f(r)
 
 """
 $(TYPEDSIGNATURES)
 
-Equation (xx) in [ivers_scalar_2008](@citet).
+```math
+l(l+1)t t_2
+```
 """
 @inline function innert(t::T1,t2::T2, l::Int, r::Tr) where {T1,T2,Tr}
     return l*(l+1)*t(r)*t2(r)
@@ -147,7 +157,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Equation (xx) in [ivers_scalar_2008](@citet).
+```math
+\\frac{l(l+1)}{r^2}\\left( l(l+1)s s_2 + \\frac{\\partial r s}{\\partial r}\\frac{\\partial r s_2}{\\partial r}\\right)
+```
 """
 @inline function inners(s,s2, l, r) 
     return l*(l+1)*(s(r)*s2(r)*l*(l+1)+∂(r->r*s(r),r)*∂(r->r*s2(r),r))/r^2
