@@ -61,7 +61,7 @@ all $m \in [-l,l]$ with $l \in [1,N]$ are included. In the case of the Malkus fi
 
 The background magnetic field $\mathbf{B}_0 = s \mathbf{e}_z$ is defined and we choose our characteristic time scale as the Alfvén time, so that our nondimensional parameter is the Lehnert number.
 ```julia
-B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_z
+B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_phi
 Le = 1e-2
 ```
 Then, we compute our projection operators for the Coriolis force, the Lorentz force and the induction term. In the ideal limit here, no diffusive term is included.

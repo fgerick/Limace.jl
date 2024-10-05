@@ -27,4 +27,28 @@ To solve for modes, three steps are needed:
 
 These three steps, with some post-processing, are introduced best through the Examples.
 
+**But I just want to copy-paste code to see if it works**
+
+Calculate hydromagnetic modes for the Malkus field:
+
+```julia
+using Limace, LinearAlgebra
+
+N = 6
+u = Inviscid(N)
+b = PerfectlyConducting(N) # == Inviscid(N)
+
+B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_phi	
+Le = 1e-2
+
+RHSc = Limace.coriolis(u)
+RHSl = Limace.lorentz(u, b, B0)
+RHSi = Limace.induction(b,u,B0)
+RHSd = spzeros(length(b),length(b)) #empty (no Ohmic diffusion)
+RHS = [RHSc/Le RHSl
+	   RHSi RHSd];
+
+λ, x = eigen(Matrix(RHS))
+```
+
 Some [Theoretical background](@ref) is given, as well as some more detailed API information on the [Bases](@ref) and the implemented [Forces](@ref).

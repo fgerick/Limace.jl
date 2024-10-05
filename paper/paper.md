@@ -9,7 +9,7 @@ tags:
 authors:
   - name: Felix Gerick
     orcid: 0000-0001-9924-0562
-    affiliation: "1, 2" # (Multiple affiliations must be quoted)
+    affiliation: "1, 2"
 affiliations:
  - name: National Centre for Space Studies, France
    index: 1
@@ -24,111 +24,84 @@ bibliography: paper.bib
 # Summary
 
 Hydromagnetic modes in spherical domains are relevant to the liquid cores of planets, moons or stars, as well as rotating fluid dynamics experiments.
-These modes are solutions to the rotating magnetohydrodynamic equations that govern electrically conducting fluids under rapid rotation. 
+These modes are solutions to the linearized rotating magnetohydrodynamic equations that govern electrically conducting fluids under rapid rotation. 
 `Limace.jl` is a package written in the Julia programming language [@bezansonjulia2017], based on Galerkin projections of the governing equations onto 
 trial vectors of the velocity and magnetic field. It aims to facilitate the calculation of modes in flexible setups with a high-level interface,
 whilst remaining computationally performant enough to tackle relevant physical parameters.
 
-
 # Statement of need
 
-- No open-source framework for hydromagnetic modes
+- Recent research interest in modelling these modes [@gerickfast2021, @trianacore2022, @luowaves2022a, @luowaves2022, @gerickinterannual2024b]
+- No open-source framework for hydromagnetic modes in arbitrary background field geometry 
+- To my knowledge, the only open source code to compute hydromagnetic modes in planetary cores is Kore [@trianaviscous2021].
 - Several in-house closed source codes exist in the community
 - Reimplementation requires substantial effort due to complexity of the spectral equations
 - Generic and does not rely on symmetry assumptions.
 
+# Theoretical background and implementation details
 
-# Theoretical background
+The modeled equations are based on the work of [@iversscalar2008] and [@gerickinterannual2024]. 
 
-The modeled equations are based on the work of [@iversscalar2008] and [@gerickinterannual2024].
+Integrals over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on [@johanssonfast2016]).
+The remaining integration in radial direction is done using Gauss-Legendre quadratures available through [FastGaussQuadrature.jl](https://github.com/JuliaApproximation/FastGaussQuadrature.jl).
 
-# Basic Example - Torsional Alfvén mode
+To compute sparse solutions, a shift-invert spectral transform method is provided, based on the sparse LU factorization from `UMFPACK` [@davisalgorithm2004] and the partial Schur decomposition implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl) [@StoppelsArnoldiMethod].
 
-Load the relevant packages
+For postprocessing, `Limace.jl` uses a fast spherical harmonic transform implemented in the `SHTns` library [@schaefferefficient2013], and available in Julia through [SHTns.jl](https://github.com/fgerick/SHTns.jl).
+It is used to transform the spectral coefficients to vector fields evaluated on a spatial grid.
 
-````julia
-using Limace, SparseArrays, CairoMakie
-using Limace.EigenProblem: eigstarget
-using Limace.Discretization: spectospat
-````
 
-## Assembly
 
-We can assemble the submatrices and concatenate them to get our final left hand side matrix `LHS` and right hand side matrix `RHS`.
+# Basic Example - Malkus background magnetic field
 
-Here, the non-dimensional parameters are the Lehnert number `Le` and the Lundquist number `Lu`. We give the resolution by an integer `N`, that determines the polynomial degree of our solutions.
-This function takes for `B0` a collection of `BasisElement`'s, as shown below.
+In this example, we calculate the spectrum of modes when the background field is ``\mathbf{B}_0 = s\mathbf{e}_\phi``, following [@malkushydromagnetic1967]. 
 
-````julia
-function assemble(N, Le, Lu, B0)
-	u = Inviscid(N; m=0)
-	b = Insulating(N; m=0)
-	LHS = blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b)))
-	RHSc = Limace.coriolis(u)/Le
-	RHSl = sum(Limace.lorentz_threaded(u,b,B) for B in B0)
-	RHSi = sum(Limace.induction_threaded(b,u,B) for B in B0)
-	RHSd = Limace.diffusion(b)/Lu
-	RHS = [RHSc RHSl
-		   RHSi RHSd]
-	return LHS, RHS, u, b
+```julia
+using Limace, LinearAlgebra
+
+N = 6
+u = Inviscid(N)
+b = PerfectlyConducting(N) # == Inviscid(N)
+
+B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_phi	
+Le = 1e-2
+
+RHSc = Limace.coriolis(u)
+RHSl = Limace.lorentz(u, b, B0)
+RHSi = Limace.induction(b,u,B0)
+RHSd = spzeros(length(b),length(b)) #empty (no Ohmic diffusion)
+RHS = [RHSc/Le RHSl
+	   RHSi RHSd];
+
+λ = eigvals(Matrix(RHS))
+```
+
+In this simple configuration analytical solutions can be derived, relating the frequency of the hydromagnetic problem to the inertial mode frequencies.
+We verify that our calculated mode spectrum contains some of the analytical solutions:
+
+```julia
+function zhang(m, N) 
+	sm = sign(m)
+	m = abs(m)
+	return -sm*2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
 end
-````
 
-Define parameters and background magnetic field:
+# Malkus J. Fluid Mech. (1967), vol. 28, pp. 793-802, eq. (2.28)
+slow(m, N, Le, λ = imag(zhang(m, N))) = im * λ / 2Le * (1 - √(1 + 4Le^2 * m * (m - λ) / λ^2))
+fast(m, N, Le, λ = imag(zhang(m, N))) = im * λ / 2Le * (1 + √(1 + 4Le^2 * m * (m - λ) / λ^2))
 
-````julia
-N = 100
-Le = 5e-4
-Lu = 1/Le
-B0 = [BasisElement(Basis{Insulating}, Poloidal, (1,0,1),0.3), BasisElement(Basis{Insulating}, Poloidal, (2,0,1),0.7)]
-````
+for m = vcat(-(N-1):-1, 1:(N-1))
+	@show any(isapprox(slow(m,1,Le)),λ)
+	@show any(isapprox(fast(m, 1, Le)),λ)
+end
+```
 
-This background field is a mix of two poloidal field components, `l,m,n=(1,0,1)` and `l,m,n = (2,0,1)`, i.e. dipolar and quadrupolar symmetry.
-
-Assemble the matrices:
-
-````julia
-LHS, RHS, u, b = assemble(N, Le, Lu, B0)
-````
-
-## Solve the eigen problem
-
-We can calculate some eigenvalues and vectors near a given `target`. For torsional modes it is sensible to choose a target near `λ = -σ+im*ω = 1.0im`, i.e. an Alfvén frequency of 1 (note: this only the case, when using the Alfvén time as the characteristic time-scale in the nondimensionalization).
-
-````julia
-target = 1.0im
-````
-
-`Limace.jl` provides the `eigstarget` function, based on shift-invert spectral transform and an implicitly restarted Arnoldi method. The keyword `nev` can be set to the desired number of eigenvalues.
-
-````julia
-λ, x = eigstarget(RHS, LHS, target; nev=5)
-````
-
-## Plot the solution
-
-We find the solution of largest real part, corresponding to the smallest damping rate. In this simple example this is enough to isolate the gravest torsional mode from the other calculated solutions.
-
-````julia
-per = sortperm(λ, by = real, rev=true)
-````
-
-We discretize the corresponding eigenvector in the meridional plane. Since $m=0$, we do not need more than one value of the longitude.
-
-````julia
-nr, nθ, nϕ = 2N+1, 2N+1, 1
-
-ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ = spectospat(x[:,per[1]], u,b, nr,nθ,nϕ)
-````
-
-We visualize can visualize the meridional slices of the velocity and magnetic field components (shown in Figure \autoref{fig:example}).
-
-![Torsional Alfven mode.\label{fig:tm}](torsionalmodes.png){ width=50%}
+More examples are given in the documentation of `Limace.jl`.
 
 # Acknowledgements
 
 I have received funding from the European Research Council (ERC) GRACEFUL Synergy Grant No. 855677. 
 This project has been funded by ESA in the framework of EO Science for Society, through contract 4000127193/19/NL/IA (SWARM + 4D Deep Earth: Core). 
-I thank Phil Livermore for the help in the theoretical development of the model.
+I thank Phil Livermore for the key contributions in the theoretical development of the model.
 
 # References
