@@ -31,7 +31,7 @@ whilst remaining computationally performant enough to tackle relevant physical p
 
 # Statement of need
 
-- Recent research interest in modelling these modes [@gerickfast2021, @trianacore2022, @luowaves2022a, @luowaves2022, @gerickinterannual2024b]
+- Recent research interest in modelling these modes [@gerickfast2021; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024]
 - No open-source framework for hydromagnetic modes in arbitrary background field geometry 
 - To my knowledge, the only open source code to compute hydromagnetic modes in planetary cores is Kore [@trianaviscous2021].
 - Several in-house closed source codes exist in the community
@@ -40,21 +40,21 @@ whilst remaining computationally performant enough to tackle relevant physical p
 
 # Theoretical background and implementation details
 
-The modeled equations are based on the work of [@iversscalar2008] and [@gerickinterannual2024]. 
+The modeled equations are based on the work of @iversscalar2008 and @gerickinterannual2024. 
 
-Integrals over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on [@johanssonfast2016]).
+Integrals over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on @johanssonfast2016).
 The remaining integration in radial direction is done using Gauss-Legendre quadratures available through [FastGaussQuadrature.jl](https://github.com/JuliaApproximation/FastGaussQuadrature.jl).
 
-To compute sparse solutions, a shift-invert spectral transform method is provided, based on the sparse LU factorization from `UMFPACK` [@davisalgorithm2004] and the partial Schur decomposition implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl) [@StoppelsArnoldiMethod].
+To compute few eigen solutions of the sparse system, a shift-invert spectral transform method is provided, based on the sparse LU factorization from `UMFPACK` [@davisalgorithm2004] and the partial Schur decomposition implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl) [@StoppelsArnoldiMethod].
 
-For postprocessing, `Limace.jl` uses a fast spherical harmonic transform implemented in the `SHTns` library [@schaefferefficient2013], and available in Julia through [SHTns.jl](https://github.com/fgerick/SHTns.jl).
+For postprocessing, `Limace.jl` uses a fast spherical harmonic transform implemented in the [SHTns](https://bitbucket.org/nschaeff/shtns) library [@schaefferefficient2013], and available in Julia through [SHTns.jl](https://github.com/fgerick/SHTns.jl).
 It is used to transform the spectral coefficients to vector fields evaluated on a spatial grid.
 
 
 
 # Basic Example - Malkus background magnetic field
 
-In this example, we calculate the spectrum of modes when the background field is ``\mathbf{B}_0 = s\mathbf{e}_\phi``, following [@malkushydromagnetic1967]. 
+In this example, we calculate the spectrum of modes when the background field is $\mathbf{B}_0 = s\mathbf{e}_\phi$ [@malkushydromagnetic1967]. 
 
 ```julia
 using Limace, LinearAlgebra
