@@ -98,7 +98,7 @@ The exact modeled equations are outlined in @gerickinterannual2024, based on the
 
 From the projected equations, the problem reduces to a generalized eigen problem
 $$
-\lambda \mathbf{A}\mathb{x} = \mathbf{B}\mathbf{x},
+\lambda \mathbf{A}\mathbf{x} = \mathbf{B}\mathbf{x},
 $$
 that is solved numerically. The matrix $\mathbf{B}$ is generally not symmetric/Hermitian, but $\mathbf{A}$ can be the unit matrix, symmetric tridiagonal or symmetric, depending on the chosen bases.
 
