@@ -31,14 +31,14 @@ whilst remaining computationally performant enough to tackle relevant physical p
 
 # Statement of need
 
-The computation of hydromagnetic modes is under active scientific investigation, in particular their application in the study of the Earth's liquid core has recently gotten new attention [@gerickfast2021; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024].
-To model these waves, substantial work has to be put into the accurate implementation of the spectral equations that govern these modes.
+The computation of hydromagnetic modes is part of active scientific investigations, in particular the study of modes in the Earth's liquid core has recently gotten new attention [@gerickfast2021; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024].
+One of the only open-source models to compute hydromagnetic modes in relevant parameters for planetary cores is Kore [@trianaviscous2021], 
+a spectral code based on ultraspherical polynomials in axisymmetric setups written in Python.
+The implementation of such a code requires substantial work due to the complexity of spectral equations that govern the modes.
 This is true also for very basic and idealized examples, resulting in a substantial entry barrier for scientists to model these modes.
 `Limace.jl` tries to lower this entry barrier, by providing an open source model with a very simple high-level API and modern online documentation with practical examples.
 
-Despite having a high-level interface, `Limace.jl` can be used to solve complex and more geophysically relevant problem setups.
-One of the only open-source models to compute hydromagnetic modes in planetary cores is Kore [@trianaviscous2021], 
-a spectral code based on ultraspherical polynomials in axisymmetric setups written in Python.
+Despite having a high-level interface, `Limace.jl` can be used to solve complex and geophysically relevant problems.
 A unique feature of `Limace.jl` is the support of complex background magnetic fields and flows over which the modes evolve.
 The code has been developed from the beginning to leave assumptions of symmetry up to the user.
 The model code base is tested against mode solutions from the scientific literature to ensure its accuracy.
