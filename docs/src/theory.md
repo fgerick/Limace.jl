@@ -58,7 +58,6 @@ with the respective poloidal and toroidal basis vectors
 ```
 Here, ``Y_l^m`` is the (fully normalized) spherical harmonic of degree ``l`` and order ``m``.
 
-
 We therefore need to consider all combinations of poloidal and toroidal vector combinations in the projection of the forces.
 This leads to several long coupling terms, especially for the Lorentz force and induction term. 
 The integrals of these coupling terms over the spherical sourfaces can be reduced to Adam-Gaunt and Elsasser integrals, and it remains to calculate the radial integral. The detailed equations implemented in `Limace.jl` are given in [gerick_interannual_2024](@citet).

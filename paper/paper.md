@@ -32,7 +32,7 @@ whilst remaining computationally performant enough to tackle relevant physical p
 # Statement of need
 
 - Recent research interest in modelling these modes [@gerickfast2021; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024]
-- No open-source framework for hydromagnetic modes in arbitrary background field geometry 
+- No open-source code for hydromagnetic modes in arbitrary background field geometry 
 - To my knowledge, the only open source code to compute hydromagnetic modes in planetary cores is Kore [@trianaviscous2021].
 - Several in-house closed source codes exist in the community
 - Reimplementation requires substantial effort due to complexity of the spectral equations
@@ -40,11 +40,69 @@ whilst remaining computationally performant enough to tackle relevant physical p
 
 # Theoretical background and implementation details
 
-The modeled equations are based on the work of @iversscalar2008 and @gerickinterannual2024. 
+In non-linear form, the momentum equation of the incompressible fluid and the induction equation, are written as
+$$
+\begin{align}
+	\frac{\partial \mathbf{U}}{\partial t} + \left(\boldsymbol{\nabla}\times\mathbf{U}\right)\times\mathbf{U} + 2\boldsymbol{\Omega}\times\mathbf{U} &= -\frac{1}{\rho}\nabla P + \frac{1}{\rho\mu_0} \left(\boldsymbol{\nabla}\times\mathbf{B}\right)\times\mathbf{B} + \nu\boldsymbol{\nabla}^2\mathbf{U} + \mathbf{F}, \\
+	\frac{\partial \mathbf{B}}{\partial t} &= \boldsymbol{\nabla}\times\left(\mathbf{U}\times\mathbf{B}\right) + \eta \boldsymbol{\nabla}^2\mathbf{B},
+\end{align}
+$$
+with $\mathbf{U}$ the velocity, $\mathbf{B}$ the magnetic field, $\boldsymbol{\Omega}$ the rotation axis, $\rho$ the fluid density, $P$ the reduced hydrodynamic pressure, $\mu_0$ the magnetic permeability of free space, $\nu$ the kinematic viscosity, $\mathbf{F}$ some additional body force, and $\eta$ the magnetic diffusivitiy.
 
-Integrals over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on @johanssonfast2016).
+In order to compute modal solutions, the velocity, magnetic and pressure fields a linearized, so that 
+$$
+\begin{align}
+	\mathbf{U}(\mathbf{r},t) & = \mathbf{U}_0(\mathbf{r})+ \mathbf{u}(\mathbf{r}) e^{\lambda t}, \\
+	\mathbf{B}(\mathbf{r},t) & = \mathbf{B}_0(\mathbf{r})+ \mathbf{b}(\mathbf{r}) e^{\lambda t}, \\
+	P(\mathbf{r},t)   & = P_0(\mathbf{r})+ p(\mathbf{r}) e^{\lambda t}.
+\end{align}
+$$
+with $\lambda=-\sigma+\mathrm{i}\omega$, with $\sigma$ the damping rate and $\omega$ the frequency of the oscillatory perturbation to the steady background.
+Removing the steady part and neglecting higher order terms, the linearized momentum and induction equations then read
+$$
+\begin{align}
+	\lambda\mathbf{u} =& -\left(\boldsymbol{\nabla}\times\mathbf{u}\right)\times\mathbf{U}_0- \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u} -2\Omega\mathbf{e}_z\times\mathbf{u} - \frac{1}{\rho}\nabla p\\
+	 &+ \frac{1}{\rho\mu_0}\left(\left(\boldsymbol{\nabla}\times\mathbf{b}\right)\times\mathbf{B}_0+\left(\boldsymbol{\nabla}\times\mathbf{B}_0\right)\times\mathbf{b}\right) + \nu \boldsymbol{\nabla}^2\mathbf{u},\nonumber\\
+	\lambda\mathbf{b} =& \boldsymbol{\nabla}\times\left(\mathbf{U}_0\times\mathbf{b}\right) + \boldsymbol{\nabla}\times\left(\mathbf{u}\times\mathbf{B}_0\right) + \eta \boldsymbol{\nabla}^2\mathbf{b}.
+\end{align}
+$$
+
+These equations are then projected onto trial vectors $\boldsymbol{\xi}_i$, so that
+$$
+f_{ij} = \int \boldsymbol{\xi}_i \cdot \mathbf{f}\left(\mathbf{u}_j,\mathbf{b}_j, \mathbf{U}_0, \mathbf{B}_0\right)\,\mathrm{d}V,
+$$
+where $\mathbf{f}$ is any of the terms in the momentum and induction equation and $\boldsymbol{\xi}_i = [\mathbf{u}_i, \mathbf{b}_i]$.
+Due to the divergence free condition on the velocity and magnetic field, i.e. the flow is incompressible and no magnetic monopoles, 
+it is convenient to decompose the fields into poloidal and toroidal components.
+$$
+\begin{align}
+    \mathbf{u} &= \sum_i \alpha_i\mathbf{u}_i = \sum_{l,m,n} \alpha^P_{lmn}\mathbf{P}_{lmn} + \sum_{l,m,n} \alpha^Q_{lmn}\mathbf{Q}_{lmn},\\
+    \mathbf{b} &= \sum_i \beta_i\mathbf{b}_i =  \sum_{l,m,n} \beta^S_{lmn}\mathbf{S}_{lmn} + \sum_{l,m,n} \beta^T_{lmn}\mathbf{T}_{lmn},
+\end{align}
+$$
+with the respective poloidal and toroidal basis vectors
+$$
+\begin{align}
+	\left[\mathbf{P},\mathbf{S}\right]_{lmn} & = \boldsymbol{\nabla}\times\boldsymbol{\nabla}\times \left[P,S\right]_{ln}(r)Y_l^m(\theta,\phi)\mathbf{r}, \\
+	\left[\mathbf{Q},\mathbf{T}\right]_{lmn} & = \boldsymbol{\nabla}\times \left[Q,T\right]_{ln}(r) Y_l^m(\theta,\phi)\mathbf{r}.
+\end{align}
+$$
+Here, $Y_l^m(\theta,\phi)$ is the (fully normalized) spherical harmonic of degree $l$ and order $m$.
+The boundary conditions (or regularity condition at $r=0$) are imposed on the scalar functions $P,S,Q,T$.
+
+We need to consider all combinations of poloidal and toroidal vector combinations in the projection of the forces.
+This leads to several long coupling terms, especially for the Lorentz force and induction term. 
+The integrals of these coupling terms over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on @johanssonfast2016).
 The remaining integration in radial direction is done using Gauss-Legendre quadratures available through [FastGaussQuadrature.jl](https://github.com/JuliaApproximation/FastGaussQuadrature.jl).
+The exact modeled equations are outlined in @gerickinterannual2024, based on the work of @iversscalar2008.  
 
+From the projected equations, the problem reduces to a generalized eigen problem
+$$
+\lambda \mathbf{A}\mathb{x} = \mathbf{B}\mathbf{x},
+$$
+that is solved numerically. The matrix $\mathbf{B}$ is generally not symmetric/Hermitian, but $\mathbf{A}$ can be the unit matrix, symmetric tridiagonal or symmetric, depending on the chosen bases.
+
+For small problem sizes, the eigen problem can be solved using dense methods, e.g. using the standard library function `eigen`.
 To compute few eigen solutions of the sparse system, a shift-invert spectral transform method is provided, based on the sparse LU factorization from `UMFPACK` [@davisalgorithm2004] and the partial Schur decomposition implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl) [@StoppelsArnoldiMethod].
 
 For postprocessing, `Limace.jl` uses a fast spherical harmonic transform implemented in the [SHTns](https://bitbucket.org/nschaeff/shtns) library [@schaefferefficient2013], and available in Julia through [SHTns.jl](https://github.com/fgerick/SHTns.jl).
