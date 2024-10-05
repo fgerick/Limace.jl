@@ -24,6 +24,14 @@ Insulating(N; kwargs...) = Basis{Insulating}(;N, BC=InsulatingBC(), V=Sphere(), 
 """
 $(TYPEDSIGNATURES)
 
+```math
+t_{l,m,n}(r) = f_{l,n}r^l\\left( J_{n}^{(0,l+1/2)}(2r^2-1) - J_{n-1}^{(0,l+1/2)}(2r^2-1)\\right)
+```
+with
+```math
+f_{l,n} = \\left( l(l+1)/(2l+4n-1) + 1/(2l+4n+3) \\right)^{-1/2}
+```
+
 [gerick_interannual_2024](@citet) (A7)
 """
 @inline function t(::Type{Basis{Insulating}}, V::Volume, l,m,n,r) 
@@ -33,6 +41,14 @@ end
 
 """
 $(TYPEDSIGNATURES)
+
+```math
+s_{l,m,n}(r) = f_{l,n}r^l\\left( (2l+4n+3)J_{n}^{(0,l+1/2)}(2r^2-1) -2(2l+4n-1)J_{n-1}^{(0,l+1/2)}(2r^2-1) + (2l+4n+1)J_{n-2}^{(0,l+1/2)}(2r^2-1) \\right)
+```
+with
+```math
+f_{l,n} = \\left( 2l(l+1)(2l+4n-3)(2l+4n-1)(2l+4n+1)\\right)^{-1/2}
+```
 
 [gerick_interannual_2024](@citet) (A6)
 """
@@ -87,7 +103,8 @@ end
     return zero(l)
 end
 
-function inertial(b::Basis{Insulating}, ::Type{T}=Float64; external=true) where {T<:Number}
+function inertial(b::Basis{Insulating}; external=true)
+    T = typeof(b.V.r1)
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
@@ -101,42 +118,6 @@ function inertial(b::Basis{Insulating}, ::Type{T}=Float64; external=true) where 
     d2 = [inertial_s2;0.0; inertial_t2]
     return SymTridiagonal(d, d2)
 end 
-
-# function inertial(b::Basis{Insulating}, ::Type{T}=Float64) where {T<:Number}
-    
-#     is, js, aijs = Int[], Int[], Complex{T}[]
-#     lmn2k_p = lmn2k_p_dict(b)
-#     lmn2k_t = lmn2k_t_dict(b)
-#     _np = np(b)
-#     nmat = length(b)
-
-
-#     @inbounds for l in 1:lpmax(b)
-#         for m in intersect(b.m, -l:l)
-#             ns = nrange_p(b,l)
-#             for n in ns
-#                 for n2 in max(n-1,1):min(n+1,last(ns)) #symtridiagonal
-#                     aij = _inertial_ss(T(l), T(n), T(n2))
-#                     appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
-#                 end
-#             end
-#         end
-#     end
-
-#     @inbounds for l in 1:ltmax(b)
-#         for m in intersect(b.m, -l:l)
-#             ns = nrange_t(b,l)
-#             for n in ns
-#                 for n2 in max(n-1,1):min(n+1,last(ns)) #symtridiagonal
-#                     aij = _inertial_tt(T(l), T(n), T(n2))
-#                     appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
-#                 end
-#             end
-#         end
-#     end
-
-#     return SymTridiagonal(sparse(is,js,aijs, nmat, nmat))
-# end
 
 #diffusion
 

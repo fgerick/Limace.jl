@@ -52,8 +52,8 @@ $(TYPEDSIGNATURES)
 Compute the Galerkin projection matrix of the basis `b` onto the vector Laplacian. When keyword `external=true`, 
 the integral is computed over all space, assuming continuity of the poloidal field and a scalar potential in the exterior domain.
 """
-@inline function diffusion(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
-
+@inline function diffusion(b::Basis; external=false)
+    T = typeof(b.V.r1)
     is, js, aijs = Int[], Int[], Complex{T}[]
     lmn2k_p = lmn2k_p_dict(b)
     lmn2k_t = lmn2k_t_dict(b)
@@ -89,10 +89,12 @@ end
 $(TYPEDSIGNATURES)
 
 """
-@inline function diffusion_threaded(b::TB, ::Type{T}=Float64; external=false) where {TB<:Basis,T<:Number}
+@inline function diffusion_threaded(b::Basis; external=false)
+    T = typeof(b.V.r1)
 
+    is, js, aijs = Int[], Int[], Complex{T}[]
     _nt = Threads.nthreads()
-    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [Complex{T}[] for _ in 1:_nt]
 
     lmn2k_p = lmn2k_p_dict(b)
     lmn2k_t = lmn2k_t_dict(b)

@@ -11,9 +11,8 @@ In the induction equation we have the magnetic induction term $\nabla\times\math
 \int \mathbf{u}_i^* \cdot \mathbf{u}_j\,\mathrm{d}V,
 ```
 
-```@autodocs
-Modules = [Limace]
-Pages = ["forces/inertial.jl"]
+```@docs 
+Limace.inertial
 ```
 
 ## Coriolis
@@ -26,9 +25,8 @@ The necessary functions to compute Galerkin projections on the Coriolis term
 
 where ``\mathbf{u}_{i,j}`` are either poloidal or toroidal basis vectors.
 
-```@autodocs
-Modules = [Limace]
-Pages = ["forces/coriolis.jl"]
+```@docs
+Limace.coriolis
 ```
 
 ## Diffusion 
@@ -37,9 +35,8 @@ Pages = ["forces/coriolis.jl"]
 \int \mathbf{u}_i^* \cdot \boldsymbol{\nabla}^2\mathbf{u}_j\,\mathrm{d}V
 ```
 
-```@autodocs
-Modules = [Limace]
-Pages = ["forces/diffusion.jl"]
+```@docs
+Limace.diffusion
 ```
 
 ## Induction
@@ -48,20 +45,18 @@ Pages = ["forces/diffusion.jl"]
 \int \mathbf{b}_i^* \cdot \boldsymbol{\nabla}\times\left(\mathbf{u}_j\times\mathbf{B}_k\right)\,\mathrm{d}V
 ```
 
-```@autodocs
-Modules = [Limace]
-Pages = ["forces/induction.jl"]
+```@docs
+Limace.induction
 ```
 
 ## Lorentz
 
 ```math
-\int \mathbf{b}_i^* \cdot \left(\boldsymbol{\nabla}\times\mathbf{b}_j\times\mathbf{b}_k\right)\,\mathrm{d}V
+\int \mathbf{u}_i^* \cdot \left(\boldsymbol{\nabla}\times\mathbf{b}_j\times\mathbf{b}_k\right)\,\mathrm{d}V
 ```
 
-```@autodocs
-Modules = [Limace]
-Pages = ["forces/lorentz.jl"]
+```@docs
+Limace.lorentz
 ```
 
 

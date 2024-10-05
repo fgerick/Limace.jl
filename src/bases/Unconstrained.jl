@@ -19,6 +19,14 @@ Unconstrained(N; r=1.0, kwargs...) = Basis{Unconstrained}(;N, BC=NoBC(), V=Spher
 
 """
 $(TYPEDSIGNATURES)
+```math
+t_{l,n,m}(r) = f_{l,n}r^l J_n^{(0,l+1/2)}(2r^2-1)
+```
+with 
+
+```math
+f_{l,n} = \\sqrt{\\frac{3+2l+4n}{l(l+1)}}
+```
 
 [livermore_compendium_2014](@citet) (5.1), normalized to unit energy ∫u⋅u dV = 1.
 """
@@ -30,6 +38,15 @@ end
 
 """
 $(TYPEDSIGNATURES)
+
+```math
+s_{l,n,m}(r) = f_{l,n}r^l\\left(J_n^{(0,l+1/2)}(2r^2-1) - J_{n-1}^{(0,l+1/2)}(2r^2-1) \\right)
+```
+
+with
+```math
+f_{l,n} = \\left( l(l+1)(2l+4n+1)\\right)^{-1/2}
+```
 
 [livermore_compendium_2014](@citet) (5.3), normalized to unit energy ∫u⋅u dV = 1.
 """

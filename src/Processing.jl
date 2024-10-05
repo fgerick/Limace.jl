@@ -143,7 +143,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Compute the kinetic and magnetic energy ratios of all eigenvectors `us`, where `size(us,2)` is the number of eigenvalues. 
+Compute the kinetic and magnetic energies of all eigenvectors `us`, where `size(us,2)` is the number of eigenvalues. 
 `LHS` is the mass-matrix and `u` the velocity basis used in the calculation of the eigenvectors `us`.
 """
 function ekinmags(us, LHS, u)
@@ -164,7 +164,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-calculate spectrum for all eigenvectors `evecs` comprised of velocity basis `u` and magnetic field basis `b`. 
+Calculate spectrum for all eigenvectors `evecs` comprised of velocity basis `u` and magnetic field basis `b`. 
 Use keyword `lmn=1,2,3` to select `l=1`, `m=2` or `n=3`.
 """
 function spectrum(evecs, u, b; lmn=1)
@@ -246,7 +246,7 @@ end
 # end
 
 """
-lmn_n(u,b)
+$(TYPEDSIGNATURES)
 
 	Get all `(l,m,n)` that correspond to the poloidal and toroidal component of `u` and `b` basis at each Cartesian
 	degree `ñ ∈ 1:N`.
@@ -269,6 +269,7 @@ end
 $(TYPEDSIGNATURES)
 
 Compute poloidal/toroidal kinetic/magnetic spectra of `evecs` as a function of max. Cartesian monomial degree.
+`evecs` are the eigenvectors computed using the velocity basis `u` and magnetic field basis `b`.
 """
 function spectrum_cartesian(evecs, u, b)
     N = max(u.N, b.N)
@@ -314,6 +315,7 @@ $(TYPEDSIGNATURES)
 
 Compute the ratio of peak energy to energy at truncation degree
 (max between two last Cartesian degrees) in toroidal/poloidal kinetic/magnetic energy.
+`evecs` are the eigenvectors computed using the velocity basis `u` and magnetic field basis `b`.
 """
 function epeak_etrunc_cartesian(evecs, u, b)
     ratios = zeros(4, size(evecs, 2))
