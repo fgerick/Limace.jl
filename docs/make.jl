@@ -45,7 +45,6 @@ pages= [
 
 makedocs(;
     modules=[Limace],
-    repo="https://github.com/fgerick/Limace.jl/blob/{commit}{path}#{line}",
     sitename="Limace.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
