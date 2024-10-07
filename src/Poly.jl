@@ -5,7 +5,7 @@ using WignerSymbols
 using ForwardDiff
 using DocStringExtensions
 
-export wigner3j, adamgaunt, elsasser, jacobi, ylm, jacobis, ∂, p, _∂ll, D, innert, inners, _∂ll_m1, _∂ll_p1
+export wigner3j, adamgaunt, elsasser, jacobi, ylm, ∂, p, _∂ll, D, innert, inners
 
 
 """

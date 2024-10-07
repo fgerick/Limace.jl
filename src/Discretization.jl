@@ -47,55 +47,9 @@ function discretize(b::BasisElement{TB,TP,T}, r, θ, ϕ, V::Volume=Sphere()) whe
     end
 end
 
-function discretize(bs, r, θ, ϕ, V::Volume=Sphere())
+function discretize(bs::AbstractVector{T}, r, θ, ϕ, V::Volume=Sphere()) where T <: BasisElement
     return mapreduce(b -> discretize(b, r, θ, ϕ, V), +, bs)
 end
-
-# function discretize(αs::Vector{T}, u::TU, r, θ, ϕ) where {T<:Number,TU<:Basis}
-#     @assert length(αs) == length(u)
-#     nr = length(r)
-#     nθ = length(θ)
-#     nϕ = length(ϕ)
-
-#     lmnp_u = lmn_p(u)
-#     lmnt_u = lmn_t(u)
-
-#     ur = zeros(ComplexF64, nr, nθ, nϕ)
-#     uθ = zeros(ComplexF64, nr, nθ, nϕ)
-#     uϕ = zeros(ComplexF64, nr, nθ, nϕ)
-
-#     _np = length(lmnp_u)
-#     αsp = @view αs[1:_np]
-#     αst = @view αs[_np+1:end]
-
-#     lck = ReentrantLock()
-
-#     Threads.@threads for _i in eachindex(lmnp_u)
-#         (l, m, n) , α= lmnp_u[_i], αsp[_i]
-#         @inbounds for (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ), (i,r) in enumerate(r)
-#             _ur,_uθ,_uϕ = poloidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
-#             Threads.lock(lck) do
-#                 ur[i, j, k] += α*_ur
-#                 uθ[i, j, k] += α*_uθ
-#                 uϕ[i, j, k] += α*_uϕ
-#             end
-#         end
-#     end
-#     Threads.@threads for _i in eachindex(lmnt_u)
-#         (l, m, n) ,α = lmnt_u[_i], αst[_i]
-#         @inbounds for (k,ϕ) in enumerate(ϕ), (j,θ) in enumerate(θ), (i,r) in enumerate(r)
-#             _ur,_uθ,_uϕ = toroidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
-#             Threads.lock(lck) do
-#                 ur[i, j, k] += α*_ur
-#                 uθ[i, j, k] += α*_uθ
-#                 uϕ[i, j, k] += α*_uϕ
-#             end
-#         end
-#     end
-
-
-#     return ur, uθ, uϕ
-# end
 
 function discretize(αs::Vector{T}, u::TU, rs, θ, ϕ) where {T<:Number,TU<:Basis}
     @assert length(αs) == length(u)
