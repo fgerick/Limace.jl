@@ -3,7 +3,6 @@ using Test
 
 using LinearAlgebra
 using FunctionZeros
-using Distributed
 using SparseArrays
 
 using Limace.EigenProblem: eigstarget
