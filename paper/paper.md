@@ -41,7 +41,7 @@ This is true also for very basic and idealized examples, resulting in a substant
 Despite having a high-level interface, `Limace.jl` can be used to solve complex and geophysically relevant problems.
 A unique feature of `Limace.jl` is the support of complex background magnetic fields and flows over which the modes evolve.
 The code has been developed from the beginning to leave assumptions of symmetry up to the user.
-The model code base is tested against mode solutions from the scientific literature to ensure its accuracy.
+The model code base is tested against mode solutions from the scientific literature to ensure its correctness.
 
 # Theoretical background and implementation details
 
@@ -160,6 +160,11 @@ end
 ```
 
 More examples are given in the documentation of `Limace.jl`.
+
+# Outlook
+
+The code is written to be extendable, both in terms of the chosen Galerkin bases and also additional forcings.
+In the future, the code can be extended to fully support spherical shells and a heat equation, following the spectral equations in @iversscalar2008.
 
 # Acknowledgements
 
