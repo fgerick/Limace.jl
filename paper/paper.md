@@ -31,7 +31,10 @@ whilst remaining computationally performant enough to tackle relevant physical p
 
 # Statement of need
 
-The computation of hydromagnetic modes is part of active scientific investigations, in particular the study of modes in the Earth's liquid core has recently gotten new attention [@gerickfast2021; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024].
+The study of hydromagnetic modes is relevant in particular to Earth's liquid core. 
+Despite having been theoretically predicted a long time ago [@hidefree1966; malkushydromagnetic1967; braginskytorsional1970], 
+recent advances in numerical modelling and new observational evidence in geomagnetic data have reignited interest in these modes [@gerickfast2021; gilletsatellite2022; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024].
+It is therefore relevant to the geophysical and astrophisical fluid dynamics community to have access to a code that models these mode.
 One of the only open-source models to compute hydromagnetic modes in relevant parameters for planetary cores is Kore [@trianaviscous2021], 
 a spectral code based on ultraspherical polynomials in axisymmetric setups written in Python.
 The implementation of such a code requires substantial work due to the complexity of spectral equations that govern the modes.
@@ -72,11 +75,11 @@ $$
 \end{aligned}
 $$
 
-These equations are then projected onto trial vectors $\boldsymbol{\xi}_i$, so that
+These equations are then projected onto trial vectors $\mathbf{f}_i$, so that
 $$
-f_{ij} = \int \boldsymbol{\xi}_i \cdot \mathbf{f}\left(\mathbf{u}_j,\mathbf{b}_j, \mathbf{U}_0, \mathbf{B}_0\right)\,\mathrm{d}V,
+a_{ij} = \int \mathbf{f}_i \cdot \mathbf{a}\left(\mathbf{u}_j,\mathbf{b}_j, \mathbf{U}_0, \mathbf{B}_0\right)\,\mathrm{d}V,
 $$
-where $\mathbf{f}$ is any of the terms in the momentum and induction equation and $\boldsymbol{\xi}_i = [\mathbf{u}_i, \mathbf{b}_i]$.
+where $\mathbf{a}$ is any of the terms in the momentum and induction equation and $\mathbf{f}_i = [\mathbf{u}_i, \mathbf{b}_i]$.
 Due to the divergence free condition on the velocity and magnetic field, i.e. the flow is incompressible and no magnetic monopoles, 
 it is convenient to decompose the fields into poloidal and toroidal components.
 $$
@@ -94,12 +97,14 @@ $$
 $$
 Here, $Y_l^m(\theta,\phi)$ is the (fully normalized) spherical harmonic of degree $l$ and order $m$.
 The boundary conditions (or regularity condition at $r=0$) are imposed on the scalar functions $P,S,Q,T$.
+The scalar functions can be chosen to have optimal properties, i.e. the resulting basis is orthogonal w.r.t a given inner product [@livermoregalerkin2010; chenoptimal2018; @gerickinterannual2024].
+`Limace.jl` provides several optimal bases that satisfy relevant boundary conditions.
 
 We need to consider all combinations of poloidal and toroidal vector combinations in the projection of the forces.
 This leads to several long coupling terms, especially for the Lorentz force and induction term. 
 The integrals of these coupling terms over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on @johanssonfast2016).
 The remaining integration in radial direction is done using Gauss-Legendre quadratures available through [FastGaussQuadrature.jl](https://github.com/JuliaApproximation/FastGaussQuadrature.jl).
-The exact modeled equations are outlined in @gerickinterannual2024, based on the work of @iversscalar2008.  
+The exact modelled equations are outlined in @gerickinterannual2024, based on the work of @iversscalar2008.  
 
 From the projected equations, the problem reduces to a generalized eigen problem
 $$
