@@ -80,15 +80,16 @@ $$
 a_{ij} = \int \mathbf{f}_i \cdot \mathbf{a}\left(\mathbf{u}_j,\mathbf{b}_j, \mathbf{U}_0, \mathbf{B}_0\right)\,\mathrm{d}V,
 $$
 where $\mathbf{a}$ is any of the terms in the momentum and induction equation and $\mathbf{f}_i = [\mathbf{u}_i, \mathbf{b}_i]$.
-Due to the divergence free condition on the velocity and magnetic field, i.e. the flow is incompressible and no magnetic monopoles, 
-it is convenient to decompose the fields into poloidal and toroidal components.
+Due to the divergence free condition on the velocity and magnetic field, i.e. the flow is incompressible and no magnetic monopoles exist, 
+it is convenient to decompose the fields into poloidal and toroidal components, so that
 $$
 \begin{aligned}
     \mathbf{u} &= \sum_i \alpha_i\mathbf{u}_i = \sum_{l,m,n} \alpha^P_{lmn}\mathbf{P}_{lmn} + \sum_{l,m,n} \alpha^Q_{lmn}\mathbf{Q}_{lmn},\\
     \mathbf{b} &= \sum_i \beta_i\mathbf{b}_i =  \sum_{l,m,n} \beta^S_{lmn}\mathbf{S}_{lmn} + \sum_{l,m,n} \beta^T_{lmn}\mathbf{T}_{lmn},
 \end{aligned}
 $$
-with the respective poloidal and toroidal basis vectors
+with $\alpha_i, \beta_i \in \mathbb{C}$. 
+The respective poloidal and toroidal basis vectors are
 $$
 \begin{aligned}
 	\left[\mathbf{P},\mathbf{S}\right]_{lmn} & = \boldsymbol{\nabla}\times\boldsymbol{\nabla}\times \left[P,S\right]_{ln}(r)Y_l^m(\theta,\phi)\mathbf{r}, \\
@@ -97,27 +98,27 @@ $$
 $$
 Here, $Y_l^m(\theta,\phi)$ is the (fully normalized) spherical harmonic of degree $l$ and order $m$.
 The boundary conditions (or regularity condition at $r=0$) are imposed on the scalar functions $P,S,Q,T$.
-The scalar functions can be chosen to have optimal properties, i.e. the resulting basis is orthogonal w.r.t a given inner product [@livermoregalerkin2010; chenoptimal2018; @gerickinterannual2024].
+The scalar functions can be chosen to have optimal properties, i.e. the resulting basis is orthogonal w.r.t a given inner product [@livermoregalerkin2010; @chenoptimal2018; @gerickinterannual2024].
 `Limace.jl` provides several optimal bases that satisfy relevant boundary conditions.
 
 We need to consider all combinations of poloidal and toroidal vector combinations in the projection of the forces.
-This leads to several long coupling terms, especially for the Lorentz force and induction term. 
+This leads to several long coupling terms, especially for the Lorentz force, advection and induction terms. 
 The integrals of these coupling terms over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on @johanssonfast2016).
-The remaining integration in radial direction is done using Gauss-Legendre quadratures available through [FastGaussQuadrature.jl](https://github.com/JuliaApproximation/FastGaussQuadrature.jl).
+The remaining integration in radial direction is done using Gauss-Legendre quadratures, available through [FastGaussQuadrature.jl](https://github.com/JuliaApproximation/FastGaussQuadrature.jl).
 The exact modelled equations are outlined in @gerickinterannual2024, based on the work of @iversscalar2008.  
 
 From the projected equations, the problem reduces to a generalized eigen problem
 $$
 \lambda \mathbf{A}\mathbf{x} = \mathbf{B}\mathbf{x},
 $$
-that is solved numerically. The matrix $\mathbf{B}$ is generally not symmetric/Hermitian, but $\mathbf{A}$ can be the unit matrix, symmetric tridiagonal or symmetric, depending on the chosen bases.
+that is solved numerically. Here, the eigenvector $\mathbf{x}$ contains the coefficients $\alpha_i$ (and $\beta_i$). The matrix $\mathbf{B}$ is generally not symmetric/Hermitian, but $\mathbf{A}$ can be the unit matrix, symmetric tridiagonal or symmetric, depending on the chosen bases.
 
-For small problem sizes, the eigen problem can be solved using dense methods, e.g. using the standard library function `eigen`.
+For small problem sizes, the eigen problem can be solved using dense methods, e.g. using the standard library function `LinearAlgebra.eigen`.
 To compute few eigen solutions of the sparse system, a shift-invert spectral transform method is provided, based on the sparse LU factorization from `UMFPACK` [@davisalgorithm2004] and the partial Schur decomposition implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl) [@StoppelsArnoldiMethod].
 
 For postprocessing, `Limace.jl` uses a fast spherical harmonic transform implemented in the [SHTns](https://bitbucket.org/nschaeff/shtns) library [@schaefferefficient2013], and available in Julia through [SHTns.jl](https://github.com/fgerick/SHTns.jl).
 It is used to transform the spectral coefficients to vector fields evaluated on a spatial grid.
-
+`Limace.jl` does not provide any plotting routines, but some examples are given, leaving the choice of plotting library up to the user.
 
 
 # Basic Example - Malkus background magnetic field
@@ -144,7 +145,7 @@ RHS = [RHSc/Le RHSl
 λ = eigvals(Matrix(RHS))
 ```
 
-In this simple configuration analytical solutions can be derived, relating the frequency of the hydromagnetic problem to the inertial mode frequencies.
+In this simple configuration analytical solutions can be derived [@malkushydromagnetic1967], relating the frequency of the hydromagnetic problem to the inertial mode frequencies [@zhanginertial2001].
 We verify that our calculated mode spectrum contains some of the analytical solutions:
 
 ```julia
@@ -154,13 +155,16 @@ function zhang(m, N)
 	return -sm*2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
 end
 
-# Malkus J. Fluid Mech. (1967), vol. 28, pp. 793-802, eq. (2.28)
 slow(m, N, Le, λ = imag(zhang(m, N))) = im * λ / 2Le * (1 - √(1 + 4Le^2 * m * (m - λ) / λ^2))
 fast(m, N, Le, λ = imag(zhang(m, N))) = im * λ / 2Le * (1 + √(1 + 4Le^2 * m * (m - λ) / λ^2))
 
-for m = vcat(-(N-1):-1, 1:(N-1))
-	@show any(isapprox(slow(m,1,Le)),λ)
-	@show any(isapprox(fast(m, 1, Le)),λ)
+using Test
+
+@testset "Malkus modes" begin
+	for m = vcat(-(N-1):-1, 1:(N-1))
+		@test any(isapprox(slow(m,1,Le)),λ)
+		@test any(isapprox(fast(m, 1, Le)),λ)
+	end
 end
 ```
 
