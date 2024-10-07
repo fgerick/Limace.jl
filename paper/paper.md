@@ -17,7 +17,7 @@ affiliations:
  - name: Royal Observatory of Belgium, Belgium
    index: 2
    ror: 00hjks330
-date: 2 October 2024
+date: 7 October 2024
 bibliography: paper.bib
 ---
 
