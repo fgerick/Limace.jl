@@ -32,8 +32,8 @@ whilst remaining computationally performant enough to tackle relevant physical p
 # Statement of need
 
 The study of hydromagnetic modes is relevant in particular to Earth's liquid core. 
-Despite having been theoretically predicted a long time ago [@hidefree1966; malkushydromagnetic1967; braginskytorsional1970], 
-recent advances in numerical modelling and new observational evidence in geomagnetic data have reignited interest in these modes [@gerickfast2021; gilletsatellite2022; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024].
+Despite having been theoretically predicted a long time ago [@hidefree1966; @malkushydromagnetic1967; @braginskytorsional1970], 
+recent advances in numerical modelling and new observational evidence in geomagnetic data have reignited interest in these modes [@gerickfast2021; @gilletsatellite2022; @trianacore2022; @luowaves2022a; @luowaves2022; @gerickinterannual2024].
 It is therefore relevant to the geophysical and astrophisical fluid dynamics community to have access to a code that models these mode.
 One of the only open-source models to compute hydromagnetic modes in relevant parameters for planetary cores is Kore [@trianaviscous2021], 
 a spectral code based on ultraspherical polynomials in axisymmetric setups written in Python.
@@ -179,6 +179,7 @@ In the future, the code can be extended to fully support spherical shells and a 
 
 I have received funding from the European Research Council (ERC) GRACEFUL Synergy Grant No. 855677. 
 This project has been funded by ESA in the framework of EO Science for Society, through contract 4000127193/19/NL/IA (SWARM + 4D Deep Earth: Core). 
+
 I thank Phil Livermore for the key contributions in the theoretical development of the model.
 
 # References
