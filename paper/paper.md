@@ -48,25 +48,7 @@ The model code base is tested against mode solutions from the scientific literat
 
 # Theoretical background and implementation details
 
-In non-linear form, the momentum equation of the incompressible fluid and the induction equation, are written as
-$$
-\begin{aligned}
-	\frac{\partial \mathbf{U}}{\partial t} + \left(\boldsymbol{\nabla}\times\mathbf{U}\right)\times\mathbf{U} + 2\boldsymbol{\Omega}\times\mathbf{U} &= -\frac{1}{\rho}\nabla P + \frac{1}{\rho\mu_0} \left(\boldsymbol{\nabla}\times\mathbf{B}\right)\times\mathbf{B} + \nu\boldsymbol{\nabla}^2\mathbf{U} + \mathbf{F}, \\
-	\frac{\partial \mathbf{B}}{\partial t} &= \boldsymbol{\nabla}\times\left(\mathbf{U}\times\mathbf{B}\right) + \eta \boldsymbol{\nabla}^2\mathbf{B},
-\end{aligned}
-$$
-with $\mathbf{U}$ the velocity, $\mathbf{B}$ the magnetic field, $\boldsymbol{\Omega}$ the rotation axis, $\rho$ the fluid density, $P$ the reduced hydrodynamic pressure, $\mu_0$ the magnetic permeability of free space, $\nu$ the kinematic viscosity, $\mathbf{F}$ some additional body force, and $\eta$ the magnetic diffusivitiy.
-
-In order to compute modal solutions, the velocity, magnetic and pressure fields a linearized, so that 
-$$
-\begin{aligned}
-	\mathbf{U}(\mathbf{r},t) & = \mathbf{U}_0(\mathbf{r})+ \mathbf{u}(\mathbf{r}) e^{\lambda t}, \\
-	\mathbf{B}(\mathbf{r},t) & = \mathbf{B}_0(\mathbf{r})+ \mathbf{b}(\mathbf{r}) e^{\lambda t}, \\
-	P(\mathbf{r},t)   & = P_0(\mathbf{r})+ p(\mathbf{r}) e^{\lambda t}.
-\end{aligned}
-$$
-with $\lambda=-\sigma+\mathrm{i}\omega$, with $\sigma$ the damping rate and $\omega$ the frequency of the oscillatory perturbation to the steady background.
-Removing the steady part and neglecting higher order terms, the linearized momentum and induction equations then read
+In order to compute modal solutions, we consider the linearized momentum equation of the incompressible fluid and the linearized induction equation
 $$
 \begin{aligned}
 	\lambda\mathbf{u} =& -\left(\boldsymbol{\nabla}\times\mathbf{u}\right)\times\mathbf{U}_0- \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u} -2\Omega\mathbf{e}_z\times\mathbf{u} - \frac{1}{\rho}\nabla p\\
@@ -74,12 +56,9 @@ $$
 	\lambda\mathbf{b} =& \boldsymbol{\nabla}\times\left(\mathbf{U}_0\times\mathbf{b}\right) + \boldsymbol{\nabla}\times\left(\mathbf{u}\times\mathbf{B}_0\right) + \eta \boldsymbol{\nabla}^2\mathbf{b}.
 \end{aligned}
 $$
+with $\mathbf{u}$ the velocity perturbation, $\mathbf{U}_0$ the steady background velocity, $\mathbf{b}$ the magnetic field perturbation, $\mathbf{B}_0$ the background magnetic field, $\boldsymbol{\Omega}$ the rotation axis, $\rho$ the fluid density, $P$ the reduced hydrodynamic pressure, $\mu_0$ the magnetic permeability of free space, $\nu$ the kinematic viscosity, $\eta$ the magnetic diffusivitiy, and $\lambda=-\sigma+\mathrm{i}\omega$, with $\sigma$ the damping rate and $\omega$ the frequency of the oscillatory perturbation to the steady background.
 
-These equations are then projected onto trial vectors $\mathbf{f}_i$, so that
-$$
-a_{ij} = \int \mathbf{f}_i \cdot \mathbf{a}\left(\mathbf{u}_j,\mathbf{b}_j, \mathbf{U}_0, \mathbf{B}_0\right)\,\mathrm{d}V,
-$$
-where $\mathbf{a}$ is any of the terms in the momentum and induction equation and $\mathbf{f}_i = [\mathbf{u}_i, \mathbf{b}_i]$.
+To discretize the equations, in `Limace.jl` they are projected onto trial vectors.
 Due to the divergence free condition on the velocity and magnetic field, i.e. the flow is incompressible and no magnetic monopoles exist, 
 it is convenient to decompose the fields into poloidal and toroidal components, so that
 $$
@@ -102,7 +81,7 @@ The scalar functions can be chosen to have optimal properties, i.e. the resultin
 `Limace.jl` provides several optimal bases that satisfy relevant boundary conditions.
 
 We need to consider all combinations of poloidal and toroidal vector combinations in the projection of the forces.
-This leads to several long coupling terms, especially for the Lorentz force, advection and induction terms. 
+This leads to several coupling terms, especially for the Lorentz force, advection and induction terms. 
 The integrals of these coupling terms over the spherical surfaces are computed through the Adam-Gaunt and Elsasser variables [@jamesadams1973], which are calculated from Wigner symbols (available in Julia through [WignerSymbols.jl](https://github.com/Jutho/WignerSymbols.jl), based on @johanssonfast2016).
 The remaining integration in radial direction is done using Gauss-Legendre quadratures, available through [FastGaussQuadrature.jl](https://github.com/JuliaApproximation/FastGaussQuadrature.jl).
 The exact modelled equations are outlined in @gerickinterannual2024, based on the work of @iversscalar2008.  
@@ -119,61 +98,6 @@ To compute few eigen solutions of the sparse system, a shift-invert spectral tra
 For postprocessing, `Limace.jl` uses a fast spherical harmonic transform implemented in the [SHTns](https://bitbucket.org/nschaeff/shtns) library [@schaefferefficient2013], and available in Julia through [SHTns.jl](https://github.com/fgerick/SHTns.jl).
 It is used to transform the spectral coefficients to vector fields evaluated on a spatial grid.
 `Limace.jl` does not provide any plotting routines, but some examples are given, leaving the choice of plotting library up to the user.
-
-
-# Basic Example - Malkus background magnetic field
-
-In this example, we calculate the spectrum of modes when the background field is $\mathbf{B}_0 = s\mathbf{e}_\phi$ [@malkushydromagnetic1967]. 
-
-```julia
-using Limace, LinearAlgebra
-
-N = 6
-u = Inviscid(N)
-b = PerfectlyConducting(N) # == Inviscid(N)
-
-B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_phi	
-Le = 1e-2
-
-RHSc = Limace.coriolis(u)
-RHSl = Limace.lorentz(u, b, B0)
-RHSi = Limace.induction(b,u,B0)
-RHSd = spzeros(length(b),length(b)) #empty (no Ohmic diffusion)
-RHS = [RHSc/Le RHSl
-	   RHSi RHSd];
-
-λ = eigvals(Matrix(RHS))
-```
-
-In this simple configuration analytical solutions can be derived [@malkushydromagnetic1967], relating the frequency of the hydromagnetic problem to the inertial mode frequencies [@zhanginertial2001].
-We verify that our calculated mode spectrum contains some of the analytical solutions:
-
-```julia
-function zhang(m, N) 
-	sm = sign(m)
-	m = abs(m)
-	return -sm*2 / (m + 2) * (√(1 + m * (m + 2) / (N * (2N + 2m + 1))) - 1) * im
-end
-
-slow(m, N, Le, λ = imag(zhang(m, N))) = im * λ / 2Le * (1 - √(1 + 4Le^2 * m * (m - λ) / λ^2))
-fast(m, N, Le, λ = imag(zhang(m, N))) = im * λ / 2Le * (1 + √(1 + 4Le^2 * m * (m - λ) / λ^2))
-
-using Test
-
-@testset "Malkus modes" begin
-	for m = vcat(-(N-1):-1, 1:(N-1))
-		@test any(isapprox(slow(m,1,Le)),λ)
-		@test any(isapprox(fast(m, 1, Le)),λ)
-	end
-end
-```
-
-More examples are given in the documentation of `Limace.jl`.
-
-# Outlook
-
-The code is written to be extendable, both in terms of the chosen Galerkin bases and also additional forcings.
-In the future, the code can be extended to fully support spherical shells and a heat equation, following the spectral equations in @iversscalar2008.
 
 # Acknowledgements
 
