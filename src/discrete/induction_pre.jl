@@ -792,7 +792,7 @@ function rhs_induction_bpol_dist_pre(N,m, lmnb0, r,wr, js_a1,js_a0;
         is,js, aijs = first(localpart(isd)),first(localpart(jsd)),first(localpart(aijsd))
         for (j, lmnj) in enumerate(lmn_p)
             lj,mj,nj = lmnj
-            conditions && !ncondition(lb0,ni,nb0,nj) && continue
+            conditions && !ncondition(lb0,ni,nb0+1,nj) && continue
             conditions && !condition1(li,lb0,lj,mi,mb0,mj) && continue
             aij = _induction_sSS_pre(lmnj, lmnb0, lmni, r, wr, su, Smfb0, Smf, dsu, dSmfb0, dSmf, d2su, d2Smfb0, s_in, s_mf_b0, s_mf)
             appendit!(is,js,aijs,i,j,aij; thresh)
