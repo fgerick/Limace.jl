@@ -331,16 +331,16 @@ function discretizationsetup(L::Int, V::Volume)
 	return sht, rgrid, lats, lons
 end
 
-function discretizationsetup(L::Int, V::Volume, nr, nlat, nlon; mmax=L)
+function discretizationsetup(L::Int, V::Volume, nr, nlat, nlon; mmax=L, shtype=SHTns.QuickInit())
 	
-	sht = SHTnsCfg(L, mmax, 1, nlat, nlon)
+	sht = SHTnsCfg(L, mmax, 1, nlat, nlon; shtype)
 	lats, lons = SHTns.grid(sht; colat=true)
 	rgrid, _ = Quadrature.rquad(nr,V.r0, V.r1)
 	return sht, rgrid, lats, lons
 end
 
-function discretizationsetup(L::Int, nlat, nlon; mmax=L)
-	sht = SHTnsCfg(L, mmax, 1, nlat, nlon)
+function discretizationsetup(L::Int, nlat, nlon; mmax=L, shtype=SHTns.QuickInit())
+	sht = SHTnsCfg(L, mmax, 1, nlat, nlon; shtype)
 	lats, lons = SHTns.grid(sht; colat=true)
 	return sht, lats, lons
 end
@@ -443,8 +443,8 @@ $(TYPEDSIGNATURES)
 Transform eigenvector containing spectral coefficients to three-dimensional vector field at `nr x nθ x nϕ` grid points.
 Returns `ur,uθ,uϕ, r,θ,ϕ`.
 """
-function spectospat(coeffs::Vector{T}, u::TU, nr::Int, nθ::Int, nϕ::Int) where {TU<:Basis, T<:ComplexF64}
-    sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m))
+function spectospat(coeffs::Vector{T}, u::TU, nr::Int, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, T<:ComplexF64}
+    sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m), kwargs...)
     ur,uθ,uϕ = _spectospat_shtns(coeffs, sht, r, u)
     return ur,uθ,uϕ, r,θ,ϕ
 end
@@ -455,8 +455,8 @@ $(TYPEDSIGNATURES)
 Transform eigenvector containing spectral coefficients to two-dimensional vector field at `1 x nθ x nϕ` grid points at radius `r`.
 Returns `ur,uθ,uϕ, θ,ϕ`.
 """
-function spectospat(coeffs::Vector{T}, u::TU, r::Float64, nθ::Int, nϕ::Int) where {TU<:Basis, T<:ComplexF64}
-    sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
+function spectospat(coeffs::Vector{T}, u::TU, r::Float64, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, T<:ComplexF64}
+    sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m), kwargs...)
     ur,uθ,uϕ = _spectospat_shtns(coeffs, sht, r, u)
     return ur,uθ,uϕ, θ,ϕ
 end
@@ -467,8 +467,8 @@ $(TYPEDSIGNATURES)
 Transform eigenvector containing spectral coefficients to three-dimensional vector fields at `nr x nθ x nϕ` grid points at radius `r`.
 Returns `ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ`.
 """
-function spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
-    sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m))
+function spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
+    sht, r, θ, ϕ = discretizationsetup(u.N, u.V, nr, nθ, nϕ; mmax=maximum(u.m), kwargs...)
     ur,uθ,uϕ, br,bθ,bϕ = _spectospat_shtns(coeffs, sht, r, u, b)
     return ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ
 end
@@ -479,8 +479,8 @@ $(TYPEDSIGNATURES)
 Transform eigenvector containing spectral coefficients to two-dimensional vector fields at `1 x nθ x nϕ` grid points at radius `r`.
 Returns `ur,uθ,uϕ, br,bθ,bϕ, θ,ϕ`.
 """
-function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Tr, nθ::Int, nϕ::Int) where {TU<:Basis, TB<:Basis, T<:ComplexF64, Tr<:Union{AbstractVector{Float64},Float64}}
-    sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m))
+function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Tr, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, TB<:Basis, T<:ComplexF64, Tr<:Union{AbstractVector{Float64},Float64}}
+    sht, θ, ϕ = discretizationsetup(u.N, nθ, nϕ; mmax=maximum(u.m), kwargs...)
     ur,uθ,uϕ, br,bθ,bϕ = _spectospat_shtns(coeffs, sht, r, u, b)
     return ur,uθ,uϕ, br,bθ,bϕ, θ,ϕ
 end
