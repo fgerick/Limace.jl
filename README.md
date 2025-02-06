@@ -12,7 +12,7 @@ Solve for linear eigenmodes of the rotating magnetohydrodynamics equations in a 
 ## Installation
 Simply run
 ```julia
-import Pkg; Pkg.add("https://github.com/fgerick/Limace.jl.git")
+import Pkg; Pkg.add(url="https://github.com/fgerick/Limace.jl.git")
 ```
 
 ## Examples 
