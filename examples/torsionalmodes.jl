@@ -9,7 +9,7 @@
 # In the following example we will solve and illustrate the gravest torsional mode, for an axisymmetric poloidal background magnetic field.
 
 
-using Limace, SparseArrays, CairoMakie
+using Limace, LinearAlgebra, SparseArrays, CairoMakie
 using Limace.EigenProblem: eigstarget
 using Limace.Discretization: spectospat
 
@@ -67,8 +67,9 @@ per = sortperm(λ, by = real, rev=true);
 # We discretize the corresponding eigenvector in the meridional plane. Since $m=0$, we do not need more than one value of the longitude.
 
 nr, nθ, nϕ = 2N+1, 2N+1, 1
-
-ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ = spectospat(x[:,per[1]], u,b, nr,nθ,nϕ);
+y = x[:,per[1]]
+y /= y[Limace.Bases.lmn2k_t_dict(u)[(1,0,1)] + Limace.Bases.np(u)] #norm by m=0 toroidal component.
+ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ = spectospat(y, u,b, nr,nθ,nϕ);
 
 # The meridional slices are plotted with `CairoMakie.jl` for example:
 
