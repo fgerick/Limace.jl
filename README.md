@@ -99,4 +99,8 @@ end
 
 More examples are in the [documentation](https://fgerick.github.io/Limace.jl/dev/) and the `test/modes.jl` file.
 
+## Contributing
+
+See the [guidelines in the documentation](https://fgerick.github.io/Limace.jl/dev/contribute/) on how to contribute to this project.
+
 ## Citation

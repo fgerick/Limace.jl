@@ -38,6 +38,7 @@ pages= [
     "Forces" => "forces.md",
     "Poly" => "poly.md",
     "Postprocessing" => "processing.md",
+    "Contribute" => "contribute.md",
     "References" => "references.md",
     # "Misc" => "misc.md"
 ]
