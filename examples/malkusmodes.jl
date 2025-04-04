@@ -8,7 +8,7 @@
 #
 # ```math
 # \begin{align}
-# \frac{\partial\mathbf{u}}{\partial t} + \frac{2}{\mathrm{Le}} \mathbf{e}_z\times\mathbf{u} &= -\nabla p + \nabla\times\mathbf{B}_0\times\mathbf{b} + \nabla\times\mathbf{b}\times\mathbf{B}_0,\\
+# \frac{\partial\mathbf{u}}{\partial t} + \frac{2}{\mathrm{Le}} \mathbf{e}_z\times\mathbf{u} &= -\nabla p + \left(\nabla\times\mathbf{B}_0\right)\times\mathbf{b} + \left(\nabla\times\mathbf{b}\right)\times\mathbf{B}_0,\\
 # \frac{\partial\mathbf{b}}{\partial t} &= \nabla\times\left( \mathbf{u}\times\mathbf{B}_0\right),
 # \end{align}
 # ```
@@ -44,8 +44,8 @@
 # ```math
 # \begin{align}
 # A^u_{ij} &= \int \mathbf{u}_i \cdot \left(2\Omega\mathbf{e}_z\times\mathbf{u}_j\right)\,\mathrm{d}V,\\
-# A^{ub}_{ij} &= \int \mathbf{u}_i \cdot \left(\nabla\times\mathbf{B}_0\times\mathbf{b}_j + \nabla\times\mathbf{b}_i\times\mathbf{B}_0\right)\,\mathrm{d}V,\\
-# A^{bu}_{ij} &= \int \mathbf{b}_i \cdot \left(\nabla\times\mathbf{u}_j\times\mathbf{B}_0\right)\,\mathrm{d}V.
+# A^{ub}_{ij} &= \int \mathbf{u}_i \cdot \left(\left(\nabla\times\mathbf{B}_0\right)\times\mathbf{b}_j + \left(\nabla\times\mathbf{b}_i\right)\times\mathbf{B}_0\right)\,\mathrm{d}V,\\
+# A^{bu}_{ij} &= \int \mathbf{b}_i \cdot \left(\nabla\times\left(\mathbf{u}_j\times\mathbf{B}_0\right)\right)\,\mathrm{d}V.
 # \end{align}
 # ```
 #
