@@ -90,14 +90,19 @@ let
 	lons, lats = rad2deg.(ϕ).-180, rad2deg.(θ);
 	
 	fig = Figure(backgroundcolor = :transparent)
-	ax1 = GeoAxis(fig[1,1]; dest="proj=moll", yticklabelsvisible=false, xticklabelsvisible=false, title=L"u_\theta")
-	ax2 = GeoAxis(fig[1,2]; dest="proj=moll", yticklabelsvisible=false, xticklabelsvisible=false, title=L"u_\phi")
+	kwargs = (; dest="+proj=moll", yticklabelsvisible=false, xticklabelsvisible=false, xticksvisible=false, yticksvisible=false)
+	ax1 = GeoAxis(fig[1,1]; kwargs..., title=L"u_\theta")
+	ax2 = GeoAxis(fig[1,2]; kwargs..., title=L"u_\phi")
+	for ax in (ax1, ax2)
+		hidedecorations!(ax)
+	end
+
 	_uθ = real.(uθ[1,:,:].+eps())
 	umax = maximum(abs,_uθ)
-	heatmap!(ax1,lons, lats,_uθ'; colorrange=(-umax,umax), colormap=:balance)
+	surface!(ax1,lons, lats,_uθ'; colorrange=(-umax,umax), colormap=:balance,shading=NoShading)
 	
 	_uϕ = real.(uϕ[1,:,:].+eps())
 	umax = maximum(abs,_uϕ)
-	heatmap!(ax2,lons, lats,_uϕ'; colorrange=(-umax,umax), colormap=:balance)
+	surface!(ax2,lons, lats,_uϕ'; colorrange=(-umax,umax), colormap=:balance, shading=NoShading)
 	fig
 end

@@ -16,6 +16,7 @@ const OUTPUT_DIR   = joinpath(@__DIR__, "src", "examples")
 
 examples = [
     "inertialmodes.jl",
+    "malkusmodes.jl",
     "torsionalmodes.jl"
 ]
 
@@ -32,6 +33,7 @@ pages= [
     "Theoretical background" => "theory.md",
     "Examples" => [
         "Inviscid inertial modes" => "examples/inertialmodes.md",
+        "Makus modes" => "examples/malkusmodes.md",
         "Torsional Alfvén modes" => "examples/torsionalmodes.md"
     ],
     "Bases" => "bases.md",
