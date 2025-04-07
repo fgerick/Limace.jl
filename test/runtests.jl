@@ -5,7 +5,7 @@ using LinearAlgebra
 using FunctionZeros
 using SparseArrays
 
-using Limace.EigenProblem: eigstarget
+using Limace.Eigen: eigstarget
 
 
 struct LJ22; end

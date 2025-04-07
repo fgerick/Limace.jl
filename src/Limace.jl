@@ -22,8 +22,10 @@ using .Quadrature
 include("Discretization.jl")
 using .Discretization
 
-include("EigenProblem.jl")
-using .EigenProblem
+include("Eigen.jl")
+using .Eigen
+
+include("problem.jl")
 
 # forces
 include("forces/inertial.jl")

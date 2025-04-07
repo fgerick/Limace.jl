@@ -39,6 +39,7 @@ pages= [
     "Bases" => "bases.md",
     "Forces" => "forces.md",
     "Poly" => "poly.md",
+    "Solving the eigenvalue problem" => "eigen.md",
     "Postprocessing" => "processing.md",
     "Contribute" => "contribute.md",
     "References" => "references.md",
