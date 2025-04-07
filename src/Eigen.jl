@@ -43,15 +43,13 @@ function eigs(A, B; kwargs...)
     P = lu(B)
     LO = LinearMap{eltype(A)}((y, x) -> ldiv!(y, P, A * x), size(A, 2))
     pschur, history = partialschur(LO; kwargs...)
-    evals, x = partialeigen(pschur)
-    λ = 1 ./ evals .+ σ
+    λ, x = partialeigen(pschur)
     return λ, x
 end
 
 function eigs(A; kwargs...)
     pschur, history = partialschur(A; kwargs...)
-    evals, x = partialeigen(pschur)
-    λ = 1 ./ evals .+ σ
+    λ, x = partialeigen(pschur)
     return λ, x
 end
 
