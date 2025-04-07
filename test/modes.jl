@@ -406,7 +406,7 @@ end
 
     B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
 
-    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
+    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b))))
 
     RHSc = Limace.coriolis(u)/Le
     RHSl = Limace.lorentz(u,b,B0)
@@ -443,7 +443,7 @@ end
 
     B0 = BasisElement(Basis{Insulating}, Poloidal, (1,0,1), sqrt(30/23))
 
-    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b))))
+    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b))))
 
     RHSc = Limace.coriolis(u)/Le
     RHSl = Limace.lorentz(u,b,B0)
@@ -477,7 +477,7 @@ end
     b = Insulating(N; m)
     B0 = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0fac)
 
-    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSu = sparse(Limace.inertial(u))*Eη
     LHSb = sparse(Limace.inertial(b))
     LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
@@ -516,7 +516,7 @@ end
     b = Insulating(N; m)
     B0 = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fac)
 
-    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSu = sparse(Limace.inertial(u))*Eη
     LHSb = sparse(Limace.inertial(b))
     LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 
@@ -557,7 +557,7 @@ end
     B0t = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fact)
     B0p = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0facp)
 
-    LHSu = sparse(Limace.inertial(u),length(u),length(u))*Eη
+    LHSu = sparse(Limace.inertial(u))*Eη
     LHSb = sparse(Limace.inertial(b))
     LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
 

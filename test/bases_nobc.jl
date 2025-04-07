@@ -71,7 +71,7 @@ end
 
 		B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
 
-		LHS = blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial_threaded(b; external=false)))
+		LHS = blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial_threaded(b; external=false)))
 
 		# @time begin
 		RHSc = Limace.coriolis(u)/Le

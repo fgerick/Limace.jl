@@ -179,7 +179,7 @@ end
 
 
 function inertial(b::Basis{Inviscid})
-    return one(typeof(b.V.r1))*I
+    return one(typeof(b.V.r1))*I(length(b))
 end
 
 end

@@ -10,7 +10,7 @@
 
 
 using Limace, LinearAlgebra, SparseArrays, CairoMakie
-using Limace.EigenProblem: eigstarget
+using Limace.Eigen: eigstarget
 using Limace.Discretization: spectospat
 
 # ## Assembly
@@ -23,7 +23,7 @@ using Limace.Discretization: spectospat
 function assemble(N, Le, Lu, B0)
 	u = Inviscid(N; m=0)
 	b = Insulating(N; m=0)
-	LHS = blockdiag(sparse(Limace.inertial(u),length(u),length(u)), sparse(Limace.inertial(b)))
+	LHS = blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b)))
 	RHSc = Limace.coriolis(u)/Le
 	RHSl = sum(Limace.lorentz_threaded(u,b,B) for B in B0)
 	RHSi = sum(Limace.induction_threaded(b,u,B) for B in B0)
