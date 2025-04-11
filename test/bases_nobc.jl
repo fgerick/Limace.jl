@@ -55,9 +55,6 @@ end
 
     import Limace.Bases
 
-	# struct LJ22; end
-	# Limace.Bases.s(::Type{Basis{LJ22}}, V::Volume, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
-
 	function compute(UT, BT; N=50)
 		m = 0
 		Le = 1e-4
@@ -69,15 +66,15 @@ end
 
 		
 
-		B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
+		B0 = BasisElement(Basis{LJ22, Sphere}, Poloidal, (2,0,1), 1.0)
 
-		LHS = blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial_threaded(b; external=false)))
+		LHS = blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b; threads=true, external=false)))
 
 		# @time begin
 		RHSc = Limace.coriolis(u)/Le
-		RHSl = Limace.lorentz_threaded(u,b,B0)
-		RHSi = Limace.induction_threaded(b,u,B0; external=false)
-		RHSd = Limace.diffusion_threaded(b;external=false)/Lu
+		RHSl = Limace.lorentz(u,b,B0; threads=true)
+		RHSi = Limace.induction(b,u,B0; threads=true, external=false)
+		RHSd = Limace.diffusion(b; threads=true, external=false)/Lu
 		Limace.boundarycondition!(RHSd,b)
 		# end
 

@@ -19,7 +19,7 @@ export Insulating
 
 struct Insulating; end
 
-Insulating(N; kwargs...) = Basis{Insulating}(;N, BC=InsulatingBC(), V=Sphere(), kwargs...)
+Insulating(N; kwargs...) = Basis{Insulating, Sphere}(;N, BC=InsulatingBC(), V=Sphere(), kwargs...)
 
 """
 $(TYPEDSIGNATURES)
@@ -34,7 +34,7 @@ f_{l,n} = \\left( l(l+1)/(2l+4n-1) + 1/(2l+4n+3) \\right)^{-1/2}
 
 [gerick_interannual_2024](@citet) (A7)
 """
-@inline function t(::Type{Basis{Insulating}}, V::Volume, l,m,n,r) 
+@inline function t(::Type{Basis{Insulating, Sphere}}, V::Sphere, l,m,n,r) 
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
     return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
 end
@@ -52,19 +52,19 @@ f_{l,n} = \\left( 2l(l+1)(2l+4n-3)(2l+4n-1)(2l+4n+1)\\right)^{-1/2}
 
 [gerick_interannual_2024](@citet) (A6)
 """
-@inline function s(::Type{Basis{Insulating}}, V::Volume, l,m,n,r) 
+@inline function s(::Type{Basis{Insulating, Sphere}}, V::Sphere, l,m,n,r) 
     fac = 1/(sqrt(2l*(1 + l)*(-3 + 2*l + 4*n)*(-1 + 2*l + 4*n)*(1 + 2*l + 4*n)))
     return fac * r^l * ( (2*l + 4*n - 3) * jacobi(n,0,l+1/2,2*r^2-1) - 2*(2*l + 4*n - 1)*jacobi(n-1,0,l+1/2,2*r^2-1) +(2*l + 4*n + 1)*jacobi(n-2,0,l+1/2,2*r^2-1))
 end
 
-@inline _nrange_p(b::Basis{Insulating},l) = 1:((b.N-l+1)÷2)
-@inline _nrange_t(b::Basis{Insulating},l) = 1:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{Insulating, Sphere},l) = 1:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{Insulating, Sphere},l) = 1:((b.N-l)÷2)
 
-@inline lpmax(b::Basis{Insulating}) = b.N
-@inline ltmax(b::Basis{Insulating}) = b.N
+@inline lpmax(b::Basis{Insulating, Sphere}) = b.N
+@inline ltmax(b::Basis{Insulating, Sphere}) = b.N
 
 
-n(N) = ((-1)^(2*N)*(-1 + N)*N*(5 + 2*N))÷6
+#n(N) = ((-1)^(2*N)*(-1 + N)*N*(5 + 2*N))÷6 #wrong!
 _np(N) = ((-1)^N*(3 + (-1)^N*(-3 + 2*N*(-1 + N*(3 + N)))))÷12
 _nt(N) = ((-1)^N*(-3 + (-1)^N*(3 - 8*N + 2*N^3)))÷12
 
@@ -74,8 +74,8 @@ _nlt(N,l) = ((-1)^N*(-3 + 3*(-1)^l*(1 + l) + (-1)^N*(12*(-1 + (-1)^(2*l)) + l*(-
 lmn2k_p(l,m,n,N) = _nlp(N,l-1) + (l+m)*((N-l+1)÷2) + n
 lmn2k_t(l,m,n,N) = _nlt(N,l-1) + (l+m)*((N-l)÷2) + n
 
-_lmn2cdeg_p(b::Basis{Insulating}, l,m,n) = l+2n-1
-_lmn2cdeg_t(b::Basis{Insulating}, l,m,n) = l+2n
+_lmn2cdeg_p(b::Basis{Insulating, Sphere}, l,m,n) = l+2n-1
+_lmn2cdeg_t(b::Basis{Insulating, Sphere}, l,m,n) = l+2n
 
 
 
@@ -103,7 +103,7 @@ end
     return zero(l)
 end
 
-function inertial(b::Basis{Insulating}; external=true)
+function inertial(b::Basis{Insulating, Sphere}; threads=false, external=true)
     T = typeof(b.V.r1)
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
@@ -129,7 +129,7 @@ end
     return -η*((-3 + 2*l + 4*n)*(1 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Insulating}; η::T=1.0, external=true) where T
+function diffusion(b::Basis{Insulating, Sphere}; η::T=1.0, threads=false, external=true) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 

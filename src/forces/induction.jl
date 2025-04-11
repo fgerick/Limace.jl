@@ -350,12 +350,8 @@ function _induction_tqt!(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ, is, 
 end
 
 
-"""
-$(TYPEDSIGNATURES)
 
-Computes the induction term for a poloidal background magnetic field `B0`, a magnetic field basis `bbi` and a velocity basis `buj`.
-"""
-function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{false}, bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
 
@@ -404,12 +400,8 @@ function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=t
     return sparse(is, js, aijs, nmatb, nmatu)
 end
 
-"""
-$(TYPEDSIGNATURES)
 
-Computes the induction term for a toroidal background magnetic field `B0`, a magnetic field basis `bbi` and a velocity basis `buj`.
-"""
-function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{false}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
 
@@ -456,12 +448,8 @@ function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=t
     return sparse(is, js, aijs, nmatb, nmatu)
 end
 
-"""
-$(TYPEDSIGNATURES)
 
-Computes the induction term for a poloidal background velocity `U0`, a magnetic field basis `bbi` and a magnetic field basis `bbj`.
-"""
-function induction(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{false}, bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
 
@@ -513,12 +501,8 @@ function induction(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=t
     return sparse(is, js, aijs, nmatbi, nmatbj)
 end
 
-"""
-$(TYPEDSIGNATURES)
 
-Computes the induction term for a toroidal background velocity `U0`, a magnetic field basis `bbi` and a magnetic field basis `bbj`.
-"""
-function induction(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{false}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
 
@@ -562,12 +546,7 @@ function induction(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=t
     return sparse(is, js, aijs, nmatbi, nmatbj)
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Threaded version of [induction](@ref)
-"""
-function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{true}, bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     _nt = Threads.nthreads()
     is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
@@ -632,12 +611,7 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; e
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatb, nmatu)
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Threaded version of [induction](@ref)
-"""
-function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{true}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     
     _nt = Threads.nthreads()
@@ -696,12 +670,7 @@ function induction_threaded(bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; e
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatb, nmatu)
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Threaded version of [induction](@ref)
-"""
-function induction_threaded(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{true}, bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     
     _nt = Threads.nthreads()
@@ -768,12 +737,7 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; e
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatbi, nmatbj)
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Threaded version of [induction](@ref)
-"""
-function induction_threaded(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _induction(::Val{true}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     
     _nt = Threads.nthreads()
@@ -829,98 +793,16 @@ function induction_threaded(bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; e
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatbi, nmatbj)
 end
 
-# function induction_threaded_new(bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=true, threading=false) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+"""
+$(TYPEDSIGNATURES)
 
-#     if threading
-#         _nt = Threads.nthreads()
-#         is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
-#     else
-#         is, js, aijs = Int[], Int[], complex(T)[] 
-#     end
+Computes the induction term for a poloidal/toroidal background magnetic field `B0`, a magnetic field basis `bbi` and a velocity basis `buj`.
+"""
+induction(bbi::TI, buj::TJ, B0::BasisElement{T0,TH,T}; threads=false, external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T} = _induction(Val(threads), bbi, buj, B0; external)
 
+"""
+$(TYPEDSIGNATURES)
 
-#     lmn2k_p_bi = lmn2k_p_dict(bbi)
-#     lmn2k_t_bi = lmn2k_t_dict(bbi)
-
-#     lmn2k_p_uj = lmn2k_p_dict(buj)
-#     lmn2k_t_uj = lmn2k_t_dict(buj)
-
-#     l0, m0, n0 = B0.lmn
-#     @assert bbi.N == buj.N
-#     N = bbi.N
-#     rwrs = [rquad(n + l0 + n0 + 1) for n in 1:N]
-
-#     npb = length(lmn2k_p_bi)
-#     npu = length(lmn2k_p_uj)
-
-#     @sync begin
-#     for li in 1:lpmax(bbi), mi in intersect(bbi.m, -li:li)
-#         mj = adamgaunt_mjs(mi, m0)
-#         for lj in adamgaunt_ljs(li, l0, mj, lpmax(buj))
-#             A = adamgaunt(lj,l0,li, mj, m0, mi)
-#             @inline _f = (is,js,aijs) ->  _induction_sps!(bbi, buj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj, A; external)
-#             if threading
-#                 Threads.@spawn begin
-#                     id = Threads.threadid()
-#                    _f(is[id], js[id], aijs[id])
-#                 end
-#             else
-#                 _f(is,js,aijs)
-#                 # _induction_sps!(bbi, buj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_p_uj, A; external)
-#             end
-#         end
-#         mj = elsasser_mjs(mi, m0)
-#         for lj in elsasser_ljs(li, l0, mj, ltmax(buj))
-#             E = elsasser(lj, l0, li, mj, m0, mi)
-#             @inline _f = (is,js,aijs) -> _induction_sqs!(bbi, buj, B0, is, js, aijs, 0, npu, li, mi, lj, mj, rwrs, lmn2k_p_bi, lmn2k_t_uj, E; external)
-#             if threading
-#                 Threads.@spawn begin
-#                     id = Threads.threadid()
-#                    _f(is[id], js[id], aijs[id])
-#                 end
-#             else
-#                 _f(is,js,aijs)
-#             end
-#         end
-#     end
-
-#     for li in 1:ltmax(bbi), mi in intersect(bbi.m, -li:li)
-#         mj = adamgaunt_mjs(mi, m0)
-#         for lj in adamgaunt_ljs(li, l0, mj, ltmax(buj))
-#             A = adamgaunt(lj,l0,li, mj, m0, mi)
-#             @inline _f = (is,js,aijs) -> _induction_tqs!(bbi, buj, B0, is, js, aijs, npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj, A)
-#             if threading
-#                 Threads.@spawn begin
-#                     id = Threads.threadid()
-#                    _f(is[id], js[id], aijs[id])
-#                 end
-#             else
-#                 _f(is,js,aijs)
-#             end
-
-#         end
-#         mj = elsasser_mjs(mi, m0)
-#         for lj in elsasser_ljs(li, l0, mj, lpmax(buj))
-#             E = elsasser(lj, l0, li, mj, m0, mi)
-#             @inline _f = (is,js,aijs) -> _induction_tps!(bbi, buj, B0, is, js, aijs, npb, 0, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_p_uj, E)
-#             if threading
-#                 Threads.@spawn begin
-#                     id = Threads.threadid()
-#                    _f(is[id], js[id], aijs[id])
-#                 end
-#             else
-#                 _f(is,js,aijs)
-#             end
-#         end
-#     end
-#     end
-
-#     nmatb = length(bbi)
-#     nmatu = length(buj)
-    
-#     if threading
-#         return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatb, nmatu)
-#     else
-#         return sparse(is, js, aijs, nmatb, nmatu)
-#     end
-# end
+Computes the induction term for a poloidal/toroidal background velocity `U0`, a magnetic field basis `bbi` and a magnetic field basis `bbj`.
+"""
+induction(bbi::TI, U0::BasisElement{T0,TH,T}, bbj::TJ; threads=false, external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T} = _induction(Val(threads), bbi, U0, bbj; external)

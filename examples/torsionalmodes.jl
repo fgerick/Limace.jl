@@ -25,8 +25,8 @@ function assemble(N, Le, Lu, B0)
 	b = Insulating(N; m=0)
 	LHS = blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b)))
 	RHSc = Limace.coriolis(u)/Le
-	RHSl = sum(Limace.lorentz_threaded(u,b,B) for B in B0)
-	RHSi = sum(Limace.induction_threaded(b,u,B) for B in B0)
+	RHSl = sum(Limace.lorentz(u,b,B; threads=true) for B in B0)
+	RHSi = sum(Limace.induction(b,u,B; threads=true) for B in B0)
 	RHSd = Limace.diffusion(b)/Lu
 	RHS = [RHSc RHSl
 		   RHSi RHSd]
@@ -38,7 +38,7 @@ end
 N = 100
 Le = 5e-4
 Lu = 1/Le
-B0 = [BasisElement(Basis{Insulating}, Poloidal, (1,0,1),0.3), BasisElement(Basis{Insulating}, Poloidal, (2,0,1),0.7)]
+B0 = [BasisElement(b, Poloidal, (1,0,1),0.3), BasisElement(b, Poloidal, (2,0,1),0.7)]
 
 # This background field is a mix of two poloidal field components, `l,m,n=(1,0,1)` and `l,m,n = (2,0,1)`, i.e. dipolar and quadrupolar symmetry.
 # 

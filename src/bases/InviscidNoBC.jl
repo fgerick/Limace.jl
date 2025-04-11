@@ -14,29 +14,29 @@ import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s, 
 
 export InviscidNoBC
 
-struct InviscidNoBC; end
+struct InviscidNoBC <: LimaceBasis; end
 
-InviscidNoBC(N; kwargs...) = Basis{InviscidNoBC}(;N, V=Sphere(), BC=NoBC(), kwargs...)
+InviscidNoBC(N; kwargs...) = Basis{InviscidNoBC, Sphere}(;N, V=Sphere(), BC=NoBC(), kwargs...)
 
-s(::Type{Basis{InviscidNoBC}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
-t(::Type{Basis{InviscidNoBC}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{InviscidNoBC, Sphere}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
+t(::Type{Basis{InviscidNoBC, Sphere}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
 
-@inline _nrange_p(b::Basis{InviscidNoBC},l) = 0:((b.N-l+1)÷2)
-@inline _nrange_t(b::Basis{InviscidNoBC},l) = 0:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{InviscidNoBC, Sphere},l) = 0:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{InviscidNoBC, Sphere},l) = 0:((b.N-l)÷2)
 
-@inline function bcs_p(b::Basis{InviscidNoBC})
-    fs = (@inline((l,n)->s(Basis{InviscidNoBC}, b.V, l, 0, n, 1.0)), )
+@inline function bcs_p(b::Basis{InviscidNoBC, Sphere})
+    fs = (@inline((l,n)->s(Basis{InviscidNoBC, Sphere}, b.V, l, 0, n, 1.0)), )
     # return ()
     return fs
 end
 
-@inline function bcs_t(b::Basis{InviscidNoBC})
+@inline function bcs_t(b::Basis{InviscidNoBC, Sphere})
     return ()
 end
 
 
-lpmax(b::Basis{InviscidNoBC}) = b.N
-ltmax(b::Basis{InviscidNoBC}) = b.N
+lpmax(b::Basis{InviscidNoBC, Sphere}) = b.N
+ltmax(b::Basis{InviscidNoBC, Sphere}) = b.N
 
 
 end

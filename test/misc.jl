@@ -35,6 +35,34 @@ end
 
 end
 
+@testset "bases access functions" begin
+	
+	using Limace.Bases: lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
+
+	N = 10
+	for b in (Limace.Inviscid, Limace.Insulating, Limace.Viscous)
+		basis = b(N)
+		@test basis.N == N
+		@test basis.V == Limace.Bases.Sphere()
+		@test basis.m == -N:N
+
+		lmnp = lmn_p(basis)
+		lmnt = lmn_t(basis)
+		@test length(lmnp) == Limace.np(basis)
+		@test length(lmnt) == Limace.nt(basis)
+		@test length(lmnp)+length(lmnt) == length(basis)
+		dp = lmn2k_p_dict(basis)
+		dt = lmn2k_t_dict(basis)
+		for (k,lmn) in enumerate(lmnp)
+			@test dp[lmn] == k
+		end
+		for (k,lmn) in enumerate(lmnt)
+			@test dt[lmn] == k
+		end
+
+	end
+
+end
 
 @testset "serial vs threaded" begin
 
@@ -44,31 +72,32 @@ end
     u = Inviscid(N; m)
     b = Insulating(N; m)
 
-    B0s = [BasisElement(Basis{Insulating}, Poloidal, (1,0,1), 1.0), BasisElement(Basis{Insulating}, Toroidal, (1,0,1), 1.0)]
-	U0s = [BasisElement(Basis{Inviscid}, Poloidal, (1,0,1), 1.0), BasisElement(Basis{Inviscid}, Toroidal, (1,0,1), 1.0)]
+    B0s = [BasisElement(b, Poloidal, (1,0,1), 1.0), BasisElement(b, Toroidal, (1,0,1), 1.0)]
+	U0s = [BasisElement(u, Poloidal, (1,0,1), 1.0), BasisElement(u, Toroidal, (1,0,1), 1.0)]
 
-	@test Limace.diffusion(u) ≈ Limace.diffusion_threaded(u)
-	@test Limace.diffusion(b) ≈ Limace.diffusion_threaded(b; external=true)
 
-	@test Limace.inertial(u) ≈ Limace.inertial_threaded(u)
-	@test Limace.inertial(b) ≈ Limace.inertial_threaded(b; external=true)
+	@test Limace.diffusion(u) ≈ Limace._diffusion(Val(true),u)
+	@test Limace.diffusion(b) ≈ Limace._diffusion(Val(true),b; external=true)
 
-	@test Limace.coriolis(u) ≈ Limace.coriolis_threaded(u)
+	@test Limace.inertial(u) ≈ Limace._inertial(Val(true),u)
+	@test Limace.inertial(b) ≈ Limace._inertial(Val(true),b; external=true)
+
+	@test Limace.coriolis(u) ≈ Limace._coriolis(Val(true),u)
 
 
 	for B0 in B0s
-		RHSl = Limace.lorentz(u,b,B0)
-		RHSi = Limace.induction(b,u,B0)
-		RHSlt = Limace.lorentz_threaded(u,b,B0)
-		RHSit = Limace.induction_threaded(b,u,B0)
+		RHSl = Limace.lorentz(u,b,B0; threads=false)
+		RHSi = Limace.induction(b,u,B0; threads=false)
+		RHSlt = Limace.lorentz(u,b,B0; threads=true)
+		RHSit = Limace.induction(b,u,B0; threads=true)
 		@test RHSl ≈ RHSlt
 		@test RHSi ≈ RHSit
 	end
 	for U0 in U0s
-		RHSl = Limace.lorentz(u,u,U0)
-		RHSi = Limace.induction(b,U0,b)
-		RHSlt = Limace.lorentz_threaded(u,u,U0)
-		RHSit = Limace.induction_threaded(b,U0,b)
+		RHSl = Limace.lorentz(u,u,U0; threads=false)
+		RHSi = Limace.induction(b,U0,b; threads=false)
+		RHSlt = Limace.lorentz(u,u,U0; threads=true)
+		RHSit = Limace.induction(b,U0,b; threads=true)
 		@test RHSl ≈ RHSlt
 		@test RHSi ≈ RHSit
 	end

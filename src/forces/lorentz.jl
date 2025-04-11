@@ -150,7 +150,7 @@ $(TYPEDSIGNATURES)
 
 Computes the Lorentz term for a poloidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
 """
-function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
 
@@ -209,7 +209,7 @@ $(TYPEDSIGNATURES)
 
 Computes the Lorentz term for a toroidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
 """
-function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
 
@@ -269,7 +269,7 @@ $(TYPEDSIGNATURES)
 
 Computes the Lorentz term for a poloidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
 """
-function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     _nt = Threads.nthreads()
     is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
@@ -347,7 +347,7 @@ $(TYPEDSIGNATURES)
 
 Computes the Lorentz term for a toroidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
 """
-function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     _nt = Threads.nthreads()
     is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
@@ -419,3 +419,10 @@ function lorentz_threaded(bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) whe
 
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatu, nmatb)
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Computes the Lorentz term for a poloidal/toroidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
+"""
+lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,TH,T}; threads=false) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T} = _lorentz(Val(threads), bui, bbj, B0)

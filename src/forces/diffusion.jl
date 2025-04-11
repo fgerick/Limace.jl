@@ -46,13 +46,7 @@ function _diffusion_tt(b::T, lmna, lmnb, r,wr) where T<:Basis
 end
 
 
-"""
-$(TYPEDSIGNATURES)
-
-Compute the Galerkin projection matrix of the basis `b` onto the vector Laplacian. When keyword `external=true`, 
-the integral is computed over all space, assuming continuity of the poloidal field and a scalar potential in the exterior domain.
-"""
-@inline function diffusion(b::Basis; external=false)
+@inline function _diffusion(::Val{false}, b::Basis; external=false)
     T = typeof(b.V.r1)
     is, js, aijs = Int[], Int[], Complex{T}[]
     lmn2k_p = lmn2k_p_dict(b)
@@ -85,11 +79,7 @@ the integral is computed over all space, assuming continuity of the poloidal fie
     return sparse(is, js, aijs, nbasis, nbasis)
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-"""
-@inline function diffusion_threaded(b::Basis; external=false)
+@inline function _diffusion(::Val{true}, b::Basis; external=false)
     T = typeof(b.V.r1)
 
     is, js, aijs = Int[], Int[], Complex{T}[]
@@ -133,4 +123,10 @@ $(TYPEDSIGNATURES)
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nbasis, nbasis)
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Compute the Galerkin projection matrix of the basis `b` onto the vector Laplacian. When keyword `external=true`, 
+the integral is computed over all space, assuming continuity of the poloidal field and a scalar potential in the exterior domain.
+"""
+diffusion(b::Basis; threads=false, external=false) = _diffusion(Val(threads), b; external)

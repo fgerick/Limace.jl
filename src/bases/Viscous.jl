@@ -18,7 +18,7 @@ export Viscous
 
 struct Viscous; end
 
-Viscous(N; kwargs...) = Basis{Viscous}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
+Viscous(N; kwargs...) = Basis{Viscous,Sphere}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
 
 """
 $(TYPEDSIGNATURES)
@@ -33,7 +33,7 @@ f_{l,n}=\\left(l(l+1)/(2l+4n-1)+1/(2l+4n+3)\\right)^{-1/2}
 
 [chen_optimal_2018](@citet) toroidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
-@inline function t(::Type{Basis{Viscous}}, V::Volume, l,m,n,r)
+@inline function t(::Type{Basis{Viscous,Sphere}}, V::Sphere, l,m,n,r)
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n)))
     return fac * r^l * (jacobi(n,0,l+1/2, 2r^2-1) - jacobi(n-1,0,l+1/2,2r^2-1)) 
 end
@@ -51,7 +51,7 @@ f_{l,n} = \\left( 2l(l+1)(2l+4n+1)(2l+4n+3)(2l+4n+5) \\right)^{-1/2}
 
 [chen_optimal_2018](@citet) (2.38), (2.39) poloidal scalar, orthogonal w.r.t ∫ u⋅∇²u dV with 0 ≤ r ≤ 1.
 """
-@inline function s(::Type{Basis{Viscous}}, V::Volume, l,m,n,r::T) where T
+@inline function s(::Type{Basis{Viscous,Sphere}}, V::Sphere, l,m,n,r::T) where T
     c1 = 2l+4n+1
     c2 = -2(2l+4n+3)
     c3 = 2l+4n+5
@@ -59,11 +59,11 @@ f_{l,n} = \\left( 2l(l+1)(2l+4n+1)(2l+4n+3)(2l+4n+5) \\right)^{-1/2}
     return fac*r^l*(c1*jacobi(n+1,zero(T),l+one(T)/2,2r^2-1) + c2*jacobi(n,zero(T),l+one(T)/2,2r^2-1) + c3*jacobi(n-1,zero(T),l+one(T)/2,2r^2-1)  ) 
 end
 
-@inline _nrange_p(b::Basis{Viscous},l) = 1:((b.N-l+1)÷2-1)
-@inline _nrange_t(b::Basis{Viscous},l) = 1:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{Viscous,Sphere},l) = 1:((b.N-l+1)÷2-1)
+@inline _nrange_t(b::Basis{Viscous,Sphere},l) = 1:((b.N-l)÷2)
 
-@inline lpmax(b::Basis{Viscous}) = b.N
-@inline ltmax(b::Basis{Viscous}) = b.N
+@inline lpmax(b::Basis{Viscous,Sphere}) = b.N
+@inline ltmax(b::Basis{Viscous,Sphere}) = b.N
 
 
 #Inertial term/inner products
@@ -92,7 +92,7 @@ end
     end
 end
 
-function inertial(b::Basis{Viscous})
+function inertial(b::Basis{Viscous,Sphere}; kwargs...)
     T = typeof(b.V.r1)
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
@@ -165,7 +165,7 @@ function _coriolis_st(l,l2,m,m2,n,n2; Ω::T = 2.0) where T
     return aij
 end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         njs_all = nrange_p(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -176,7 +176,7 @@ function _coriolis_poloidal_poloidal!(b::Basis{Viscous}, is, js, aijs, lmn2k_p, 
     return nothing
 end
 
-function _coriolis_poloidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_toroidal!(b::Basis{Viscous,Sphere}, is, js, aijs, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         njs_all = nrange_t(b,l2)
         for n2 in max(n-2,first(njs_all)):min(n+2, last(njs_all))
@@ -188,7 +188,7 @@ function _coriolis_poloidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Viscous,Sphere}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l)
         njs_all = nrange_t(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -199,7 +199,7 @@ function _coriolis_toroidal_toroidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2
     return nothing
 end
 
-function _coriolis_toroidal_poloidal!(b::Basis{Viscous}, is, js, aijs, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_poloidal!(b::Basis{Viscous,Sphere}, is, js, aijs, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l) 
         njs_all = nrange_p(b,l2)
         for n2 in max(n-2,first(njs_all)):min(n+2, last(njs_all))
@@ -223,7 +223,7 @@ end
     return -ν*((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Viscous}; ν::T=1.0) where T
+function diffusion(b::Basis{Viscous,Sphere}; ν::T=1.0, threads=false) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
