@@ -5,7 +5,7 @@ using LinearAlgebra
 using FunctionZeros
 using SparseArrays
 
-using Limace.Eigen: eigstarget
+using Limace.EigenSolve: eigstarget
 using Limace.Bases: Sphere
 
 struct LJ22; end

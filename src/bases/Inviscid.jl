@@ -20,7 +20,7 @@ struct Inviscid; end
 Inviscid(N; kwargs...) = Basis{Inviscid, Sphere}(;N, BC=InviscidBC(), V=Sphere(), kwargs...)
 
 """
-$(TYPEDSIGNATURES)
+    t(::Type{Basis{Inviscid, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 t_{l,n,m}(r) = f_{l,n}r^l J_n^{(0,l+1/2)}(2r^2-1)
@@ -39,7 +39,7 @@ f_{l,n} = \\sqrt{\\frac{3+2l+4n}{l(l+1)}}
 end
 
 """
-$(TYPEDSIGNATURES)
+    s(::Type{Basis{Inviscid, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 s_{l,n,m}(r) = f_{l,n}(1-r^2)r^l J_n^{(1,l+1/2)}(2r^2-1)

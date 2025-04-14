@@ -84,7 +84,7 @@ If `LHS` is a unit matrix, we can solve the problem as
 ## Sparse eigenvalue solver
 
 A native Julia implementation of the Arnoldi method (with Krylov-Schur restarts) is implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl).
-In the `Eigen` submodule of `Limace.jl`, an implementation of the shift-invert method is available through the `eigstarget` function.
+In the `EigenSolve` submodule of `Limace.jl`, an implementation of the shift-invert method is available through the `eigstarget` function.
 The shift-invert method shifts the spectrum around a given target eigenvalue ``\sigma`` and inverts the operator on the left-hand-side, so that
 ```math
 \frac{1}{\lambda-\sigma}\mathbf{x} = (\mathbf{A}-\sigma\mathbf{B})^{-1}\mathbf{B}\mathbf{x}.
@@ -98,23 +98,23 @@ When computing the largest-amplitude eigenvalues to this problem, we find the ei
 
 
 ```@docs
-Limace.Eigen.eigstarget
+Limace.EigenSolve.eigstarget
 ```
 
 Using the same matrices assembled previously, we can calculate solutions close to a target ``\sigma = \mathrm{i}`` (frequency ``\omega=1``).
 ```julia
-using Limace.Eigen: eigstarget
+using Limace.EigenSolve: eigstarget
 
 target = 1.0im
 
 λ, x = eigstarget(RHS, LHS, target; nev=5);
 ```
 
-The standard inverse method is also provided through `Limace.Eigen.eigs`, in order to compute only the extremal eigenvalues (no shift required).
+The standard inverse method is also provided through `Limace.EigenSolve.eigs`, in order to compute only the extremal eigenvalues (no shift required).
 This is approach is not possible when ``\mathbf{B}`` is singular (e.g. when explicit boundary conditions are imposed, ``\mathbf{B}`` contains zero lines and is therefore singular).
 
 ```@docs
-Limace.Eigen.eigs
+Limace.EigenSolve.eigs
 ```
 
 These sparse approaches are computationally much more efficient and feasible than the dense approach for much larger truncation degrees `N` (as we also only compute a few eigensolutions and not the complete spectrum).

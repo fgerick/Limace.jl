@@ -54,6 +54,10 @@
 
 # ## Solve using Limace.jl
 # 
+# There are two solve this problem using `Limace.jl`. One high level interface is provided by the `LimaceProblem` type, 
+# which allows to assemble the problem and solve it using the `eigstarget` function. The other is to use a slightly lower level interface,
+# where the user assembles the matrices manually before solving the eigenvalue problem using `eigen` or `eigstarget`. 
+# In this example, we will use the lower level interface.
 # First, load the packages:
 
 using Limace
@@ -68,7 +72,7 @@ N = 8
 # Create inviscid velocity and perfectly conducting magnetic field bases
 
 u = Inviscid(N)
-b = PerfectlyConducting(N) # == Inviscid(N; m)
+b = PerfectlyConducting(N) # same poloidal and toroidal scalars as Inviscid(N; m)
 
 # The background magnetic field $\mathbf{B}_0 = s \mathbf{e}_z$ is defined and we choose our characteristic time scale as the Alfvén time, so that our nondimensional parameter is the Lehnert number.
 
@@ -84,10 +88,22 @@ RHSd = spzeros(length(b),length(b)) #empty (no Ohmic diffusion)
 RHS = [RHSc/Le RHSl
 	   RHSi RHSd];
 
-# The eigenvalues `λ` have zero real part, i.e. no viscous damping (you can type `λ` by typing `\lambda<tab>`).
+# In this way, we have assembled the right-hand-side matrix of the problem. This is equivalent to using the high level interface:
 
+problem = LimaceProblem([u,b], [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0)])
+Limace.assemble!(problem)
+RHS2 = problem.RHS
+RHS ≈ RHS2
+
+# We can solve the problem using the high-level interface
+Limace.solve!(problem)
+λ, x = problem.sol.values, problem.sol.vectors;
+# which computes all eigenvalues and eigenvectors of the problem and stores them in `problem.sol.values` and `problem.sol.vectors`, respectively.
+
+# This is equivalent to using the `eigen` function from `LinearAlgebra` directly:
 λ, x = eigen(Matrix(RHS));
 
+# The eigenvalues `λ` have zero real part, i.e. no viscous damping (you can type `λ` by typing `\lambda<tab>`).
 # The eigenvectors are stored in a matrix `x`, so that `λ[i]*x[:,i] ≈ A*x[:,i]`.
 
 λ[1]*x[:,1] ≈ RHS*x[:,1]
@@ -164,9 +180,8 @@ end
 # ## Spectrum of modes
 
 # It is also possible to plot the spectrum of all solutions. We can use the ratio of kinetic to magnetic energy as a characteristic. 
-# We can compute it using
-LHS = I(length(u)+length(b))
-ekin, emag = Limace.Processing.ekinmags(x, LHS, u)
+# We can compute the energies using
+ekin, emag = Limace.Processing.energies(problem)
 
 # where we use the identity matrix as the mass matrix.
 # The frequency-energy ratio spectrum is then plotted as

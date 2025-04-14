@@ -6,7 +6,8 @@ using LinearAlgebra
 using SparseArrays
 using Statistics
 using ..Bases
-using ..Bases: lmn_p, lmn_t, lmn_p_bc, lmn_t_bc, lmn2k_p_dict, lmn2k_t_dict, _lmn2cdeg_p, _lmn2cdeg_t
+using ..Bases: lmn_p, lmn_t, lmn_p_bc, lmn_t_bc, lmn2k_p_dict, lmn2k_t_dict, _lmn2cdeg_p, _lmn2cdeg_t, _nrange_p, _nrange_t, lpmax, ltmax
+using ..Limace: LimaceProblem, inertial
 
 
 
@@ -141,35 +142,48 @@ function usection(::Val{true}, λ, λ2, evecs, evecs2, u0, b0, u1, b1; threshc=0
 end
 
 """
-$(TYPEDSIGNATURES)
+    energies(problem::LimaceProblem)
 
-Compute the kinetic and magnetic energies of all eigenvectors `us`, where `size(us,2)` is the number of eigenvalues. 
-`LHS` is the mass-matrix and `u` the velocity basis used in the calculation of the eigenvectors `us`.
+Compute the energies for all bases `problem.bases` of all eigenvectors `problem.sol.vectors` if `problem.solved==true`.
 """
-function ekinmags(us, LHS, u)
-    nu = length(u)
-    nm = size(LHS, 1)
-    LHSu = Diagonal(view(LHS, 1:nu, 1:nu))
-    LHSb = SymTridiagonal(view(LHS, nu+1:nm, nu+1:nm))
-    nev = size(us, 2)
-    ekin = zeros(nev)
-    emag = zeros(nev)
-    Threads.@threads for j in axes(us, 2)
-        ekin[j] = abs(dot(view(us, 1:nu, j), LHSu, view(us, 1:nu, j)))
-        emag[j] = abs(dot(view(us, nu+1:nm, j), LHSb, view(us, nu+1:nm, j)))
+function energies(problem::LimaceProblem)
+    @assert problem.solved
+
+    x = problem.sol.vectors
+    nbases = length(problem.bases)
+    ns_bases = length.(problem.bases)
+    nev = size(x,2)
+    energies = [zeros(nev) for _ in 1:nbases]
+
+    for i in 1:nbases
+        _LHS = inertial(problem.bases[i])
+        if Diagonal(_LHS) ≈ _LHS
+            LHS = Diagonal(_LHS)
+        elseif SymTridiagonal(_LHS) ≈ _LHS
+            LHS = SymTridiagonal(_LHS)
+        else
+            LHS = _LHS
+        end
+        _range = sum(ns_bases[1:i-1]) + 1:sum(ns_bases[1:i])
+        Threads.@threads for j in axes(x, 2)
+            _x = view(x, _range, j)
+            energies[i][j] = abs(dot(_x, LHS, _x))
+        end
     end
-    return ekin, emag
+    return energies
 end
 
+
 """
-$(TYPEDSIGNATURES)
+$(SIGNATURES)
 
 Calculate spectrum for all eigenvectors `evecs` comprised of velocity basis `u` and magnetic field basis `b`. 
 Use keyword `lmn=1,2,3` to select `l=1`, `m=2` or `n=3`.
 """
 function spectrum(evecs, u, b; lmn=1)
-    N = max(u.N, b.N)
+    N = lmn ≤ 2 ? max(lpmax(u),ltmax(u), lpmax(b),ltmax(b)) : max(maximum.((_nrange_p(u,1), _nrange_t(u,1), _nrange_p(b,1), _nrange_t(b,1)))...)
     _N = N + 1
+    degs = 0:N
     nev = size(evecs, 2)
     spec = zeros(4 * _N, nev)
     spec_fac = zeros(Int, 4 * _N)
@@ -206,7 +220,23 @@ function spectrum(evecs, u, b; lmn=1)
     spec ./= spec_fac
 
     specup, specut, specbp, specbt = spec[1:_N, :], spec[_N+1:2*_N, :], spec[2*_N+1:3*_N, :], spec[3*_N+1:4*_N, :]
-    return specup, specut, specbp, specbt
+    return degs, specup, specut, specbp, specbt
+end
+
+"""
+$(SIGNATURES)
+
+Calculate spectrum for all eigenvectors `problem.sol.vectors`,
+comprised of velocity basis `u` (`problem.bases[1]`!) and magnetic field basis `b` (`problem.bases[2]`!). 
+Use keyword `lmn=1,2,3` to compute spectra in ``l`` (`lmn=1`), ``m`` (`lmn=2`) or in ``n`` (`lmn=3`).
+"""
+function spectrum(problem::LimaceProblem; lmn=1)
+    @assert problem.solved
+    @assert length(problem.bases) == 2
+    u = problem.bases[1]
+    b = problem.bases[2]
+    evecs = problem.sol.vectors
+    return spectrum(evecs, u, b; lmn)
 end
 
 # function spec_ub_all_lmn(evecs, u, b; lmn=1)
@@ -246,7 +276,7 @@ end
 # end
 
 """
-$(TYPEDSIGNATURES)
+$(SIGNATURES)
 
 	Get all `(l,m,n)` that correspond to the poloidal and toroidal component of `u` and `b` basis at each Cartesian
 	degree `ñ ∈ 1:N`.
@@ -266,7 +296,7 @@ end
 
 
 """
-$(TYPEDSIGNATURES)
+$(SIGNATURES)
 
 Compute poloidal/toroidal kinetic/magnetic spectra of `evecs` as a function of max. Cartesian monomial degree.
 `evecs` are the eigenvectors computed using the velocity basis `u` and magnetic field basis `b`.
@@ -311,7 +341,7 @@ function spectrum_cartesian(evecs, u, b)
 end
 
 """
-$(TYPEDSIGNATURES)
+$(SIGNATURES)
 
 Compute the ratio of peak energy to energy at truncation degree
 (max between two last Cartesian degrees) in toroidal/poloidal kinetic/magnetic energy.
@@ -329,7 +359,7 @@ function epeak_etrunc_cartesian(evecs, u, b)
 end
 
 """
-$(TYPEDSIGNATURES)
+$(SIGNATURES)
 
 Find all indices of `evals1` and `evals2` for which `findall(y->any(x->isapprox(x,y; rtol=λtol), evals2),evals1)`.
 Multithreaded.
@@ -352,7 +382,7 @@ function eigenvalue_filter(evals1, evals2; λtol=1e-3)
 end
 
 """
-$(TYPEDSIGNATURES)
+$(SIGNATURES)
 
 Find numerically converged eigensolutions between two resolutions.
 """
@@ -436,9 +466,11 @@ function energydiff(evecs, u, b, cutoff; thresh=1e-2, lmn=1, ub_pt=:up)
 end
 
 """
-$(TYPEDSIGNATURES)
+$(SIGNATURES)
 
-Find observationally relevant solutions, based on the poloidal magnetic field.
+Find observationally relevant solutions, based on the poloidal magnetic field at the surface.
+The function takes the arguments `evals`, `evecs`, `u`, and `b` which are the eigenvalues, eigenvectors, velocity basis, and magnetic field basis, respectively.
+Keyword arguments `ωlow`, `ωhigh`, `Qlow`, and `lthresh` are used to filter the eigenvalues based on their frequency, quality factor, and the maximum allowed peak degree in energy.
 """
 function observability_filter(evals, evecs, u, b;
 	ωlow = 0.57, 

@@ -62,6 +62,13 @@ A = Limace.coriolis(u)
 
 λ[1]*x[:,1] ≈ A*x[:,1]
 
+# We can do the same using the high-level interface through a `LimaceProblem` object:
+problem = LimaceProblem([u], [Limace.Inertial(u), Limace.Coriolis(u)]);
+Limace.assemble!(problem);
+Limace.solve!(problem; method=:dense);
+λ2, x2 = problem.sol.values, problem.sol.vectors;
+(λ ≈ λ2) && (x ≈ x2)
+
 # We can compare some of the numerically calculated eigenvalues `λ` to the analytical equation 
 # given by [zhang_inertial_2001](@citet) for equatorially symmetric inertial modes.
 

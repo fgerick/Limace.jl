@@ -19,7 +19,7 @@ struct PerfectlyConducting; end
 PerfectlyConducting(N; kwargs...) = Basis{PerfectlyConducting, Sphere}(;N, BC=PerfectlyConductingBC(), V=Sphere(), kwargs...)
 
 """
-$(TYPEDSIGNATURES)
+    t(::Type{Basis{PerfectlyConducting, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 t_{l,n,m}(r) = f_{l,n}r^l J_n^{(0,l+1/2)}(2r^2-1)
@@ -32,13 +32,13 @@ f_{l,n} = \\sqrt{\\frac{3+2l+4n}{l(l+1)}}
 
 [livermore_compendium_2014](@citet) (5.1), normalized to unit energy.
 """
-@inline function t(::Type{Basis{PerfectlyConducting, Sphere}}, V::Volume, l,m,n,r)
+@inline function t(::Type{Basis{PerfectlyConducting, Sphere}}, V::Sphere, l,m,n,r)
     fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
     return r^l*jacobi(n,0,l+1/2, 2r^2-1)*fac
 end
 
 """
-$(TYPEDSIGNATURES)
+    s(::Type{Basis{PerfectlyConducting, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 s_{l,n,m}(r) = f_{l,n}(1-r^2)r^l J_n^{(1,l+1/2)}(2r^2-1)
@@ -51,7 +51,7 @@ f_{l,n} = \\sqrt{\\frac{5+2l+4n}{4l(l+1)(n+1)^2}}
 
 [livermore_compendium_2014](@citet) (5.6), normalized to unit energy. 
 """
-@inline function s(::Type{Basis{PerfectlyConducting, Sphere}}, V::Volume, l,m,n,r)
+@inline function s(::Type{Basis{PerfectlyConducting, Sphere}}, V::Sphere, l,m,n,r)
     fac = sqrt(5+2l+4n)/sqrt(4l*(l+1)*(n+1)^2)
     return (1-r^2)*r^l*jacobi(n,1,l+1/2, 2r^2-1)*fac
 end

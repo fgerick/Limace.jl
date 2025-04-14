@@ -21,7 +21,7 @@ struct Viscous; end
 Viscous(N; kwargs...) = Basis{Viscous,Sphere}(;N, BC=NoSlipBC(), V=Sphere(), kwargs...)
 
 """
-$(TYPEDSIGNATURES)
+    t(::Type{Basis{Viscous, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 t_{l,m,n}(r) = f_{l,n}r^l\\left( J_n^{(0,l+1/2)}(2r^2-1) - J_{n-1}^{(0,l+1/2)}(2r^2-1)\\right)
@@ -39,7 +39,7 @@ f_{l,n}=\\left(l(l+1)/(2l+4n-1)+1/(2l+4n+3)\\right)^{-1/2}
 end
 
 """
-$(TYPEDSIGNATURES)
+    s(::Type{Basis{Viscous, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 s_{l,m,n} = f_{l,n}r^l\\left( (2l+4n+1)J_{n+1}^{(0,l+1/2)}(2r^2-1)-2(2l+4n+3)J_{n}^{(0,l+1/2)}(2r^2-1) + (2l+4n+5)J_{n-1}^{(0,l+1/2)}(2r^2-1) \\right)

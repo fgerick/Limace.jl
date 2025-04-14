@@ -22,7 +22,7 @@ struct Insulating; end
 Insulating(N; kwargs...) = Basis{Insulating, Sphere}(;N, BC=InsulatingBC(), V=Sphere(), kwargs...)
 
 """
-$(TYPEDSIGNATURES)
+    t(::Type{Basis{Insulating, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 t_{l,m,n}(r) = f_{l,n}r^l\\left( J_{n}^{(0,l+1/2)}(2r^2-1) - J_{n-1}^{(0,l+1/2)}(2r^2-1)\\right)
@@ -40,7 +40,7 @@ f_{l,n} = \\left( l(l+1)/(2l+4n-1) + 1/(2l+4n+3) \\right)^{-1/2}
 end
 
 """
-$(TYPEDSIGNATURES)
+    s(::Type{Basis{Insulating, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 s_{l,m,n}(r) = f_{l,n}r^l\\left( (2l+4n+3)J_{n}^{(0,l+1/2)}(2r^2-1) -2(2l+4n-1)J_{n-1}^{(0,l+1/2)}(2r^2-1) + (2l+4n+1)J_{n-2}^{(0,l+1/2)}(2r^2-1) \\right)

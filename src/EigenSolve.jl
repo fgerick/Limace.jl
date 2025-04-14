@@ -1,4 +1,4 @@
-module Eigen
+module EigenSolve
 
 using DocStringExtensions
 

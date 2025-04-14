@@ -1,7 +1,5 @@
 export LimaceProblem
 
-
-
 import Base: iterate, length
 
 abstract type Forcing{T} end
@@ -12,6 +10,11 @@ iterate(f::Forcing, ::Any) = nothing
 
 Base.show(io::IO, f::T) where T <: Forcing = print(io, "$T(N = $(getfield(f,1).N), factor = $(f.factor))")
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
 mutable struct Coriolis{TB,T} <: Forcing{1}
     basis::Basis{TB}
     factor::T
@@ -19,6 +22,11 @@ mutable struct Coriolis{TB,T} <: Forcing{1}
     preassembled::Bool
 end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
 mutable struct Inertial{TB,T} <: Forcing{1}
     basis::Basis{TB}
     factor::T
@@ -26,6 +34,11 @@ mutable struct Inertial{TB,T} <: Forcing{1}
     preassembled::Bool
 end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
 mutable struct Diffusion{TB,T} <: Forcing{1}
     basis::Basis{TB}
     factor::T
@@ -33,6 +46,11 @@ mutable struct Diffusion{TB,T} <: Forcing{1}
     preassembled::Bool
 end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
 mutable struct InductionU0{TB,T} <: Forcing{1}
     basis::Basis{TB}
     U0
@@ -41,6 +59,11 @@ mutable struct InductionU0{TB,T} <: Forcing{1}
     preassembled::Bool
 end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
 mutable struct InductionB0{TB,TU,T} <: Forcing{2}
     bbasis::Basis{TB}
     ubasis::Basis{TU}
@@ -50,6 +73,11 @@ mutable struct InductionB0{TB,TU,T} <: Forcing{2}
     preassembled::Bool
 end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
 mutable struct Lorentz{TU,TB,T} <: Forcing{2}
     ubasis::Basis{TU}
     bbasis::Basis{TB}
@@ -59,6 +87,11 @@ mutable struct Lorentz{TU,TB,T} <: Forcing{2}
     preassembled::Bool
 end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
 mutable struct Advection{TU,T} <: Forcing{1}
     basis::Basis{TU}
     U0
@@ -146,33 +179,62 @@ function assemble!(f::Advection; kwargs...)
 end
 
 
-mutable struct LimaceProblem 
-    bases::AbstractVector{Basis}
-    forcings # [ [[f1_b1_b1, f2_b1_b1], f_b1_b2, ...] , [f_b2_b2, [f1_b2_b1, f2_b2_b3]] , ... ]
-    RHS::SparseMatrixCSC{ComplexF64}
-    LHS::SparseMatrixCSC{ComplexF64}
+## LimaceProblem
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+"""
+mutable struct LimaceProblem{T}
+    bases
+    forcings 
+    RHS::SparseMatrixCSC{T}
+    LHS::SparseMatrixCSC{T}
+    sol::Union{Eigen{T, T, Matrix{T}, Vector{T}}, GeneralizedEigen{T, T, Matrix{T}, Vector{T}}}
     preassembled::Bool
+    assembled::Bool
+    solved::Bool
 end
+
 
 function LimaceProblem(bases, forcings=Forcing[])
     RHS = spzeros(ComplexF64, sum(length.(bases)), sum(length.(bases)))
     LHS = spzeros(ComplexF64, sum(length.(bases)), sum(length.(bases)))
-    return LimaceProblem(bases, forcings, RHS, LHS, false)
+    sol = Eigen(ComplexF64[], Matrix{ComplexF64}(undef, 0 , 0))
+    return LimaceProblem{ComplexF64}(bases, forcings, RHS, LHS, sol, false, false, false)
 end
 
-function preassemble!(problem::LimaceProblem)
+# function Base.show(io::IO, problem::LimaceProblem) 
+#     print(io, "LimaceProblem(bases = $([typeof(b) for b in problem.bases]), forcings = $(problem.forcings), preassembled = $(problem.preassembled), assembled = $(problem.assembled), solved = $(problem.solved))")
+# end
+## assemble the problem
+
+"""
+    preassemble!(problem::LimaceProblem; kwargs...)
+
+Preassemble `problem.forcing` matrices in the problem.
+"""
+function preassemble!(problem::LimaceProblem; kwargs...)
     for f in problem.forcings
         if !f.preassembled
-            assemble!(f)
+            assemble!(f; kwargs...)
         end
     end
     problem.preassembled=true
     return nothing
 end
 
-function assemble!(problem::LimaceProblem)
+"""
+    assemble!(problem::LimaceProblem; kwargs...)
+
+Assemble the problem matrices `problem.LHS` and `problem.RHS` from the forcing matrices that may or may not be preassembled.
+For now, only `Limace.Inertial` are added to the `LHS` matrix.
+"""
+function assemble!(problem::LimaceProblem; kwargs...)
     if !problem.preassembled 
-        preassemble!(problem)
+        preassemble!(problem; kwargs...)
     end
 
     prematLHS = [spzeros(ComplexF64,length(bi),length(bj)) for bi in problem.bases, bj in problem.bases]
@@ -188,9 +250,15 @@ function assemble!(problem::LimaceProblem)
 
     problem.LHS = hvcat(length(problem.bases),permutedims(prematLHS)...)
     problem.RHS = hvcat(length(problem.bases),permutedims(prematRHS)...)
+    problem.assembled=true
     return problem.LHS, problem.RHS
 end
 
+"""
+    add!(problem::LimaceProblem, f::Forcing)
+
+Add a forcing `f` to the `problem`. The forcing is not preassembled.
+"""
 function add!(problem::LimaceProblem, f::Forcing)
     push!(problem.forcings, f)
     problem.preassembled = false
@@ -214,5 +282,64 @@ function _add_to_premat!(problem::LimaceProblem, premat, f::TF) where {TF <: For
 end
 
 
+## Solving the problem
+
+"""
+    solve!(problem::LimaceProblem; method=:dense, kwargs...)
+
+Solve `problem` using the specified method. The default method is `:dense`, which transforms the problem matrices to dense matrices.
+Other methods are `:sparse`, which uses the sparse matrices directly.
+
+Solutions are stored in `problem.sol` and `problem.solved` is set to `true`.
+"""
+function solve!(problem::LimaceProblem; method=:dense, kwargs...)
+    if !problem.assembled
+        @warn "Problem was not assembled. Assembling the problem now."
+        assemble!(problem)
+    end
+
+    if method == :dense
+        return solve_dense!(problem)
+    elseif method == :sparse
+        return solve_sparse!(problem; kwargs...)
+    else
+        error("Unknown method $(method). Use :dense or :sparse.")
+    end
+  
+    return problem.sol
+end
 
 
+function solve_dense!(problem::LimaceProblem)
+
+    if (first(problem.bases).N > 30) && length(first(problem.bases).m) > 1
+        @warn "LimaceProblem.solve_dense! is not optimized for large problems. Use :sparse method instead."
+    end
+
+    if isdiag(problem.LHS)
+        if problem.LHS ≈ I
+            C = Matrix(problem.RHS)
+        else
+            C = Matrix(problem.RHS\Diagonal(problem.LHS))
+        end
+        problem.sol = eigen(C)
+    else
+        problem.sol = eigen(Matrix(problem.RHS), Matrix(problem.LHS))
+    end
+    problem.solved = true
+
+    return problem.sol
+end
+
+function solve_sparse!(problem::LimaceProblem; target=Inf, kwargs...)
+    if isinf(target) 
+        λ, x = EigenSolve.eigs(problem.RHS, problem.LHS; kwargs...)
+    else
+        λ, x = EigenSolve.eigstarget(problem.RHS, problem.LHS, target; kwargs...)
+    end
+
+    problem.sol = GeneralizedEigen(λ, x)
+    problem.solved = true
+
+    return problem.sol
+end

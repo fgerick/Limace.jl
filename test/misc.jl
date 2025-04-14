@@ -40,7 +40,7 @@ end
 	using Limace.Bases: lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
 	N = 10
-	for b in (Limace.Inviscid, Limace.Insulating, Limace.Viscous)
+	for b in (Limace.Inviscid, Limace.Insulating, Limace.Viscous, Limace.PerfectlyConducting)
 		basis = b(N)
 		@test basis.N == N
 		@test basis.V == Limace.Bases.Sphere()
@@ -107,9 +107,11 @@ end
 
 
 @testset "eigs" begin
-    N = 20
+    N = 10
     b = Limace.Inviscid(N)
     RHS = Limace.coriolis(b)
-	max_eval = first(first(Limace.Eigen.eigs(RHS; nev=1)))
+	max_eval = first(first(Limace.EigenSolve.eigs(RHS; nev=1)))
+	max_eval_dense = maximum(abs, eigvals(Matrix(RHS)))
 	@test abs(max_eval) ≤ 2.0
+	@test abs(max_eval) ≈ abs(max_eval_dense)
 end

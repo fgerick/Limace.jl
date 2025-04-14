@@ -403,7 +403,9 @@ end
     problem = LimaceProblem(bases, forcings)
     Limace.assemble!(problem)
 
-    λ = eigvals(Matrix(problem.RHS))
+    # λ = eigvals(Matrix(problem.RHS))
+    Limace.solve!(problem)
+    λ = problem.sol.values
 
     @test sort(imag.(λ)) ≈ sort(imag.(λ_mire))
 end
@@ -428,7 +430,7 @@ end
     forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b, 1/Lu)]
 
     problem = LimaceProblem(bases, forcings)
-    Limace.assemble!(problem)
+    Limace.assemble!(problem; threads=true)
 
     target = -0.0066 - 1.033im
     # target = -0.042+0.66im
@@ -460,7 +462,7 @@ end
     forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b, 1/Lu)]
 
     problem = LimaceProblem(bases, forcings)
-    Limace.assemble!(problem)
+    Limace.assemble!(problem; threads=true)
 
 	target = -0.041950864156977755 - 0.6599458208985812im
 	evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
@@ -490,7 +492,7 @@ end
     forcings = [Limace.Inertial(u, Eη), Limace.Inertial(b), Limace.Coriolis(u, 1/2), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b)]
 
     problem = LimaceProblem(bases, forcings)
-    Limace.assemble!(problem)
+    Limace.assemble!(problem; threads=true)
     target = -287.9448432-115.2081087im
 
     evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
@@ -516,16 +518,18 @@ end
     
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0 = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fac)
+    B0 = BasisElement(b, Toroidal, lmnb0, B0fac)
 
     bases = [u,b]
     forcings = [Limace.Inertial(u, Eη), Limace.Inertial(b), Limace.Coriolis(u, 1/2), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b)]
 
     problem = LimaceProblem(bases, forcings)
-    Limace.assemble!(problem)
+    Limace.assemble!(problem; threads=true)
 
     target = -742.7652176+684.132152im
-    evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
+    # evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
+    Limace.solve!(problem; method=:sparse, target, nev=1)
+    evals = problem.sol.values
 
     @test isapprox(first(evals), target, atol = 1e-4) #at N=70 we match the 1e-4 converged digits of N=120 of LMJ2022
 
@@ -549,8 +553,8 @@ end
    
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0t = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fact)
-    B0p = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0facp)
+    B0t = BasisElement(b, Toroidal, lmnb0, B0fact)
+    B0p = BasisElement(b, Poloidal, lmnb0, B0facp)
 
     LHSu = sparse(Limace.inertial(u))*Eη
     LHSb = sparse(Limace.inertial(b))

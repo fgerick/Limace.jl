@@ -21,8 +21,8 @@ using .Quadrature
 include("Discretization.jl")
 using .Discretization
 
-include("Eigen.jl")
-using .Eigen
+include("EigenSolve.jl")
+using .EigenSolve
 
 include("problem.jl")
 
