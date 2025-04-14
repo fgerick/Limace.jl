@@ -18,8 +18,8 @@ struct InviscidNoBC <: LimaceBasis; end
 
 InviscidNoBC(N; kwargs...) = Basis{InviscidNoBC, Sphere}(;N, V=Sphere(), BC=NoBC(), kwargs...)
 
-s(::Type{Basis{InviscidNoBC, Sphere}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
-t(::Type{Basis{InviscidNoBC, Sphere}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{InviscidNoBC, Sphere}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
+t(::Type{Basis{InviscidNoBC, Sphere}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
 
 @inline _nrange_p(b::Basis{InviscidNoBC, Sphere},l) = 0:((b.N-l+1)÷2)
 @inline _nrange_t(b::Basis{InviscidNoBC, Sphere},l) = 0:((b.N-l)÷2)

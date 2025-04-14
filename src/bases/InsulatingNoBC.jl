@@ -22,8 +22,8 @@ struct InsulatingNoBC; end
 
 InsulatingNoBC(N; kwargs...) = Basis{InsulatingNoBC, Sphere}(; N, BC=NoBC(), V=Sphere(), kwargs...)
 
-s(::Type{Basis{InsulatingNoBC, Sphere}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained}, V, l,m,n,r) 
-t(::Type{Basis{InsulatingNoBC, Sphere}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{InsulatingNoBC, Sphere}}, V::Volume, l,m,n,r)  = s(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
+t(::Type{Basis{InsulatingNoBC, Sphere}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
 
 @inline _nrange_p(b::Basis{InsulatingNoBC, Sphere}, l) = 0:((b.N-l+1)÷2)
 @inline _nrange_t(b::Basis{InsulatingNoBC, Sphere}, l) = 0:((b.N-l)÷2)

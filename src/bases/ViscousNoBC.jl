@@ -19,8 +19,8 @@ struct ViscousNoBC; end
 
 ViscousNoBC(N; kwargs...) = Basis{ViscousNoBC, Sphere}(;N, V=Sphere(), BC=NoBC(), kwargs...)
 
-s(::Type{Basis{ViscousNoBC, Sphere}}, V::Volume, l,m,n,r)  = s(Basis{Inviscid}, V, l,m,n,r) 
-t(::Type{Basis{ViscousNoBC, Sphere}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{ViscousNoBC, Sphere}}, V::Volume, l,m,n,r)  = s(Basis{Inviscid, Sphere}, V, l,m,n,r) 
+t(::Type{Basis{ViscousNoBC, Sphere}}, V::Volume, l,m,n,r)  = t(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
 
 @inline _nrange_p(b::Basis{ViscousNoBC, Sphere},l) = 0:((b.N-l+1)÷2)
 @inline _nrange_t(b::Basis{ViscousNoBC, Sphere},l) = 0:((b.N-l)÷2)

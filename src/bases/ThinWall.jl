@@ -25,8 +25,8 @@ function ThinWall(N; σw=1.0, σf = 1.0, h = 0.0, μr = 1.0, kwargs...)
     return Basis{ThinWall,Sphere}(;N, V=Sphere(), BC=NoBC(), params,  kwargs...)
 end
 
-s(::Type{Basis{ThinWall,Sphere}}, V::Volume, l,m,n,r) = s(Basis{Unconstrained}, V, l,m,n,r) 
-t(::Type{Basis{ThinWall,Sphere}}, V::Volume, l,m,n,r) = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{ThinWall,Sphere}}, V::Volume, l,m,n,r) = s(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
+t(::Type{Basis{ThinWall,Sphere}}, V::Volume, l,m,n,r) = t(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
 
 @inline _nrange_p(b::Basis{ThinWall,Sphere},l) = 0:((b.N-l+1)÷2)
 @inline _nrange_t(b::Basis{ThinWall,Sphere},l) = 0:((b.N-l)÷2)
