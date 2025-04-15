@@ -21,6 +21,7 @@ examples = [
 ]
 
 if !(@isdefined LiveServer)
+    @show "Generating examples"
     for example in examples
         example_filepath = joinpath(EXAMPLES_DIR, example)
         Literate.markdown(example_filepath, OUTPUT_DIR)

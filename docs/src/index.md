@@ -26,7 +26,7 @@ To solve for modes, four steps are needed:
 3) Assembly of Galerkin projection matrices.
 4) Compute solution(s) of (generalized) eigen problem.
 
-These four steps, are accessible through a high-level interface, as presented in the [Quickstart](@ref).
+These four steps, are accessible through a high-level interface, as presented in the [Quickstart](@ref "Quickstart through high-level interface").
 The details are introduced in a more comprehensive way through the Examples, and in the relevant sections.
 
 Some [Theoretical background](@ref) is given, as well as some more detailed API information on the [Bases](@ref) and the implemented [Forces](@ref).

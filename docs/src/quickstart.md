@@ -1,4 +1,4 @@
-# Quickstart
+# Quickstart through high-level interface
 
 `Limace.jl` provides a high-level interface to setup and solve the linear problem. 
 The four main steps to solve for hydromagnetic modes are outlined here:
@@ -53,6 +53,7 @@ Limace.assemble!
 
 ## Compute solution(s) of (generalized) eigen problem.
 
+Solving the eigen problem can be done through a high-level function
 ```julia
 Limace.solve!(problem)
 ```
@@ -65,6 +66,8 @@ We can then access the eigenvalues `λ`, and eigenvectors `x` within `problem.so
 ```@docs
 Limace.solve!
 ```
+
+More details on the choices of method and the underlying methodology is outlined in the section on [Solving the eigenvalue problem](@ref "Solving the eigenvalue problem").
 
 
 From here, we can plot the solutions or process the spectrum of modes. See the examples and [Postprocessing](@ref) for more details.

@@ -42,22 +42,31 @@ B0 = [BasisElement(Basis{Insulating}, Poloidal, (1,0,1),0.3), BasisElement(Basis
 
 u = Inviscid(N; m=0)
 b = Insulating(N; m=0)
-LHS = blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b)))
-RHSc = Limace.coriolis(u)/Le
-RHSl = sum(Limace.lorentz_threaded(u,b,B) for B in B0)
-RHSi = sum(Limace.induction_threaded(b,u,B) for B in B0)
-RHSd = Limace.diffusion(b)/Lu
-RHS = [RHSc RHSl
-	  RHSi RHSd]
+bases = [u,b]
+forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u,1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b,1/Lu)]
+problem = LimaceProblem(bases,forcings)
+Limace.assemble!(problem; threads=true)
 ```
 
-Convert the sparse matrices `LHS` and `RHS` of size `2500x2500` to a dense matrices, using
+We can then solve the dense [`LimaceProblem`](@ref) by using
 ```julia
+Limace.solve!(problem)
+```
+which uses the default keyword argument `method=:dense`.
+
+The results are stored in `problem.sol`, so that
+```julia
+λ, x = problem.sol.values, problem.sol.vectors
+```
+
+The function [`Limace.solve!`](@ref) essentially converts the sparse matrices `LHS` and `RHS` of size `2500x2500` to dense matrices, using
+```julia
+(; LHS, RHS) = problem # syntactic sugar for LHS,RHS = problem.LHS, problem.RHS
 LHSd = Matrix(LHS)
 RHSd = Matrix(RHS)
 ```
 
-To solve the problem we can then use
+and solves for the eigensolutions
 ```julia
 λ, x = eigen(RHSd, LHSd)
 ```
@@ -84,7 +93,7 @@ If `LHS` is a unit matrix, we can solve the problem as
 ## Sparse eigenvalue solver
 
 A native Julia implementation of the Arnoldi method (with Krylov-Schur restarts) is implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl).
-In the `EigenSolve` submodule of `Limace.jl`, an implementation of the shift-invert method is available through the `eigstarget` function.
+In the `EigenSolve` submodule of `Limace.jl`, an implementation of the shift-invert method is available through the [`Limace.EigenSolve.eigstarget`](@ref) function.
 The shift-invert method shifts the spectrum around a given target eigenvalue ``\sigma`` and inverts the operator on the left-hand-side, so that
 ```math
 \frac{1}{\lambda-\sigma}\mathbf{x} = (\mathbf{A}-\sigma\mathbf{B})^{-1}\mathbf{B}\mathbf{x}.
@@ -103,18 +112,33 @@ Limace.EigenSolve.eigstarget
 
 Using the same matrices assembled previously, we can calculate solutions close to a target ``\sigma = \mathrm{i}`` (frequency ``\omega=1``).
 ```julia
-using Limace.EigenSolve: eigstarget
-
 target = 1.0im
 
-λ, x = eigstarget(RHS, LHS, target; nev=5);
+λ, x = Limace.EigenSolve.eigstarget(RHS, LHS, target; nev=5);
 ```
 
-The standard inverse method is also provided through `Limace.EigenSolve.eigs`, in order to compute only the extremal eigenvalues (no shift required).
+this is equivalent to using the high-level interface
+
+```julia
+Limace.solve!(problem; method=:sparse, target=1.0im, nev=5)
+```
+
+The standard inverse method is also provided through [`Limace.EigenSolve.eigs`](@ref), in order to compute only the extremal eigenvalues (no shift required).
 This is approach is not possible when ``\mathbf{B}`` is singular (e.g. when explicit boundary conditions are imposed, ``\mathbf{B}`` contains zero lines and is therefore singular).
 
 ```@docs
 Limace.EigenSolve.eigs
+```
+
+For example we can compute the largest eigensolution using the high-level interface
+```julia
+Limace.solve!(problem; method=:sparse, nev=1)
+```
+
+or 
+
+```julia
+λ, x = Limace.EigenSolve.eigs(RHS, LHS; nev=1);
 ```
 
 These sparse approaches are computationally much more efficient and feasible than the dense approach for much larger truncation degrees `N` (as we also only compute a few eigensolutions and not the complete spectrum).
