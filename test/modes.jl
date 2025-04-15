@@ -32,7 +32,7 @@
 end
 
 @testset "Inviscid inertial modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
-    function assembleU0uniHydro(N,m; ns=false, Ω=2.0, Ω2 = 0.0)
+    function assembleU0uniHydro(N,m; Ω=2.0, Ω2 = 0.0)
 
         u = Inviscid(N; m)
         RHS = Limace.coriolis(u; Ω)
@@ -242,13 +242,19 @@ end
     u = Inviscid(N)
     b = PerfectlyConducting(N)
 
+    bases = [u,b]
 
     B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15))
 
-   RHS = [Limace.coriolis(u)/Le Limace.lorentz(u, b, B0)
-          Limace.induction(b,u,B0) spzeros(length(b),length(u))];
+    forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u, b, B0), Limace.InductionB0(b,u,B0)]
 
-    evals = eigvals(Matrix(RHS))
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem)
+    RHS = [Limace.coriolis(u)/Le Limace.lorentz(u, b, B0)
+            Limace.induction(b,u,B0) spzeros(length(b),length(u))];
+
+    @test problem.RHS ≈ RHS
+    evals = eigvals(Matrix(problem.RHS))
 
     @test any(evals .≈ 1.0 * im / Le)
     for m = vcat(-(N-1):-1, 1:(N-1))
@@ -259,9 +265,12 @@ end
     for m = vcat(-(N-1):-1, 1:(N-1))
         u = Inviscid(N; m)
         b = PerfectlyConducting(N; m)
-        RHS = [Limace.coriolis(u)/Le Limace.lorentz(u,b, B0)
-        Limace.induction(b,u,B0) spzeros(length(b),length(b))];
-        evals = eigvals(Matrix(RHS))    
+        bases = [u,b]
+        forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b, B0), Limace.InductionB0(b,u,B0)];
+        problem = LimaceProblem(bases, forcings)
+        Limace.assemble!(problem)
+
+        evals = eigvals(Matrix(problem.RHS))    
         @test any(evals .≈ slow(m, 1, Le))
         @test any(evals .≈ fast(m, 1, Le))
     end
@@ -269,34 +278,43 @@ end
 end
 
 @testset "Malkus modes, rotating frame vs. u0 = Ωs𝐞ᵩ" begin
-
-    function assembleU0uniMalkus(N,m, Le; rotatingframe=true)
-
+   
+    function solve_malkus(N,m,Le)
         u = Inviscid(N; m)
         b = PerfectlyConducting(N; m)
-
         B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15))
-       
-        if rotatingframe 
-            RHSuu = Limace.coriolis(u)
-            RHSbb = spzeros(length(b),length(b))
-        else
-            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 2sqrt(2pi/15))
-            RHSuu = -Limace.lorentz(u, u, U0)
-            RHSbb = Limace.induction(b,U0,b)/Le
-        end
 
-       RHS = [RHSuu/Le Limace.lorentz(u, b, B0)
-              Limace.induction(b,u,B0) RHSbb];
+        bases = [u,b]
+        forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b, B0), Limace.InductionB0(b,u,B0)];
+        problem = LimaceProblem(bases, forcings)
+        Limace.assemble!(problem)
+        return eigvals(Matrix(problem.RHS))
+    end
+
+
+    function solve_malkus_U0(N,m,Le)
+        u = Inviscid(N; m)
+        b = PerfectlyConducting(N; m)
+        B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15))
+        U0 = BasisElement(u, Toroidal, (1,0,0), 2sqrt(2pi/15))
+
+        bases = [u,b]
+        forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Advection(u, U0, 1/Le), Limace.Lorentz(u,b, B0), Limace.InductionB0(b,u,B0), Limace.InductionU0(b,U0,1/Le)];
+        problem = LimaceProblem(bases, forcings)
+        Limace.assemble!(problem)
+        return eigvals(Matrix(problem.RHS))
+    end
+
     
 
-        return RHS
-    end
     N = 4
     Le = 1e-2
+
+    
+
     for m = -3:3
-        λ   = eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = true)))
-        λu0 = eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = false))) .+ m*im/Le
+        λ   = solve_malkus(N,m,Le) #eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = true)))
+        λu0 = solve_malkus_U0(N,m,Le) .+ m*im/Le #eigvals(Matrix(assembleU0uniMalkus(N,m,Le; rotatingframe = false))) .+ m*im/Le
         @test sort(λ, by=imag) ≈ sort(λu0, by=imag)
     end
 
@@ -374,19 +392,20 @@ end
     u = Inviscid(N)
     b = PerfectlyConducting(N)
 
+    bases = [u,b]
+
     # For non-axisymmetric B₀ we need to take the real value. Here:
-    B0 = BasisElement(b, Toroidal, (1,1,0), sqrt(16pi / 15)/2)
-    B0c = BasisElement(b, Toroidal, (1,-1,0), -sqrt(16pi / 15)/2)
+    B0 = [BasisElement(b, Toroidal, (1,1,0), sqrt(16pi / 15)/2), BasisElement(b, Toroidal, (1,-1,0), -sqrt(16pi / 15)/2)]
 
 
-    RHSl = Limace.lorentz(u, b, B0) +  Limace.lorentz(u, b, B0c)
-    RHSi = Limace.induction(b,u,B0) + Limace.induction(b,u,B0c)
+    forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0)]
 
-    RHS = [Limace.coriolis(u)/Le RHSl
-           RHSi spzeros(length(b),length(b))];
- 
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem)
 
-    λ = eigvals(Matrix(RHS))
+    # λ = eigvals(Matrix(problem.RHS))
+    Limace.solve!(problem)
+    λ = problem.sol.values
 
     @test sort(imag.(λ)) ≈ sort(imag.(λ_mire))
 end
@@ -403,23 +422,19 @@ end
 
     u = Inviscid(N; m)
     b = Insulating(N; m)
+    
+    bases = [u,b]
 
-    B0 = BasisElement(Basis{LJ22}, Poloidal, (2,0,1), 1.0)
+    B0 = BasisElement(Basis{LJ22, Sphere}, Poloidal, (2,0,1), 1.0)
 
-    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b))))
+    forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b, 1/Lu)]
 
-    RHSc = Limace.coriolis(u)/Le
-    RHSl = Limace.lorentz(u,b,B0)
-    RHSi = Limace.induction(b,u,B0)
-    RHSd = Limace.diffusion(b)/Lu
-
-    RHS = [RHSc RHSl
-           RHSi RHSd]
-    # RHS = rhs(N, m; Ω = 2 / Le, η = 1 / Lu, lmnb0, B0poloidal = true, smfb0 = lj22)
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem; threads=true)
 
     target = -0.0066 - 1.033im
     # target = -0.042+0.66im
-    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+    evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
 
     lj22_n350 = -0.0065952461 - 1.0335959942im
 
@@ -441,20 +456,16 @@ end
     u = Inviscid(N; m)
     b = Insulating(N; m)
 
-    B0 = BasisElement(Basis{Insulating}, Poloidal, (1,0,1), sqrt(30/23))
+    B0 = BasisElement(b, Poloidal, (1,0,1), sqrt(30/23))
 
-    LHS = SymTridiagonal(blockdiag(sparse(Limace.inertial(u)), sparse(Limace.inertial(b))))
+    bases = [u,b]
+    forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b, 1/Lu)]
 
-    RHSc = Limace.coriolis(u)/Le
-    RHSl = Limace.lorentz(u,b,B0)
-    RHSi = Limace.induction(b,u,B0)
-    RHSd = Limace.diffusion(b)/Lu
-
-    RHS = [RHSc RHSl
-           RHSi RHSd]
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem; threads=true)
 
 	target = -0.041950864156977755 - 0.6599458208985812im
-	evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+	evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
 	@test isapprox(first(evals), target, atol = 1e-4)
 
 end
@@ -475,23 +486,16 @@ end
   
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0 = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0fac)
+    B0 = BasisElement(b, Poloidal, lmnb0, B0fac)
 
-    LHSu = sparse(Limace.inertial(u))*Eη
-    LHSb = sparse(Limace.inertial(b))
-    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
+    bases = [u,b]
+    forcings = [Limace.Inertial(u, Eη), Limace.Inertial(b), Limace.Coriolis(u, 1/2), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b)]
 
-    RHSc = Limace.coriolis(u; Ω = 1.0)
-    RHSl = Limace.lorentz(u,b,B0)
-    RHSi = Limace.induction(b,u,B0)
-    RHSd = Limace.diffusion(b)
-
-    RHS = [RHSc RHSl
-           RHSi RHSd]
-
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem; threads=true)
     target = -287.9448432-115.2081087im
 
-    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+    evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
 
     @test isapprox(first(evals), target, atol = 1e-4) #at N=40 we match the 1e-4 converged digits of N=120 of LMJ2022
 
@@ -514,23 +518,18 @@ end
     
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0 = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fac)
+    B0 = BasisElement(b, Toroidal, lmnb0, B0fac)
 
-    LHSu = sparse(Limace.inertial(u))*Eη
-    LHSb = sparse(Limace.inertial(b))
-    LHS = SymTridiagonal(blockdiag(LHSu,LHSb))
+    bases = [u,b]
+    forcings = [Limace.Inertial(u, Eη), Limace.Inertial(b), Limace.Coriolis(u, 1/2), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b)]
 
-    RHSc = Limace.coriolis(u; Ω = 1.0)
-    RHSl = Limace.lorentz(u,b,B0)
-    RHSi = Limace.induction(b,u,B0)
-    RHSd = Limace.diffusion(b)
-
-    RHS = [RHSc RHSl
-           RHSi RHSd]
-
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem; threads=true)
 
     target = -742.7652176+684.132152im
-    evals, evecs = eigstarget(RHS, LHS, target; nev = 1)
+    # evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
+    Limace.solve!(problem; method=:sparse, target, nev=1)
+    evals = problem.sol.values
 
     @test isapprox(first(evals), target, atol = 1e-4) #at N=70 we match the 1e-4 converged digits of N=120 of LMJ2022
 
@@ -554,8 +553,8 @@ end
    
     u = Inviscid(N; m)
     b = Insulating(N; m)
-    B0t = BasisElement(Basis{Insulating}, Toroidal, lmnb0, B0fact)
-    B0p = BasisElement(Basis{Insulating}, Poloidal, lmnb0, B0facp)
+    B0t = BasisElement(b, Toroidal, lmnb0, B0fact)
+    B0p = BasisElement(b, Poloidal, lmnb0, B0facp)
 
     LHSu = sparse(Limace.inertial(u))*Eη
     LHSb = sparse(Limace.inertial(b))
@@ -576,15 +575,3 @@ end
 
 
 end
-
-# @testset "Distributed vs serial" begin
-#     addprocs(4; exeflags=`--project=$(Base.active_project())`)
-#     @everywhere begin
-#         using Limace
-#         using Limace.MHDProblem: rhs, rhs_dist
-#         N = 10
-#         m = -N:N
-#     end
-#     @test rhs_dist(N,m) ≈ rhs(N,m)
-#     rmprocs(workers())
-# end

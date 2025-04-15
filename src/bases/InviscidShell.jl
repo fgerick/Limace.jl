@@ -15,12 +15,13 @@ export InviscidShell
 
 struct InviscidShell; end
 
-InviscidShell(N; r0 = 0.9, r1=1.0, kwargs...) = Basis{InviscidShell}(;N, BC=NoBC(), V=SphericalShell(r0,r1), kwargs...)
+InviscidShell(N; r0 = 0.35, r1=1.0, kwargs...) = Basis{InviscidShell}(;N, BC=NoBC(), V=SphericalShell(r0,r1), kwargs...)
 
 @inline function t(::Type{Basis{InviscidShell}}, V::Volume, l,m,n,r) 
 	r0,r1 = V.r0, V.r1
 	x = (2r-(r1+r0))/(r1-r0) #map to x ∈ [-1,1]
-	return jacobi(n,-1/2,1.0, x) # - jacobi(n-1,0.0,0.0, x)
+	fac = 1/sqrt(-l*(l+1)*(r0-r1)*((-2+3n+3n^2)*r0^2+2*(-1+n+n^2)*r0*r1+(-2+3n+3n^2)*r1^2)/(-6-4n+24n^2+16n^3))
+	return fac*jacobi(n,0,0, x) # - jacobi(n-1,0.0,0.0, x)
 end
 
 # @inline function s(::Type{Basis{InviscidShell}}, V::Volume, l,m,n,r)
@@ -43,18 +44,23 @@ end
 @inline function s(::Type{Basis{InviscidShell}}, V::Volume, l,m,n,r) 
 	r0,r1 = V.r0, V.r1
 	x = (2r-(r1+r0))/(r1-r0) #map to x ∈ [-1,1]
-	return jacobi(n,-1/2,1.0, x) # - jacobi(n-1,0.0,0.0, x)
-	# return jacobi(n,0,l+1/2, x) - jacobi(n-1,0,l+1/2, x)
+	# fac = 1/sqrt(-(r0-r1)*((-2+3n+3n^2)*r0^2+2*(-1+n+n^2)*r0*r1+(-2+3n+3n^2)*r1^2)/(-6-4n+24n^2+16n^3))
+	fac = 1/sqrt( l*(l+1)*(-((1+l+l^2+2n*(1+n+n^2))*r0^2)+2(1+l+l^2+n-n^2)*r0*r1-(1+l+l^2+2n*(1+n+n^2))*r1^2)/((1+2n)*(r0-r1)) )
+	# return (1-x)*(x+1)*jacobi(n-2,0,l+1/2, x) # - jacobi(n-1,0.0,0.0, x)
+	return fac*(r1-r)*(r0-r)*jacobi(n-2,0,0, x) # - jacobi(n-1,0.0,0.0, x)
 end
 
-@inline _nrange_p(b::Basis{InviscidShell},l) = 1:(b.N-l)+1
-@inline _nrange_t(b::Basis{InviscidShell},l) = 1:(b.N-l)
+
+# @inline _nrange_p(b::Basis{InviscidShell},l) = 2:(b.N-l+1)
+@inline _nrange_p(b::Basis{InviscidShell},l) = 2:(b.N-l+1)
+@inline _nrange_t(b::Basis{InviscidShell},l) = 0:(b.N-l)
 
 # @inline nrange_p_bc(b::Basis{InviscidShell},l) = 0:((b.N-l+1)÷2-1)
 # @inline nrange_t_bc(b::Basis{InviscidShell},l) = nrange_t(b, l)
 
 @inline function bcs_p(b::Basis{InviscidShell})
-    # fs = (@inline((l, n) -> s(Basis{InviscidShell}, b.V, l, 0, n, b.V.r1)), )
+    # fs = (@inline((l, n) -> s(Basis{InviscidShell}, b.V, l, 0, n, b.V.r0)), 
+	# 	  @inline((l, n) -> s(Basis{InviscidShell}, b.V, l, 0, n, b.V.r1)))
 	fs = ()
     return fs
 end
@@ -65,7 +71,7 @@ end
 end
 
 
-lpmax(b::Basis{InviscidShell}) = b.N-1
+lpmax(b::Basis{InviscidShell}) = b.N
 ltmax(b::Basis{InviscidShell}) = b.N
 
 

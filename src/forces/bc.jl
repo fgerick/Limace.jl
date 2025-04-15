@@ -1,6 +1,7 @@
 """
-$(TYPEDSIGNATURES)
+    boundarycondition(b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 
+Construct a sparse matrix representing the boundary conditions for the basis `b`.
 """
 @inline function boundarycondition(b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 
@@ -48,8 +49,9 @@ $(TYPEDSIGNATURES)
 end
 
 """
-$(TYPEDSIGNATURES)
+    boundarycondition!(A, b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 
+Add the explicit boundary condition lines to a preassembled matrix `A`.
 """
 @inline function boundarycondition!(A, b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 
@@ -96,8 +98,9 @@ $(TYPEDSIGNATURES)
 end
 
 """
-$(TYPEDSIGNATURES)
+    zero_boundarycondition!(A, b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 
+Zero out lines in a preassembled matrix (useful, when preassembling matrices at large resolution and then using them at lower resolution).
 """
 @inline function zero_boundarycondition!(A, b::TB, ::Type{T}=Float64) where {TB<:Basis,T<:Number}
 

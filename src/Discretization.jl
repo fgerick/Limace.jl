@@ -39,6 +39,11 @@ function toroidal_discretize(::Type{Basis{T}}, V::Volume, l, m, n, r, θ, ϕ) wh
     end
 end
 
+"""
+    discretize(b::BasisElement{TB,TP,T}, r, θ, ϕ, V::Volume=Sphere()) where {TB<:Basis,TP<:Helmholtz,T<:Number}
+
+Discretize a basis element `b` at the given coordinates `(r, θ, ϕ)` in the volume `V`.
+"""
 function discretize(b::BasisElement{TB,TP,T}, r, θ, ϕ, V::Volume=Sphere()) where {TB<:Basis,TP<:Helmholtz,T<:Number}
     if TP <: Poloidal
         return b.factor * poloidal_discretize(TB, V, b.lmn..., r, θ, ϕ)

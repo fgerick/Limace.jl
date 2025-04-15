@@ -21,6 +21,7 @@ examples = [
 ]
 
 if !(@isdefined LiveServer)
+    @show "Generating examples"
     for example in examples
         example_filepath = joinpath(EXAMPLES_DIR, example)
         Literate.markdown(example_filepath, OUTPUT_DIR)
@@ -30,20 +31,20 @@ end
 
 pages= [
     "Home" => "index.md",
-    "Theoretical background" => "theory.md",
+    "Quickstart" => "quickstart.md",
     "Examples" => [
         "Inviscid inertial modes" => "examples/inertialmodes.md",
         "Makus modes" => "examples/malkusmodes.md",
         "Torsional Alfvén modes" => "examples/torsionalmodes.md"
     ],
+    "Theoretical background" => "theory.md",
     "Bases" => "bases.md",
     "Forces" => "forces.md",
     "Poly" => "poly.md",
     "Solving the eigenvalue problem" => "eigen.md",
-    "Postprocessing" => "processing.md",
+    "Postprocessing" => "postprocessing.md",
     "Contribute" => "contribute.md",
     "References" => "references.md",
-    # "Misc" => "misc.md"
 ]
 
 

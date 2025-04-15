@@ -1,9 +1,17 @@
 # Forces
 
-Different forces included in `Limace.jl`. 
+Different forces (or forcings, linear operators in general) are included in `Limace.jl`.
+For the high-level interface, they are implemented as abstract types `Limace.Forcing{1}` or `Limace.Forcing{2}`, for on one or two bases dependencies respectively.
 
-So far, there is no heat equation in `Limace.jl`, so the forces include only the mass-term (or `Limace.inertial`), the Coriolis force (`Limace.coriolis`), the Lorentz force (`Limace.lorentz`) and diffusion (`Limace.diffusion`). 
-In the induction equation we have the magnetic induction term $\nabla\times\mathbf{u}\times\mathbf{B}$ (`Limace.induction`). Some details for each of these forcings is given on the respective pages.
+Currently, the implemented forces are:
+- [Inertial](#Inertial)
+- [Advection](#Advection)
+- [Coriolis](#Coriolis)
+- [Diffusion](#Diffusion)
+- [Induction](#Induction)
+- [Lorentz](#Lorentz)
+
+Some details for each of these forces is given in the following.
 
 ## Inertial
 
@@ -11,21 +19,33 @@ In the induction equation we have the magnetic induction term $\nabla\times\math
 \int \mathbf{u}_i^* \cdot \mathbf{u}_j\,\mathrm{d}V,
 ```
 
+The linear operator is simply the inner product of the basis elements. For the momentum equation, this is essentially the projection of the inertial term ``\partial_t \mathbf{u} \rightarrow \lambda \mathbf{u}``, hence the name.
+
 ```@docs 
+Limace.Inertial
 Limace.inertial
+```
+
+## Advection
+
+```math
+\int \mathbf{u}_i^* \cdot \left(\left(\boldsymbol{\nabla}\times\mathbf{u}_j\right)\times\mathbf{U}_0 + \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u}_j \right)\,\mathrm{d}V
+```
+
+```@docs
+Limace.Advection
+Limace.advection
 ```
 
 ## Coriolis
 
-The necessary functions to compute Galerkin projections on the Coriolis term
 
 ```math
 \int \mathbf{u}_i^* \cdot 2\mathbf{e}_z\times\mathbf{u}_j\,\mathrm{d}V,
 ```
 
-where ``\mathbf{u}_{i,j}`` are either poloidal or toroidal basis vectors.
-
 ```@docs
+Limace.Coriolis
 Limace.coriolis
 ```
 
@@ -36,26 +56,35 @@ Limace.coriolis
 ```
 
 ```@docs
+Limace.Diffusion
 Limace.diffusion
 ```
 
 ## Induction
 
 ```math
-\int \mathbf{b}_i^* \cdot \boldsymbol{\nabla}\times\left(\mathbf{u}_j\times\mathbf{B}_k\right)\,\mathrm{d}V
+\int \mathbf{b}_i^* \cdot \boldsymbol{\nabla}\times\left(\mathbf{u}_j\times\mathbf{B}_0\right)\,\mathrm{d}V
 ```
 
+```math
+\int \mathbf{b}_i^* \cdot \boldsymbol{\nabla}\times\left(\mathbf{U}_0\times\mathbf{b}_j\right)\,\mathrm{d}V
+```
+
+
 ```@docs
+Limace.InductionB0
+Limace.InductionU0
 Limace.induction
 ```
 
 ## Lorentz
 
 ```math
-\int \mathbf{u}_i^* \cdot \left(\boldsymbol{\nabla}\times\mathbf{b}_j\times\mathbf{b}_k\right)\,\mathrm{d}V
+\int \mathbf{u}_i^* \cdot \left(\left(\boldsymbol{\nabla}\times\mathbf{b}_j\right)\times\mathbf{B}_0+\left(\boldsymbol{\nabla}\times\mathbf{B}_0\right)\times\mathbf{b}_j\right)\,\mathrm{d}V
 ```
 
 ```@docs
+Limace.Lorentz
 Limace.lorentz
 ```
 

@@ -36,13 +36,8 @@ function _inertial_tt(b::T, lmna, lmnb, r,wr) where T<:Basis
     return aij
 end
 
-"""
-$(TYPEDSIGNATURES)
 
-Compute the Galerkin projection matrix of basis `b` onto itself, i.e. the inner products. 
-Also known as the mass matrix.
-"""
-@inline function inertial(b::Basis; external=false)
+function _inertial(::Val{false}, b::Basis; external=false)
 
     is, js, aijs = Int[], Int[], Complex{Float64}[]
     lmn2k_p = lmn2k_p_dict(b)
@@ -74,7 +69,7 @@ Also known as the mass matrix.
     return sparse(is, js, aijs, nu, nu)
 end
 
-function inertial_threaded(b::Basis; external=false)
+function _inertial(::Val{true}, b::Basis; external=false)
 
     _nt = Threads.nthreads()
     is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [Complex{Float64}[] for _ in 1:_nt]
@@ -116,4 +111,10 @@ function inertial_threaded(b::Basis; external=false)
     return  sparse(vcat(is...), vcat(js...), vcat(aijs...), nu, nu)
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Compute the Galerkin projection matrix of basis `b` onto itself, i.e. the inner products. 
+Also known as the mass matrix.
+"""
+inertial(b::Basis; threads=false, external=false) = _inertial(Val(threads), b; external)

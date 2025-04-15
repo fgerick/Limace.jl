@@ -15,10 +15,11 @@ export Unconstrained
 
 struct Unconstrained; end
 
-Unconstrained(N; r=1.0, kwargs...) = Basis{Unconstrained}(;N, BC=NoBC(), V=Sphere(; r), kwargs...)
+Unconstrained(N; r=1.0, kwargs...) = Basis{Unconstrained, Sphere}(;N, BC=NoBC(), V=Sphere(; r), kwargs...)
 
 """
-$(TYPEDSIGNATURES)
+    t(::Type{Basis{Unconstrained, Sphere}}, V::Sphere, l,m,n,r)
+
 ```math
 t_{l,n,m}(r) = f_{l,n}r^l J_n^{(0,l+1/2)}(2r^2-1)
 ```
@@ -30,14 +31,14 @@ f_{l,n} = \\sqrt{\\frac{3+2l+4n}{l(l+1)}}
 
 [livermore_compendium_2014](@citet) (5.1), normalized to unit energy ∫u⋅u dV = 1.
 """
-@inline function t(::Type{Basis{Unconstrained}}, V::Volume, l,m,n,r) 
+@inline function t(::Type{Basis{Unconstrained, Sphere}}, V::Sphere, l,m,n,r) 
     fac = sqrt(3+2l+4n)/sqrt(l*(l+1))
     x = (2r^2-V.r1^2)/V.r1^2
     return fac*r^l*jacobi(n,0,l+1/2, x)
 end
 
 """
-$(TYPEDSIGNATURES)
+    s(::Type{Basis{Unconstrained, Sphere}}, V::Sphere, l,m,n,r)
 
 ```math
 s_{l,n,m}(r) = f_{l,n}r^l\\left(J_n^{(0,l+1/2)}(2r^2-1) - J_{n-1}^{(0,l+1/2)}(2r^2-1) \\right)
@@ -50,27 +51,27 @@ f_{l,n} = \\left( l(l+1)(2l+4n+1)\\right)^{-1/2}
 
 [livermore_compendium_2014](@citet) (5.3), normalized to unit energy ∫u⋅u dV = 1.
 """
-@inline function s(::Type{Basis{Unconstrained}}, V::Volume, l,m,n,r)
+@inline function s(::Type{Basis{Unconstrained, Sphere}}, V::Sphere, l,m,n,r)
     fac = 1/sqrt(l*(l+1)*(1+2l+4n))
     x = (2r^2-V.r1^2)/V.r1^2
     return fac*r^l*(jacobi(n,0,l+1/2, x) - jacobi(n-1,0,l+1/2, x))
 end
 
-@inline _nrange_p(b::Basis{Unconstrained},l) = 0:((b.N-l+1)÷2)
-@inline _nrange_t(b::Basis{Unconstrained},l) = 0:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{Unconstrained, Sphere},l) = 0:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{Unconstrained, Sphere},l) = 0:((b.N-l)÷2)
 
 
-@inline function bcs_p(b::Basis{Unconstrained})
+@inline function bcs_p(b::Basis{Unconstrained, Sphere})
     return ()
 end
 
-@inline function bcs_t(b::Basis{Unconstrained})
+@inline function bcs_t(b::Basis{Unconstrained, Sphere})
     return ()
 end
 
 
-lpmax(b::Basis{Unconstrained}) = b.N
-ltmax(b::Basis{Unconstrained}) = b.N
+lpmax(b::Basis{Unconstrained, Sphere}) = b.N
+ltmax(b::Basis{Unconstrained, Sphere}) = b.N
 
 
 end

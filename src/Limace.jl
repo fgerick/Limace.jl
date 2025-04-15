@@ -15,18 +15,19 @@ include("Bases.jl")
 @reexport using .Bases
 using .Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
-
 include("Quadrature.jl")
 using .Quadrature
 
 include("Discretization.jl")
 using .Discretization
 
-include("Eigen.jl")
-using .Eigen
+include("EigenSolve.jl")
+using .EigenSolve
 
+include("problem.jl")
 
 # forces
+include("forces/advection.jl")
 include("forces/inertial.jl")
 include("forces/coriolis.jl")
 include("forces/diffusion.jl")
@@ -39,6 +40,15 @@ include("forces/bc.jl")
 include("bases/Inviscid.jl")
 @reexport using .InviscidBasis
 
+include("bases/PerfectlyConducting.jl")
+@reexport using .PerfectlyConductingBasis
+
+include("bases/Insulating.jl")
+@reexport using .InsulatingBasis
+
+include("bases/Viscous.jl")
+@reexport using .ViscousBasis
+
 include("bases/InviscidShell.jl")
 using .InviscidShellBasis
 
@@ -48,14 +58,8 @@ using .UnconstrainedBasis
 include("bases/InviscidNoBC.jl")
 using .InviscidBasisNoBC
 
-include("bases/Insulating.jl")
-@reexport using .InsulatingBasis
-
 include("bases/InsulatingNoBC.jl")
 using .InsulatingBasisNoBC
-
-include("bases/Viscous.jl")
-@reexport using .ViscousBasis
 
 include("bases/ViscousNoBC.jl")
 @reexport using .ViscousBasisNoBC

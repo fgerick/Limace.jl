@@ -20,17 +20,17 @@ ViscousShell(N; r0 = 0.35, r1=1.0, kwargs...) = Basis{ViscousShell}(;N, BC=NoBC(
 @inline function t(::Type{Basis{ViscousShell}}, V::Volume, l::Int,m::Int,n::Int,r::T) where T 
 	r0,r1 = V.r0, V.r1
 	x = (2r-(r1+r0))/(r1-r0) #map to x ∈ [-1,1]
-	return (r0-r)*(r1-r)*jacobi(n,0.0,0.0, x) # - jacobi(n-1,0.0,0.0, x)
+	return (r0-r)*(r1-r)*jacobi(n-2,0.0,0.0, x) # - jacobi(n-1,0.0,0.0, x)
 end
 
 @inline function s(::Type{Basis{ViscousShell}}, V::Volume, l::Int,m::Int,n::Int,r::T) where T
 	r0,r1 = V.r0, V.r1
 	x = (2r-(r1+r0))/(r1-r0) #map to x ∈ [-1,1]
-	return (r0-r)*(r1-r)*jacobi(n,0.0,0.0, x) #- jacobi(n-1,0.0,0.0, x)
+	return (r0-r)*(r1-r)*jacobi(n-2,0.0,0.0, x) #- jacobi(n-1,0.0,0.0, x)
 end
 
-@inline _nrange_p(b::Basis{ViscousShell},l) = 0:((b.N-l+1)+3)
-@inline _nrange_t(b::Basis{ViscousShell},l) = 0:((b.N-l)+2)
+@inline _nrange_p(b::Basis{ViscousShell},l) = 2:((b.N-l+1)+3)
+@inline _nrange_t(b::Basis{ViscousShell},l) = 2:((b.N-l)+2)
 
 # @inline nrange_p_bc(b::Basis{ViscousShell},l) = 0:((b.N-l+1)÷2-1)
 # @inline nrange_t_bc(b::Basis{ViscousShell},l) = nrange_t(b, l)

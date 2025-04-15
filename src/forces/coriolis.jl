@@ -222,12 +222,8 @@ end
     return vcat(is...), vcat(js...), vcat(aijs...)
 end
 
-"""
-$(TYPEDSIGNATURES)
 
-Compute the sparse Galerkin projection matrix, by projecting the basis `b` onto the Coriolis operator.
-"""
-function coriolis(b::TB; Ω::T=2.0) where {TB<:Basis,T}
+function _coriolis(::Val{false}, b::TB; Ω::T=2.0) where {TB<:Basis,T}
     nu = length(b)
 
     is, js, aijs = _coriolis_poloidal(b; Ω)
@@ -242,7 +238,7 @@ function coriolis(b::TB; Ω::T=2.0) where {TB<:Basis,T}
 
 end
 
-function coriolis_threaded(b::TB; Ω::T=2.0) where {TB<:Basis,T}
+function _coriolis(::Val{true}, b::TB; Ω::T=2.0) where {TB<:Basis,T}
     nu = length(b)
 
     is, js, aijs = _coriolis_poloidal_threaded(b; Ω)
@@ -257,3 +253,9 @@ function coriolis_threaded(b::TB; Ω::T=2.0) where {TB<:Basis,T}
 
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Compute the sparse Galerkin projection matrix, by projecting the basis `b` onto the Coriolis operator.
+"""
+coriolis(b::Basis; threads=false, Ω::T=2.0) where {T<:Number} = _coriolis(Val(threads), b; Ω)

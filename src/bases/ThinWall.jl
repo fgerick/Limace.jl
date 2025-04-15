@@ -22,18 +22,18 @@ struct ThinWall; end
 
 function ThinWall(N; σw=1.0, σf = 1.0, h = 0.0, μr = 1.0, kwargs...)
     params=Dict(:σw => σw, :σf => σf, :h => h, :μr => μr)
-    return Basis{ThinWall}(;N, V=Sphere(), BC=NoBC(), params,  kwargs...)
+    return Basis{ThinWall,Sphere}(;N, V=Sphere(), BC=NoBC(), params,  kwargs...)
 end
 
-s(::Type{Basis{ThinWall}}, V::Volume, l,m,n,r) = s(Basis{Unconstrained}, V, l,m,n,r) 
-t(::Type{Basis{ThinWall}}, V::Volume, l,m,n,r) = t(Basis{Unconstrained}, V, l,m,n,r) 
+s(::Type{Basis{ThinWall,Sphere}}, V::Volume, l,m,n,r) = s(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
+t(::Type{Basis{ThinWall,Sphere}}, V::Volume, l,m,n,r) = t(Basis{Unconstrained, Sphere}, V, l,m,n,r) 
 
-@inline _nrange_p(b::Basis{ThinWall},l) = 0:((b.N-l+1)÷2)
-@inline _nrange_t(b::Basis{ThinWall},l) = 0:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{ThinWall,Sphere},l) = 0:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{ThinWall,Sphere},l) = 0:((b.N-l)÷2)
 
 #10.1103/PhysRevE.88.053010
-@inline function bcs_p(b::Basis{ThinWall}) 
-    @inline _s = (l,n,r) -> r*s(Basis{ThinWall}, b.V, l, 0, n, r)
+@inline function bcs_p(b::Basis{ThinWall,Sphere}) 
+    @inline _s = (l,n,r) -> r*s(Basis{ThinWall,Sphere}, b.V, l, 0, n, r)
     (; r1) = b.V 
     h, σf, σw, μr = b.params[:h], b.params[:σf], b.params[:σw], b.params[:μr]
     fs = (
@@ -43,8 +43,8 @@ t(::Type{Basis{ThinWall}}, V::Volume, l,m,n,r) = t(Basis{Unconstrained}, V, l,m,
 end
 
 #10.1103/PhysRevE.88.053010
-@inline function bcs_t(b::Basis{ThinWall}) 
-    @inline _t = (l,n,r) -> r*t(Basis{ThinWall}, b.V, l, 0, n, r)
+@inline function bcs_t(b::Basis{ThinWall,Sphere}) 
+    @inline _t = (l,n,r) -> r*t(Basis{ThinWall,Sphere}, b.V, l, 0, n, r)
     (; r1) = b.V 
     h, σf, σw = b.params[:h], b.params[:σf], b.params[:σw]
     fs = (@inline((l,n) -> σw*h/σf*∂(r->_t(l,n,r),r1) + _t(l,n,r1)), )
@@ -52,40 +52,7 @@ end
 end
 
 
-lpmax(b::Basis{ThinWall}) = b.N
-ltmax(b::Basis{ThinWall}) = b.N
-
-function inertial(b::Basis{ThinWall}, ::Type{T}=Float64; external=false) where {T<:Number}
-
-    is, js, aijs = Int[], Int[], Complex{T}[]
-    lmn2k_p = lmn2k_p_dict(b)
-    lmn2k_t = lmn2k_t_dict(b)
-    _np = np(b)
-    r, wr = rquad(b.N + 5, b.V)
-    nu = length(b)
-
-    #m == m2 and only l==l2 needs to be considered.
-    @inbounds for l in 1:lpmax(b)
-        for m in intersect(b.m, -l:l)
-            for n in nrange_p_bc(b,l)
-                aij = _inertial_ss(b, (l,m,n), (l,m,n), r,wr; external)
-                appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n)], aij)
-            end
-        end
-    end
-
-    @inbounds for l in 1:ltmax(b)
-        for m in intersect(b.m, -l:l)
-            for n in nrange_t_bc(b,l)
-                aij = _inertial_tt(b, (l,m,n), (l,m,n), r,wr)
-                appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n)] + _np, aij)
-            end
-        end
-    end
-
-
-    return sparse(is, js, aijs, nu, nu)
-end
-
+lpmax(b::Basis{ThinWall,Sphere}) = b.N
+ltmax(b::Basis{ThinWall,Sphere}) = b.N
 
 end

@@ -19,12 +19,14 @@ The examples here use [Makie.jl](https://docs.makie.org/dev/) and [GeoMakie.jl](
 
 ## Getting started
 
-To solve for modes, three steps are needed:
+To solve for modes, four steps are needed:
 
 1) Definition/Choice of appropriate bases.
-2) Assembly of Galerkin projection matrices.
-3) Compute solution(s) of (generalized) eigen problem.
+2) Chose forcings, background state and parameters.
+3) Assembly of Galerkin projection matrices.
+4) Compute solution(s) of (generalized) eigen problem.
 
-These three steps, with some post-processing, are introduced best through the Examples.
+These four steps, are accessible through a high-level interface, as presented in the [Quickstart](@ref "Quickstart through high-level interface").
+The details are introduced in a more comprehensive way through the Examples, and in the relevant sections.
 
 Some [Theoretical background](@ref) is given, as well as some more detailed API information on the [Bases](@ref) and the implemented [Forces](@ref).
