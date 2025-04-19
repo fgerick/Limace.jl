@@ -280,24 +280,24 @@ function coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb, lmnpu, lmntu,
 
 	for (c,(l,m,n)) in zip(@views(coeffs[1:npu]),lmnpu)
 		@inline p = r-> s(TU,u.V,l,m,n,r)
-		Qlmu[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
-		Slmu[SHTns.LM_cplx(sht,l,m)] += c/r*∂(r->r*p(r),r)
+		Qlmu[SHTns.LM(sht,l,m)] += c*l*(l+1)/r*p(r)
+		Slmu[SHTns.LM(sht,l,m)] += c/r*∂(r->r*p(r),r)
 
 	end
 	for (c,(l,m,n)) in zip(@views(coeffs[npu+1:npu+ntu]),lmntu)
-		Tlmu[SHTns.LM_cplx(sht,l,m)] += c*t(TU,u.V,l,m,n,r)
+		Tlmu[SHTns.LM(sht,l,m)] += c*t(TU,u.V,l,m,n,r)
 	end
 
 	#magnetic field
 
 	for (c,(l,m,n)) in zip(@views(coeffs[nu+1:nu+npb]),lmnpb)
 		@inline p = r-> s(TB,b.V,l,m,n,r)
-		Qlmb[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
-		Slmb[SHTns.LM_cplx(sht,l,m)] += c/r*∂(@inline(r->r*p(r)),r)
+		Qlmb[SHTns.LM(sht,l,m)] += c*l*(l+1)/r*p(r)
+		Slmb[SHTns.LM(sht,l,m)] += c/r*∂(@inline(r->r*p(r)),r)
 
 	end
 	for (c,(l,m,n)) in zip(@views(coeffs[nu+npb+1:nu+npb+ntb]),lmntb)
-		Tlmb[SHTns.LM_cplx(sht,l,m)] += c*t(TB,b.V,l,m,n,r)
+		Tlmb[SHTns.LM(sht,l,m)] += c*t(TB,b.V,l,m,n,r)
 	end
 
 	return nothing
@@ -315,12 +315,12 @@ function coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, lmnpu, lmntu, coeffs, sht, u::T
 
 	for (c,(l,m,n)) in zip(@views(coeffs[1:npu]),lmnpu)
 		@inline p = r-> s(TU,u.V,l,m,n,r)
-		Qlmu[SHTns.LM_cplx(sht,l,m)] += c*l*(l+1)/r*p(r)
-		Slmu[SHTns.LM_cplx(sht,l,m)] += c/r*∂(r->r*p(r),r)
+		Qlmu[SHTns.LM(sht,l,m)] += c*l*(l+1)/r*p(r)
+		Slmu[SHTns.LM(sht,l,m)] += c/r*∂(r->r*p(r),r)
 
 	end
 	for (c,(l,m,n)) in zip(@views(coeffs[npu+1:npu+ntu]),lmntu)
-		Tlmu[SHTns.LM_cplx(sht,l,m)] += c*t(TU,u.V,l,m,n,r)
+		Tlmu[SHTns.LM(sht,l,m)] += c*t(TU,u.V,l,m,n,r)
 	end
 
 	return nothing
@@ -330,7 +330,7 @@ end
 function discretizationsetup(L::Int, V::Volume)
 	
 	nr = 2L
-	sht = SHTnsCfg(L)
+	sht = SHTnsCfg(L; transform=Complex)
 	lats, lons = SHTns.grid(sht; colat=true)
 	rgrid, _ = Quadrature.rquad(nr,V.r0, V.r1)
 	return sht, rgrid, lats, lons
@@ -338,14 +338,14 @@ end
 
 function discretizationsetup(L::Int, V::Volume, nr, nlat, nlon; mmax=L, shtype=SHTns.QuickInit())
 	
-	sht = SHTnsCfg(L, mmax, 1, nlat, nlon; shtype)
+	sht = SHTnsCfg(L, mmax, 1, nlat, nlon; shtype, transform=Complex)
 	lats, lons = SHTns.grid(sht; colat=true)
 	rgrid, _ = Quadrature.rquad(nr,V.r0, V.r1)
 	return sht, rgrid, lats, lons
 end
 
 function discretizationsetup(L::Int, nlat, nlon; mmax=L, shtype=SHTns.QuickInit())
-	sht = SHTnsCfg(L, mmax, 1, nlat, nlon; shtype)
+	sht = SHTnsCfg(L, mmax, 1, nlat, nlon; shtype, transform=Complex)
 	lats, lons = SHTns.grid(sht; colat=true)
 	return sht, lats, lons
 end
@@ -358,14 +358,14 @@ function setup_coeffs_to_SHTnSlmTlm(sht, u::TU, b::TB) where {TU<:Basis, TB<:Bas
 	
 
 	#velocity
-	Qlmu = zeros(ComplexF64,sht.nlm_cplx)
-	Slmu = zeros(ComplexF64,sht.nlm_cplx)
-	Tlmu = zeros(ComplexF64,sht.nlm_cplx)
+	Qlmu = zeros(ComplexF64,SHTns.nlm(sht))
+	Slmu = zeros(ComplexF64,SHTns.nlm(sht))
+	Tlmu = zeros(ComplexF64,SHTns.nlm(sht))
 
 	#magnetic field
-	Qlmb = zeros(ComplexF64,sht.nlm_cplx)
-	Slmb = zeros(ComplexF64,sht.nlm_cplx)
-	Tlmb = zeros(ComplexF64,sht.nlm_cplx)
+	Qlmb = zeros(ComplexF64,SHTns.nlm(sht))
+	Slmb = zeros(ComplexF64,SHTns.nlm(sht))
+	Tlmb = zeros(ComplexF64,SHTns.nlm(sht))
 
 	return lmnpu, lmntu, lmnpb, lmntb, Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb
 	
@@ -376,9 +376,9 @@ function setup_coeffs_to_SHTnSlmTlm(sht, u::TU) where {TU<:Basis}
 	lmnpu = lmn_p(u)
 	lmntu = lmn_t(u)
 	
-	Qlmu = zeros(ComplexF64,sht.nlm_cplx)
-	Slmu = zeros(ComplexF64,sht.nlm_cplx)
-	Tlmu = zeros(ComplexF64,sht.nlm_cplx)
+	Qlmu = zeros(ComplexF64,SHTns.nlm(sht))
+	Slmu = zeros(ComplexF64,SHTns.nlm(sht))
+	Tlmu = zeros(ComplexF64,SHTns.nlm(sht))
 
 	return lmnpu, lmntu, Qlmu, Slmu, Tlmu
 	
