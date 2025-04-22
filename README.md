@@ -51,33 +51,40 @@ We create our two Bases for the flow and the magnetic field.
 
 N = 6
 u = Inviscid(N)
-b = PerfectlyConducting(N) # == Inviscid(N)
+b = PerfectlyConducting(N)
+bases = [u,b]
 ```
-Without specifying the azimuthal wave number $m$, e.g. 
-```julia
-u = Inviscid(N; m=1)
-```
-all $m \in [-l,l]$ with $l \in [1,N]$ are included. In the case of the Malkus field, this is not necessary, but in general (when $\mathbf{B}_0$ consist not only of $m=0$ components) we couple all $m$.
+Without specifying the azimuthal wave number $m$ all $m \in [-l,l]$ with $l \in [1,N]$ are included. In the case of the Malkus field, this is not necessary, but in general (when $\mathbf{B}_0$ consist not only of $m=0$ components) we couple all $m$.
 
 The background magnetic field $\mathbf{B}_0 = s \mathbf{e}_z$ is defined and we choose our characteristic time scale as the Alfvén time, so that our nondimensional parameter is the Lehnert number.
 ```julia
 B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_z
 Le = 1e-2
 ```
-Then, we compute our projection operators for the Coriolis force, the Lorentz force and the induction term. In the ideal limit here, no diffusive term is included.
+Then, we can include the necessary forcings in our setup:
 ```julia
-RHSc = Limace.coriolis(u)
-RHSl = Limace.lorentz(u, b, B0)
-RHSi = Limace.induction(b,u,B0)
-RHSd = spzeros(length(b),length(u)) #empty (no Ohmic diffusion)
-RHS = [RHSc/Le RHSl
-	   RHSi RHSd];
+forcings = [Limace.Inertial(u), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u, b, B0),
+			Limace.Inertial(b), Limace.InductionB0(b,u,B0)]
+```
+We create a `LimaceProblem`
+```julia
+problem = LimaceProblem(bases, forcings)
+```
+that can be assembled
+```julia
+Limace.assemble!(problem)
 ```
 
-Again, the projections on $\partial_t \mathbf{u}$ and $\partial_t \mathbf{b}$ are unit matrices, so that the eigenvalues are simply computed as
+and then solved
 ```julia
-λ = eigvals(Matrix(RHS))
+Limace.solve!(problem)
 ```
+
+The eigenvalues are then
+```julia
+λ = problem.sol.values
+```
+
 We can again compare to the analytical solutions:
 ```julia
 function zhang(m, N) 
