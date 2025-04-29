@@ -37,7 +37,7 @@ end
         u = Inviscid(N; m)
         RHS = Limace.coriolis(u; Ω)
         if Ω2 != 0.0
-            U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), sqrt(2pi/15))
+            U0 = BasisElement(u, Toroidal, (1,0,0), sqrt(2pi/15))
             RHSadv = -Ω2*Limace.lorentz(u, u, U0) #advection term is the same as Lorentz term
             RHS += RHSadv
         end
@@ -154,7 +154,7 @@ end
 
     LHS = Limace.inertial(b)
     RHS_diff = Limace.diffusion(b)
-    U0 = BasisElement(Basis{Inviscid}, Toroidal, (1,0,0), 1.0)
+    U0 = BasisElement(Basis{Inviscid, Sphere}, Toroidal, (1,0,0), 1.0)
     ind_utor = Limace.induction(b,U0,b)
 
     Rm = 10.0
@@ -176,8 +176,8 @@ end
 
     struct Li2010; end
     # Li et al. (2010) eq. (24) fixed:
-    @inline Limace.Bases.t(::Type{Basis{Li2010}}, V::Volume, l, m, n, r) = 8.107929179422066 * r * (1 - r^2) #t10
-    @inline Limace.Bases.s(::Type{Basis{Li2010}}, V::Volume, l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2 #s20
+    @inline Limace.Bases.t(::Type{Basis{Li2010, Sphere}}, V::Sphere, l, m, n, r) = 8.107929179422066 * r * (1 - r^2) #t10
+    @inline Limace.Bases.s(::Type{Basis{Li2010, Sphere}}, V::Sphere, l, m, n, r) = 1.193271237996972 * r^2 * (1 - r^2)^2 #s20
 
     function assemble(N)
         # N =45
@@ -187,8 +187,8 @@ end
         LHS = Limace.inertial(b)
         RHS_diff = Limace.diffusion(b)
 
-        U0_t10 = BasisElement(Basis{Li2010}, Toroidal, (1,0,1), 1.0)
-        U0_s20 = BasisElement(Basis{Li2010}, Poloidal, (2,0,1), 1.0)
+        U0_t10 = BasisElement(Basis{Li2010, Sphere}, Toroidal, (1,0,1), 1.0)
+        U0_s20 = BasisElement(Basis{Li2010, Sphere}, Poloidal, (2,0,1), 1.0)
 
         RHS_induction_t10 = Limace.induction(b,U0_t10,b)
         RHS_induction_s20 = Limace.induction(b,U0_s20,b)
