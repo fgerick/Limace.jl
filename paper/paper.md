@@ -47,7 +47,7 @@ The model code base is tested against mode solutions from the scientific literat
 
 # Theoretical background and implementation details
 
-In order to compute modal solutions, we consider the linearized momentum equation of the incompressible fluid and the linearized induction equation [@iversscalar2008, @gerickinterannual2024]
+In order to compute modal solutions, we consider the linearized momentum equation of the incompressible fluid and the linearized induction equation [@iversscalar2008; @gerickinterannual2024]
 $$
 \begin{aligned}
 	\lambda\mathbf{u} =& -\left(\boldsymbol{\nabla}\times\mathbf{u}\right)\times\mathbf{U}_0- \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u} -2\boldsymbol{\Omega}times\mathbf{u} - \frac{1}{\rho}\nabla p\\
