@@ -50,7 +50,7 @@ The model code base is tested against mode solutions from the scientific literat
 In order to compute modal solutions, we consider the linearized momentum equation of the incompressible fluid and the linearized induction equation [@iversscalar2008; @gerickinterannual2024]
 $$
 \begin{aligned}
-	\lambda\mathbf{u} =& -\left(\boldsymbol{\nabla}\times\mathbf{u}\right)\times\mathbf{U}_0- \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u} -2\boldsymbol{\Omega}times\mathbf{u} - \frac{1}{\rho}\nabla p\\
+	\lambda\mathbf{u} =& -\left(\boldsymbol{\nabla}\times\mathbf{u}\right)\times\mathbf{U}_0- \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u} -2\boldsymbol{\Omega}\times\mathbf{u} - \frac{1}{\rho}\nabla p\\
 	 &+ \frac{1}{\rho\mu_0}\left(\left(\boldsymbol{\nabla}\times\mathbf{b}\right)\times\mathbf{B}_0+\left(\boldsymbol{\nabla}\times\mathbf{B}_0\right)\times\mathbf{b}\right) + \nu \boldsymbol{\nabla}^2\mathbf{u},\nonumber\\
 	\lambda\mathbf{b} =& \boldsymbol{\nabla}\times\left(\mathbf{U}_0\times\mathbf{b}\right) + \boldsymbol{\nabla}\times\left(\mathbf{u}\times\mathbf{B}_0\right) + \eta \boldsymbol{\nabla}^2\mathbf{b}.
 \end{aligned}
