@@ -204,9 +204,25 @@ lmn2k_p_dict(b::Basis) = lmn2k_dict(lmn_p(b))
 lmn2k_t_dict(b::Basis) = lmn2k_dict(lmn_t(b))
 
 function _lmn2cdeg_p(b::Basis, l, m, n)
+    for N in 1:b.N
+        _m = length(b.m) == 1 ? b.m : -N:N
+        _n = b.n
+        if (l,m,n) ∈ lmn_p(typeof(b)(;N, m=_m, n=_n))
+            return N
+        end
+    end
+    return nothing
 end
 
 function _lmn2cdeg_t(b::Basis, l, m, n)
+    for N in 1:b.N
+        _m = length(b.m) == 1 ? b.m : -N:N
+        _n = b.n
+        if (l,m,n) ∈ lmn_t(typeof(b)(;N, m=_m, n=_n))
+            return N
+        end
+    end
+    return nothing
 end
 
 # function t(::Type{Basis}, l, m, n, r)

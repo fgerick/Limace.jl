@@ -212,9 +212,9 @@ end
 ## assemble the problem
 
 """
-    preassemble!(problem::LimaceProblem; kwargs...)
+    preassemble!(problem::LimaceProblem; threads=false, kwargs...)
 
-Preassemble `problem.forcing` matrices in the problem.
+Preassemble `problem.forcing` matrices in the problem. When `threads=true` the assembly is done using `Threads.nthreads()` threads.
 """
 function preassemble!(problem::LimaceProblem; kwargs...)
     for f in problem.forcings
@@ -227,10 +227,10 @@ function preassemble!(problem::LimaceProblem; kwargs...)
 end
 
 """
-    assemble!(problem::LimaceProblem; kwargs...)
+    assemble!(problem::LimaceProblem; threads=false, kwargs...)
 
 Assemble the problem matrices `problem.LHS` and `problem.RHS` from the forcing matrices that may or may not be preassembled.
-For now, only `Limace.Inertial` are added to the `LHS` matrix.
+For now, only `Limace.Inertial` are added to the `LHS` matrix. When `threads=true` the assembly is done using `Threads.nthreads()` threads.
 """
 function assemble!(problem::LimaceProblem; kwargs...)
     if !problem.preassembled 
@@ -320,7 +320,7 @@ function solve_dense!(problem::LimaceProblem)
         if problem.LHS ≈ I
             C = Matrix(problem.RHS)
         else
-            C = Matrix(problem.RHS\Diagonal(problem.LHS))
+            C = Matrix(Diagonal(problem.LHS)\problem.RHS)
         end
         problem.sol = eigen(C)
     else

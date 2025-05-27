@@ -10,7 +10,7 @@ using ..Utils
 using ..Poly
 
 using ..Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax, Sphere
-import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s
+import ..Bases: lpmax, ltmax, lmn_t, lmn_p, _nrange_p, _nrange_t, np, nt, t, s, _lmn2cdeg_p, _lmn2cdeg_t
 import ..Limace: _coriolis_poloidal_poloidal!, _coriolis_toroidal_toroidal!,  _coriolis_poloidal_toroidal!, _coriolis_toroidal_poloidal!
 import ..Limace: inertial, diffusion
 
@@ -64,6 +64,9 @@ end
 
 @inline lpmax(b::Basis{Viscous,Sphere}) = b.N
 @inline ltmax(b::Basis{Viscous,Sphere}) = b.N
+
+_lmn2cdeg_p(b::Basis{Viscous, Sphere}, l,m,n) = l+2n+1
+_lmn2cdeg_t(b::Basis{Viscous, Sphere}, l,m,n) = l+2n
 
 
 #Inertial term/inner products
