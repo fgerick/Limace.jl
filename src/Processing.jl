@@ -278,8 +278,7 @@ end
 """
 $(SIGNATURES)
 
-	Get all `(l,m,n)` that correspond to the poloidal and toroidal component of `u` and `b` basis at each Cartesian
-	degree `ñ ∈ 1:N`.
+Get all `(l,m,n)` that correspond to the poloidal and toroidal component of `u` and `b` basis at each Cartesian degree `ñ ∈ 1:N`.
 """
 function lmn_n(u::Basis{TU}, b::Basis{TB}) where {TU, TB}
     N = u.N

@@ -3,6 +3,13 @@
 Several bases are readily implemented for full sphere geometries and satisfying certain boundary and orthogonality conditions. 
 The most commonly encountered ones are outlined here and a small introduction into how to write a new basis is given at the end.
 
+Each basis essentially consists of two scalar functions `s` and `t`, corresponding to the radial poloidal and toroidal scalars, respectively. 
+They are introduced in the [Theoretical background](@ref) in detail as $S_{ln}$ and $T_{ln}$. 
+The function arguments of `s` and `t` include the azimuthal degree `m` to keep it generic for possible future extensions.
+
+Currently, all bases rely on a radial representation using Jacobi polynomials $J_n^{\alpha,\beta}(x)$ (implemented as [Limace.Poly.jacobi](@ref)).
+
+
 ## Inviscid velocity basis
 
 For an inviscid fluid, we only require ``\mathbf{u}\cdot\mathbf{n}=0`` at the boundary. This is known as the non-penetration condition. For poloidal and toroidal decomposition, this boils down to the requirement that the poloidal scalar vanishes at the boundary. The toroidal scalar remains unconstrained and we have free slip.

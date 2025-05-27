@@ -38,13 +38,13 @@ E_{abc} = \\oint\\int Y_c\\left( \\frac{\\partial Y_a}{\\partial \\theta} \\frac
 end
 
 """
-$(TYPEDSIGNATURES)
+    jacobi(n,a,b,x)
 
 Jacobi polynomial 
 
 ```math
 J_n^{(a,b)}(x)
-````
+```
 """
 @inline function jacobi(n,a,b,x)
     ox = one(x)
