@@ -143,10 +143,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-The basis elements are normalized so that ∫₀^∞ B⋅B dV = 1.
+The basis elements are normalized so that ``\\int_0^\\infty \\mathbf{B}\\cdot\\mathbf{B}\\mathrm{d}V = 1``.
 There is no external contribution for the toroidal components. 
-For the poloidal components with n=1, there is an external contribution (r>1). 
-To normalize the basis elements so that ∫₀¹ B⋅B dV = 1, the following norm function can be used:
+For the poloidal components with ``n=1``, there is an external contribution (``r>1``). 
+To normalize the basis elements so that ``\\int_0^1 \\mathbf{B}\\cdot\\mathbf{B}\\mathrm{d}V = 1``, the following norm function can be used:
 """
 function unitspherenorm(l,n)
     if n==1
