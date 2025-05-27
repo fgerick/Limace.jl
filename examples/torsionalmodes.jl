@@ -21,7 +21,7 @@ using Limace.Discretization: spectospat
 # We can assemble the submatrices and concatenate them to get our final left hand side matrix `LHS` and right hand side matrix `RHS`.
 #
 # Here, the non-dimensional parameters are the Lehnert number `Le` and the Lundquist number `Lu`. We give the resolution by an integer `N`, that determines the polynomial degree of our solutions.
-# We define `B0` as a collection of two `BasisElement`'s, a mix of two poloidal field components, `l,m,n=(1,0,1)` and `l,m,n = (2,0,1)`, i.e. dipolar and quadrupolar symmetry.
+# We define `B0` as a collection of two `BasisElement`'s, an arbitrary mix of two poloidal field components, `l,m,n=(1,0,1)` and `l,m,n = (2,0,1)`, i.e. dipolar and quadrupolar symmetry.
 # Define parameters, inviscid and insulating bases, and background magnetic field:
 
 N = 80
@@ -32,6 +32,7 @@ u = Inviscid(N; m=0)
 b = Insulating(N; m=0)
 B0 = [BasisElement(b, Poloidal, (1,0,1),0.3), BasisElement(b, Poloidal, (2,0,1),0.7)]
 
+# The factors `0.3` and `0.7` are arbitrary, but they can be used to adjust the relative strength of the components of the background magnetic field.
 # We can now put it together in a `LimaceProblem`.
 bases = [u, b]
 forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b, 1/Lu)]
@@ -48,7 +49,8 @@ Limace.assemble!(problem; threads=true);
 
 target = 1.0im
 
-# The problem can be solved using `Limace.solve!` with the `:sparse` method and the `target` keyword argument. 
+# The problem can be solved using `Limace.solve!` with the `:sparse` method and the `target` keyword argument, which is based on shift-invert spectral transform and an implicitly restarted Arnoldi method. 
+# The keyword `nev` can be set to the desired number of eigenvalues.
 
 Limace.solve!(problem; method=:sparse, target, nev=5);
 
@@ -56,8 +58,7 @@ Limace.solve!(problem; method=:sparse, target, nev=5);
 
 λ, x = problem.sol.values, problem.sol.vectors;
 
-# Alternatively, one can use the `eigstarget` function directly, which is based on shift-invert spectral transform and an implicitly restarted Arnoldi method. 
-# The keyword `nev` can be set to the desired number of eigenvalues. 
+# Alternatively, one can use the `eigstarget` function using the problem matrices directly:
 
 λ, x = eigstarget(problem.RHS, problem.LHS, target; nev=5);
 

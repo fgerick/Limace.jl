@@ -74,9 +74,10 @@ N = 8
 u = Inviscid(N)
 b = PerfectlyConducting(N) # same poloidal and toroidal scalars as Inviscid(N; m)
 
-# The background magnetic field $\mathbf{B}_0 = s \mathbf{e}_z$ is defined and we choose our characteristic time scale as the Alfvén time, so that our nondimensional parameter is the Lehnert number.
+# The background magnetic field $\mathbf{B}_0 = s \mathbf{e}_\phi$ (with $s$ the cylindrical radius and $\mathbf{e}_\phi$ the unit vector in azimuthal direction) is defined and 
+# we choose our characteristic time scale as the Alfvén time, so that our nondimensional parameter is the Lehnert number.
 
-B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_z
+B0 = BasisElement(b, Toroidal, (1,0,0), 2sqrt(2pi/15)) # corresponds to B_0 = s e_ϕ
 Le = 1e-2
 
 # Then, we compute our projection operators for the Coriolis force, the Lorentz force and the induction term. In the ideal limit here, no diffusive term is included.
@@ -189,7 +190,7 @@ ekin, emag = Limace.Processing.energies(problem)
 let
 	f = Figure()
 	ax = Axis(f[1,1], xscale=log10, yscale=log10, xlabel=L"\omega", ylabel=L"E_\mathrm{kin}/E_\mathrm{mag}")
-	scatter!(ax, abs.(imag.(λ)) .+ eps(), ekin./emag)
+	scatter!(ax, abs.(imag.(problem.sol.values)) .+ eps(), ekin./emag)
 	xlims!(ax, Le/10,10/Le)
 	ylims!(ax, Le^3, 1/Le^3)
 	f
