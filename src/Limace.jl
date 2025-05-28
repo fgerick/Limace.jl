@@ -53,7 +53,7 @@ include("bases/InviscidShell.jl")
 using .InviscidShellBasis
 
 include("bases/Unconstrained.jl")
-using .UnconstrainedBasis
+@reexport using .UnconstrainedBasis
 
 include("bases/InviscidNoBC.jl")
 using .InviscidBasisNoBC

@@ -83,7 +83,12 @@ abstract type LimaceBasis end
 """
 $(TYPEDEF)
 
-$(TYPEDFIELDS)
+- `N::Int`: truncation degree
+- `m::UnitRange{Int}`: spherical harmonic orders, default `-N:N``
+- `n::UnitRange{Int}`: radial degrees, default `0:0` to make `n = n(N,l)`.
+- `BC::BoundaryCondition`: boundary condition, default `NoBC()`
+- `V::Vol`: volume, default `Sphere()`
+- `params::Dict{Symbol,Float64}`: additional parameters, default empty dictionary
 
 """
 Base.@kwdef struct Basis{T,Vol<:Volume} <: LimaceBasis
@@ -294,7 +299,23 @@ struct Toroidal <: Helmholtz end
 """
 $(TYPEDEF)
 
-$(TYPEDFIELDS)
+- `TB<:Basis`: basis type
+- `PT<:Helmholtz`: Helmholtz type, either `Poloidal` or `Toroidal`
+- `lmn::NTuple{3,Int}`: spherical harmonic degree, order and radial degree, i.e `(l, m, n)`
+- `factor::T`: factor, default `1.0`, can be used to scale the basis element
+
+## Example
+```julia
+b = Insulating(10)
+B0 = BasisElement(b, Poloidal, (1, 0, 0))
+B1 = BasisElement(b, Toroidal, (2, 1, 2), 2.0)
+```
+
+Or without constructing a `Basis` object:
+```julia
+l, m, n = 1, 0, 1
+B0 = BasisElement(Basis{Insulating,Sphere}, Poloidal, (l, m, n))
+```
 
 """
 struct BasisElement{TB<:Basis,PT<:Helmholtz,T<:Number}

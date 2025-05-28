@@ -46,7 +46,7 @@ it is convenient to decompose the fields into poloidal and toroidal components.
 ```math
 \begin{align}
     \mathbf{u} &= \sum_i \alpha_i\mathbf{u}_i = \sum_{l,m,n} \alpha^S_{lmn}\mathbf{S}^\mathbf{u}_{lmn} + \sum_{l,m,n} \alpha^T_{lmn}\mathbf{T}^\mathbf{u}_{lmn},\\
-    \mathbf{b} &= \sum_i \beta_i\mathbf{b}_i =  \sum_{l,m,n} \beta^S_{lmn}\mathbf{S}^\mathbf{b}_{lmn} + \sum_{l,m,n} \beta^T_{lmn}\mathbf{T}^{\mathbf{b}_{lmn},
+    \mathbf{b} &= \sum_i \beta_i\mathbf{b}_i =  \sum_{l,m,n} \beta^S_{lmn}\mathbf{S}^\mathbf{b}_{lmn} + \sum_{l,m,n} \beta^T_{lmn}\mathbf{T}^\mathbf{b}_{lmn},
 \end{align}
 ```
 with the respective poloidal $\mathbf{S}$ and toroidal $\mathbf{T}$ basis vectors
