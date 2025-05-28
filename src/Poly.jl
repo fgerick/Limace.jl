@@ -165,7 +165,7 @@ Below equation (31) in [ivers_scalar_2008](@citet).
 $(TYPEDSIGNATURES)
 
 ```math
-l(l+1)t t_2
+r\\rightarrow l(l+1) t(r) t_2(r)
 ```
 
 Radial function to be integrated in radius when computing the inner product of two toroidal vectors.
@@ -178,7 +178,7 @@ end
 $(TYPEDSIGNATURES)
 
 ```math
-\\frac{l(l+1)}{r^2}\\left( l(l+1)s s_2 + \\frac{\\partial r s}{\\partial r}\\frac{\\partial r s_2}{\\partial r}\\right)
+r\\rightarrow \\frac{l(l+1)}{r^2}\\left( l(l+1)s(r) s_2(r) + \\frac{\\partial r s(r)}{\\partial r}\\frac{\\partial r s_2(r)}{\\partial r}\\right)
 ```
 
 Radial function to be integrated in radius when computing the inner product of two poloidal vectors.
