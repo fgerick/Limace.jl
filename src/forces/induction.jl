@@ -1,3 +1,82 @@
+"""
+$(TYPEDEF)
+
+- `basis::Basis{TB}`: The basis for the induction operator.
+- `U0`: The background flow, which can be a single `BasisElement` or a collection of them.
+- `factor::T`: : A scalar factor that multiplies the induction operator, defaulting to `1.0`.
+- `mat::SparseMatrixCSC{ComplexF64}`: A sparse matrix representation of the induction operator.
+- `preassembled::Bool`: A flag indicating whether the induction operator has been preassembled.
+
+## Example usage
+
+```julia
+u = Inviscid(10)
+b = Insulating(10)
+U0 = BasisElement(u, Toroidal, (2,0,1))
+f = Limace.InductionU0(b, U0)
+Limace.assemble!(f)
+f.mat # sparse matrix representation of the induction operator
+```
+"""
+mutable struct InductionU0{TB,T} <: Forcing{1}
+    basis::Basis{TB}
+    U0
+    factor::T
+    mat::SparseMatrixCSC{ComplexF64}
+    preassembled::Bool
+end
+
+"""
+$(TYPEDEF)
+
+- `bbasis::Basis{TB}`: The magnetic field basis for the induction operator.
+- `ubasis::Basis{TB}`: The velocity basis for the induction operator.
+- `B0`: The background magnetic field, which can be a single `BasisElement` or a collection of them.
+- `factor::T`: : A scalar factor that multiplies the induction operator, defaulting to `1.0`.
+- `mat::SparseMatrixCSC{ComplexF64}`: A sparse matrix representation of the induction operator.
+- `preassembled::Bool`: A flag indicating whether the induction operator has been preassembled.
+
+```julia
+u = Inviscid(10)
+b = Insulating(10)
+B0 = BasisElement(b, Poloidal, (2,0,1))
+f = Limace.InductionB0(b, u, B0)
+Limace.assemble!(f)
+f.mat # sparse matrix representation of the induction operator
+```
+"""
+mutable struct InductionB0{TB,TU,T} <: Forcing{2}
+    bbasis::Basis{TB}
+    ubasis::Basis{TU}
+    B0
+    factor::T
+    mat::SparseMatrixCSC{ComplexF64}
+    preassembled::Bool
+end
+
+function InductionU0(b::Basis, U0, factor::T=1.0) where T
+    mat = spzeros(ComplexF64, length(b), length(b))
+    return InductionU0(b, U0, ComplexF64(factor), mat, false)
+end
+
+function InductionB0(bb::Basis, ub::Basis, B0, factor::T=1.0) where T
+    mat = spzeros(ComplexF64, length(bb), length(ub))
+    return InductionB0(bb, ub, B0, ComplexF64(factor), mat, false)
+end
+
+
+function assemble!(f::InductionU0; kwargs...)
+    f.mat = sum(induction(f.basis, U0, f.basis; kwargs...) for U0 in f.U0)
+    f.preassembled = true
+    return f.mat
+end
+
+function assemble!(f::InductionB0; kwargs...)
+    f.mat = sum(induction(f.bbasis, f.ubasis, B0; kwargs...) for B0 in f.B0)
+    f.preassembled = true
+    return f.mat
+end
+
 ##
 ## poloidal induction equation
 ##

@@ -29,7 +29,7 @@ Modules = [Limace.InviscidBasis]
 
 
 To define the inviscid basis, using a polynomial truncation `N = 10`, simply run
-```@example
+```@example bases
 using Limace #hide
 N = 10
 u = Inviscid(N)
@@ -37,9 +37,7 @@ u = Inviscid(N)
 
 The basis `u` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
 
-```@example
-using Limace #hide
-N = 10 #hide
+```@example bases
 u = Inviscid(N; m=1)
 ```
 
@@ -58,17 +56,13 @@ Modules = [Limace.ViscousBasis]
 
 
 To define the viscous basis, using a polynomial truncation `N = 10`, simply run
-```@example
-using Limace #hide
-N = 10
+```@example bases
 u = Viscous(N)
 ```
 
 The basis `u` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
 
-```@example
-using Limace #hide
-N = 10 #hide
+```@example bases
 u = Viscous(N; m=1)
 ```
 
@@ -100,17 +94,13 @@ Modules = [Limace.InsulatingBasis]
 ```
 
 To define the insulating basis, using a polynomial truncation `N = 10`, simply run
-```@example
-using Limace #hide
-N = 10
+```@example bases
 b = Insulating(N)
 ```
 
 The basis `b` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
 
-```@example
-using Limace #hide
-N = 10 #hide
+```@example bases
 b = Insulating(N; m=1)
 ```
 
@@ -138,17 +128,13 @@ Modules = [Limace.PerfectlyConductingBasis]
 
 
 To define the perfectly conducting basis, using a polynomial truncation `N = 10`, simply run
-```@example
-using Limace #hide
-N = 10
+```@example bases
 b = PerfectlyConducting(N)
 ```
 
 The basis `b` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
 
-```@example
-using Limace #hide
-N = 10 #hide
+```@example bases
 b = PerfectlyConducting(N; m=1)
 ```
 
@@ -167,17 +153,13 @@ Modules = [Limace.UnconstrainedBasis]
 
 
 To define the unconstrained basis, using a polynomial truncation `N = 10`, simply run
-```@example
-using Limace #hide
-N = 10
+```@example bases
 u = Unconstrained(N)
 ```
 
 The basis `u` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
 
-```@example
-using Limace #hide
-N = 10 #hide
+```@example bases
 u = Unconstrained(N; m=1)
 ```
 
@@ -259,9 +241,8 @@ Here, these are given as evaluations at the surface, `b.V.r1 = 1.0`. We use auto
 
 The boundary condition is indicated in the basis, e.g.
 
-```@example
-using Limace #hide
-u = Inviscid(10)
+```@example bases
+u = Inviscid(N)
 u.BC
 ```
 

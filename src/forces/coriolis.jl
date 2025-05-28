@@ -1,3 +1,42 @@
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+
+This defines the Coriolis force operator for a given `basis`. The `factor` is a scalar that multiplies the operator, 
+e.g. the rotation rate ``\\Omega`` or a nondimensional parameter (e.g. ``1/\\mathrm{Le}``). 
+The `mat` is a sparse matrix representation of the operator, and `preassembled` indicates whether the matrix has been preassembled.
+
+## Example usage
+
+```julia
+u = Inviscid(10)
+Ω = 1.0
+c = Limace.Coriolis(u, Ω)
+Limace.assemble!(c)
+c.mat  # sparse matrix representation of the Coriolis operator
+```
+"""
+mutable struct Coriolis{TB,T} <: Forcing{1}
+    basis::Basis{TB}
+    factor::T
+    mat::SparseMatrixCSC{ComplexF64}
+    preassembled::Bool
+end
+
+
+function Coriolis(b::Basis, factor::T=1.0) where T
+    mat = spzeros(ComplexF64, length(b), length(b))
+    return Coriolis(b, ComplexF64(factor), mat, false)
+end
+
+function assemble!(f::Coriolis; kwargs...)
+    f.mat = coriolis(f.basis; kwargs...)
+    f.preassembled = true
+    return f.mat
+end
+
 """
 $(TYPEDSIGNATURES)
 

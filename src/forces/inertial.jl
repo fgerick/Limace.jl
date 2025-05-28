@@ -1,3 +1,39 @@
+
+"""
+$(TYPEDEF)
+
+- `basis::Basis{TB}`: The basis for the inertial operator.
+- `factor::T`: A scalar factor that multiplies the inertial operator, defaulting to `1.0`.
+- `mat::SparseMatrixCSC{ComplexF64}`: A sparse matrix representation of the inertial operator.
+- `preassembled::Bool`: A flag indicating whether the inertial operator has been preassembled.
+
+## Example usage
+```julia
+u = Inviscid(10)
+f = Limace.Inertial(u)
+Limace.assemble!(f)
+r.mat  # sparse matrix representation of the inertial operator
+```
+"""
+mutable struct Inertial{TB,T} <: Forcing{1}
+    basis::Basis{TB}
+    factor::T
+    mat::SparseMatrixCSC{ComplexF64}
+    preassembled::Bool
+end
+
+function Inertial(b::Basis, factor::T=1.0) where T
+    mat = spzeros(ComplexF64, length(b), length(b))
+    return Inertial(b, ComplexF64(factor), mat, false)
+end
+
+function assemble!(f::Inertial; kwargs...)
+    f.mat = sparse(inertial(f.basis; kwargs...))
+    f.preassembled = true
+    return f.mat
+end
+
+
 """
 $(TYPEDSIGNATURES)
 

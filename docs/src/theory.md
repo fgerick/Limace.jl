@@ -24,7 +24,7 @@ with ``\lambda=-\sigma+\mathrm{i}\omega``, with ``\sigma`` the damping rate and 
 Removing the steady part and neglecting higher order terms, the linearized MHD equations read
 ```math
 \begin{align}
-	\lambda\mathbf{u} =& -\left(\boldsymbol{\nabla}\times\mathbf{u}\right)\times\mathbf{U}_0- \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u} -2\boldsymbol{\Omega}\times\mathbf{u} - \frac{1}{\rho}\nabla p\\
+	\lambda\mathbf{u} =& -\left(\mathbf{u}\cdot\boldsymbol{\nabla}\right)\mathbf{U}_0 -\left(\mathbf{U}_0\cdot\boldsymbol{\nabla}\right)\mathbf{u} -2\boldsymbol{\Omega}\times\mathbf{u} - \frac{1}{\rho}\nabla p\\
 	 &+ \frac{1}{\rho\mu_0}\left(\left(\boldsymbol{\nabla}\times\mathbf{b}\right)\times\mathbf{B}_0+\left(\boldsymbol{\nabla}\times\mathbf{B}_0\right)\times\mathbf{b}\right) + \nu \boldsymbol{\nabla}^2\mathbf{u},\nonumber\\
 	\lambda\mathbf{b} =& \boldsymbol{\nabla}\times\left(\mathbf{U}_0\times\mathbf{b}\right) + \boldsymbol{\nabla}\times\left(\mathbf{u}\times\mathbf{B}_0\right) + \eta \boldsymbol{\nabla}^2\mathbf{b}.
 \end{align}

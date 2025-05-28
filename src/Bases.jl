@@ -3,7 +3,7 @@ module Bases
 using DocStringExtensions
 
 export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
-export Volume
+export Volume, Sphere, SphericalShell
 export LimaceBasis, Basis, BasisElement, isaxisymmetric, Helmholtz, Poloidal, Toroidal
 # export nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 

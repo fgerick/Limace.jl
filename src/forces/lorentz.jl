@@ -1,3 +1,46 @@
+"""
+$(TYPEDEF)
+
+- `ubasis::Basis{TU}`: The velocity basis for the Lorentz operator.
+- `bbasis::Basis{TB}`: The basis for the Lorentz operator.
+- `B0`: The background magnetic field, which can be a single `BasisElement` or a collection of them.
+- `factor::T`: : A scalar factor that multiplies the Lorentz operator, defaulting to `1.0`.
+- `mat::SparseMatrixCSC{ComplexF64}`: A sparse matrix representation of the Lorentz operator.
+- `preassembled::Bool`: A flag indicating whether the Lorentz operator has been preassembled.
+
+## Example usage
+
+```julia
+u = Inviscid(10)
+b = Insulating(10)
+B0 = BasisElement(b, Toroidal, (1,0,1))
+f = Limace.Lorentz(u,b,B0)
+Limace.assemble!(f)
+f.mat = # sparse matrix representation of the Lorentz operator
+```
+
+"""
+mutable struct Lorentz{TU,TB,T} <: Forcing{2}
+    ubasis::Basis{TU}
+    bbasis::Basis{TB}
+    B0
+    factor::T
+    mat::SparseMatrixCSC{ComplexF64}
+    preassembled::Bool
+end
+
+function Lorentz(ub::Basis, bb::Basis, B0, factor::T=1.0) where T
+    mat = spzeros(ComplexF64, length(ub), length(bb))
+    return Lorentz(ub, bb, B0, ComplexF64(factor), mat, false)
+end
+
+
+function assemble!(f::Lorentz; kwargs...)
+    f.mat = sum(lorentz(f.ubasis, f.bbasis, B0; kwargs...) for B0 in f.B0)
+    f.preassembled = true
+    return f.mat
+end
+
 ##
 ## poloidal Lorentz force
 ##

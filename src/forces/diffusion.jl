@@ -1,4 +1,31 @@
 """
+$(TYPEDEF)
+
+- `basis::Basis{TB}`: The basis for the diffusion operator.
+- `factor::T`: : A scalar factor that multiplies the diffusion operator, defaulting to `1.0`.
+- `mat::SparseMatrixCSC{ComplexF64}`: A sparse matrix representation of the diffusion operator.
+- `preassembled::Bool`: A flag indicating whether the diffusion operator has been preassembled.
+
+"""
+mutable struct Diffusion{TB,T} <: Forcing{1}
+    basis::Basis{TB}
+    factor::T
+    mat::SparseMatrixCSC{ComplexF64}
+    preassembled::Bool
+end
+
+function Diffusion(b::Basis, factor::T=1.0) where T
+    mat = spzeros(ComplexF64, length(b), length(b))
+    return Diffusion(b, ComplexF64(factor), mat, false)
+end
+
+function assemble!(f::Diffusion; kwargs...)
+    f.mat = diffusion(f.basis; kwargs...)
+    f.preassembled = true
+    return f.mat
+end
+
+"""
 $(TYPEDSIGNATURES)
 
 Diffusion term of the poloidal components. Set `external=true` to include the contribution 
