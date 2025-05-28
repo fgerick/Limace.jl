@@ -11,11 +11,12 @@ export wigner3j, adamgaunt, elsasser, jacobi, ylm, ∂, p, _∂ll, D, innert, in
 """
     adamgaunt(la,lb,lc,ma,mb,mc)
 
-Adam-Gaunt integral [james_adams_1973](@citep)
+Adam-Gaunt integral [james_adams_1973](@citep), given by
 
 ```math
-A_{abc} = \\oint\\int Y_aY_bY_c\\sin\\theta\\,\\mathrm{d}\\theta\\mathrm{d}\\phi
+A_{abc} = \\oint\\int Y_aY_bY_c\\sin\\theta\\,\\mathrm{d}\\theta\\mathrm{d}\\phi,
 ```
+where the spherical harmonics are abbreviated, so that ``Y_a = Y_{l_a}^{m_a}``.
 """
 @inline function adamgaunt(la,lb,lc,ma,mb,mc)::ComplexF64
     return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(Float64,Int(la), Int(lb), Int(lc), 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc))
@@ -26,12 +27,12 @@ end
 """
     elsasser(la,lb,lc,ma,mb,mc)
 
-Elsasser integral [james_adams_1973](@citep)
+Elsasser integral [james_adams_1973](@citep), given by
 
 ```math
-E_{abc} = \\oint\\int Y_c\\left( \\frac{\\partial Y_a}{\\partial \\theta} \\frac{\\partial Y_b}{\\partial \\phi} - \\frac{\\partial Y_a}{\\partial \\phi}\\frac{\\partial Y_b}{\\partial \\theta} \\right)\\,\\mathrm{d}\\theta\\mathrm{d}\\phi
+E_{abc} = \\oint\\int Y_c\\left( \\frac{\\partial Y_a}{\\partial \\theta} \\frac{\\partial Y_b}{\\partial \\phi} - \\frac{\\partial Y_a}{\\partial \\phi}\\frac{\\partial Y_b}{\\partial \\theta} \\right)\\,\\mathrm{d}\\theta\\mathrm{d}\\phi,
 ```
-
+where the spherical harmonics are abbreviated, so that ``Y_a = Y_{l_a}^{m_a}``.
 """
 @inline function elsasser(la,lb,lc,ma,mb,mc)::ComplexF64
     return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*_Δ(la,lb,lc)*wigner3j(Float64,Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
