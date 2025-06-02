@@ -360,6 +360,17 @@ end
 """
 $(SIGNATURES)
 
+Find all indices of eigenvectors `evecs` for which the ratio of peak energy to energy at truncation degree
+(max between two last Cartesian degrees) in toroidal/poloidal kinetic/magnetic energy is below `thresh`.
+"""
+function eigenvector_filter(evecs, u, b; thresh=1e-2)
+    ratios = epeak_etrunc_cartesian(evecs, u, b)
+    return eachindex(ratios)[ratios .< thresh]
+end
+
+"""
+$(SIGNATURES)
+
 Find all indices of `evals1` and `evals2` for which `findall(y->any(x->isapprox(x,y; rtol=λtol), evals2),evals1)`.
 Multithreaded.
 """
