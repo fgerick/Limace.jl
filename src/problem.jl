@@ -10,175 +10,6 @@ iterate(f::Forcing, ::Any) = nothing
 
 Base.show(io::IO, f::T) where T <: Forcing = print(io, "$T(N = $(getfield(f,1).N), factor = $(f.factor))")
 
-"""
-$(TYPEDEF)
-
-$(TYPEDFIELDS)
-"""
-mutable struct Coriolis{TB,T} <: Forcing{1}
-    basis::Basis{TB}
-    factor::T
-    mat::SparseMatrixCSC{ComplexF64}
-    preassembled::Bool
-end
-
-"""
-$(TYPEDEF)
-
-$(TYPEDFIELDS)
-"""
-mutable struct Inertial{TB,T} <: Forcing{1}
-    basis::Basis{TB}
-    factor::T
-    mat::SparseMatrixCSC{ComplexF64}
-    preassembled::Bool
-end
-
-"""
-$(TYPEDEF)
-
-$(TYPEDFIELDS)
-"""
-mutable struct Diffusion{TB,T} <: Forcing{1}
-    basis::Basis{TB}
-    factor::T
-    mat::SparseMatrixCSC{ComplexF64}
-    preassembled::Bool
-end
-
-"""
-$(TYPEDEF)
-
-$(TYPEDFIELDS)
-"""
-mutable struct InductionU0{TB,T} <: Forcing{1}
-    basis::Basis{TB}
-    U0
-    factor::T
-    mat::SparseMatrixCSC{ComplexF64}
-    preassembled::Bool
-end
-
-"""
-$(TYPEDEF)
-
-$(TYPEDFIELDS)
-"""
-mutable struct InductionB0{TB,TU,T} <: Forcing{2}
-    bbasis::Basis{TB}
-    ubasis::Basis{TU}
-    B0
-    factor::T
-    mat::SparseMatrixCSC{ComplexF64}
-    preassembled::Bool
-end
-
-"""
-$(TYPEDEF)
-
-$(TYPEDFIELDS)
-"""
-mutable struct Lorentz{TU,TB,T} <: Forcing{2}
-    ubasis::Basis{TU}
-    bbasis::Basis{TB}
-    B0
-    factor::T
-    mat::SparseMatrixCSC{ComplexF64}
-    preassembled::Bool
-end
-
-"""
-$(TYPEDEF)
-
-$(TYPEDFIELDS)
-"""
-mutable struct Advection{TU,T} <: Forcing{1}
-    basis::Basis{TU}
-    U0
-    factor::T
-    mat::SparseMatrixCSC{ComplexF64}
-    preassembled::Bool
-end
-
-function Inertial(b::Basis, factor::T=1.0) where T
-    mat = spzeros(ComplexF64, length(b), length(b))
-    return Inertial(b, ComplexF64(factor), mat, false)
-end
-
-function Coriolis(b::Basis, factor::T=1.0) where T
-    mat = spzeros(ComplexF64, length(b), length(b))
-    return Coriolis(b, ComplexF64(factor), mat, false)
-end
-
-function Diffusion(b::Basis, factor::T=1.0) where T
-    mat = spzeros(ComplexF64, length(b), length(b))
-    return Diffusion(b, ComplexF64(factor), mat, false)
-end
-
-function InductionU0(b::Basis, U0, factor::T=1.0) where T
-    mat = spzeros(ComplexF64, length(b), length(b))
-    return InductionU0(b, U0, ComplexF64(factor), mat, false)
-end
-
-function InductionB0(bb::Basis, ub::Basis, B0, factor::T=1.0) where T
-    mat = spzeros(ComplexF64, length(bb), length(ub))
-    return InductionB0(bb, ub, B0, ComplexF64(factor), mat, false)
-end
-
-function Lorentz(ub::Basis, bb::Basis, B0, factor::T=1.0) where T
-    mat = spzeros(ComplexF64, length(ub), length(bb))
-    return Lorentz(ub, bb, B0, ComplexF64(factor), mat, false)
-end
-
-function Advection(ub::Basis, U0, factor::T=1.0) where T
-    mat = spzeros(ComplexF64, length(ub), length(ub))
-    return Advection(ub, U0, ComplexF64(factor), mat, false)
-end
-
-
-function assemble!(f::Inertial; kwargs...)
-    f.mat = sparse(Limace.inertial(f.basis; kwargs...))
-    f.preassembled = true
-    return f.mat
-end
-
-function assemble!(f::Coriolis; kwargs...)
-    f.mat = Limace.coriolis(f.basis; kwargs...)
-    f.preassembled = true
-    return f.mat
-end
-
-function assemble!(f::Diffusion; kwargs...)
-    f.mat = Limace.diffusion(f.basis; kwargs...)
-    f.preassembled = true
-    return f.mat
-end
-
-function assemble!(f::InductionU0; kwargs...)
-    f.mat = sum(Limace.induction(f.basis, U0, f.basis; kwargs...) for U0 in f.U0)
-    f.preassembled = true
-    return f.mat
-end
-
-function assemble!(f::InductionB0; kwargs...)
-    f.mat = sum(Limace.induction(f.bbasis, f.ubasis, B0; kwargs...) for B0 in f.B0)
-    f.preassembled = true
-    return f.mat
-end
-
-function assemble!(f::Lorentz; kwargs...)
-    f.mat = sum(Limace.lorentz(f.ubasis, f.bbasis, B0; kwargs...) for B0 in f.B0)
-    f.preassembled = true
-    return f.mat
-end
-
-function assemble!(f::Advection; kwargs...)
-    f.mat = sum(Limace.advection(f.basis, U0; kwargs...) for U0 in f.U0)
-    f.preassembled = true
-    return f.mat
-end
-
-
 ## LimaceProblem
 
 """
@@ -209,12 +40,14 @@ end
 # function Base.show(io::IO, problem::LimaceProblem) 
 #     print(io, "LimaceProblem(bases = $([typeof(b) for b in problem.bases]), forcings = $(problem.forcings), preassembled = $(problem.preassembled), assembled = $(problem.assembled), solved = $(problem.solved))")
 # end
+
+
 ## assemble the problem
 
 """
-    preassemble!(problem::LimaceProblem; kwargs...)
+    preassemble!(problem::LimaceProblem; threads=false, kwargs...)
 
-Preassemble `problem.forcing` matrices in the problem.
+Preassemble `problem.forcing` matrices in the problem. When `threads=true` the assembly is done using `Threads.nthreads()` threads.
 """
 function preassemble!(problem::LimaceProblem; kwargs...)
     for f in problem.forcings
@@ -227,10 +60,10 @@ function preassemble!(problem::LimaceProblem; kwargs...)
 end
 
 """
-    assemble!(problem::LimaceProblem; kwargs...)
+    assemble!(problem::LimaceProblem; threads=false, kwargs...)
 
 Assemble the problem matrices `problem.LHS` and `problem.RHS` from the forcing matrices that may or may not be preassembled.
-For now, only `Limace.Inertial` are added to the `LHS` matrix.
+For now, only `Limace.Inertial` are added to the `LHS` matrix. When `threads=true` the assembly is done using `Threads.nthreads()` threads.
 """
 function assemble!(problem::LimaceProblem; kwargs...)
     if !problem.preassembled 
@@ -320,7 +153,7 @@ function solve_dense!(problem::LimaceProblem)
         if problem.LHS ≈ I
             C = Matrix(problem.RHS)
         else
-            C = Matrix(problem.RHS\Diagonal(problem.LHS))
+            C = Matrix(Diagonal(problem.LHS)\problem.RHS)
         end
         problem.sol = eigen(C)
     else

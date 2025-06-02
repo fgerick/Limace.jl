@@ -34,7 +34,7 @@ pages= [
     "Quickstart" => "quickstart.md",
     "Examples" => [
         "Inviscid inertial modes" => "examples/inertialmodes.md",
-        "Makus modes" => "examples/malkusmodes.md",
+        "Malkus modes" => "examples/malkusmodes.md",
         "Torsional Alfvén modes" => "examples/torsionalmodes.md"
     ],
     "Theoretical background" => "theory.md",

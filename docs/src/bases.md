@@ -3,24 +3,67 @@
 Several bases are readily implemented for full sphere geometries and satisfying certain boundary and orthogonality conditions. 
 The most commonly encountered ones are outlined here and a small introduction into how to write a new basis is given at the end.
 
+Each basis essentially consists of two scalar functions `s` and `t`, corresponding to the radial poloidal and toroidal scalars, respectively. 
+They are introduced in the [Theoretical background](@ref) in detail as $S_{ln}$ and $T_{ln}$. 
+The function arguments of `s` and `t` include the azimuthal degree `m` to keep it generic for possible future extensions.
+
+Currently, all bases rely on a radial representation using Jacobi polynomials $J_n^{\alpha,\beta}(x)$ (implemented as [Limace.Poly.jacobi](@ref)).
+
+All implemented bases are of type `Basis{T,Vol<:Volume}`, where the type `T` defines the type of the basis (e.g. `Inviscid`).
+```@docs
+Limace.Bases.Basis
+```
+
 ## Inviscid velocity basis
 
 For an inviscid fluid, we only require ``\mathbf{u}\cdot\mathbf{n}=0`` at the boundary. This is known as the non-penetration condition. For poloidal and toroidal decomposition, this boils down to the requirement that the poloidal scalar vanishes at the boundary. The toroidal scalar remains unconstrained and we have free slip.
 
+The basis is orthonormal on the unit sphere $\mathcal{V}$, so that
+```math
+\int_\mathcal{V} \mathbf{u}_i^*\cdot\mathbf{u}_j\,\mathrm{d}V = \delta_{ij}.
+```
+
 ```@autodocs
 Modules = [Limace.InviscidBasis]
+```
+
+
+To define the inviscid basis, using a polynomial truncation `N = 10`, simply run
+```@example bases
+using Limace #hide
+N = 10
+u = Inviscid(N)
+```
+
+The basis `u` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
+
+```@example bases
+u = Inviscid(N; m=1)
 ```
 
 ## Viscous velocity basis 
 
 For a viscous fluid, in addition to the non-penetration condition, we require no-slip, so that in total ``\mathbf{u} = \mathbf{0}`` at the boundary. [chen_optimal_2018](@citet) have written a basis that satisfies these conditions, and requires orthogonality w.r.t the vector Laplacian, so that
 ```math
-\int \mathbf{u}_i^*\cdot\boldsymbol{\nabla}^2\mathbf{u}_j\,\mathrm{d}V = \delta_{ij}.
+\int_\mathcal{V} \mathbf{u}_i^*\cdot\boldsymbol{\nabla}^2\mathbf{u}_j\,\mathrm{d}V = \delta_{ij}.
 ```
 This is desirable, as the resulting projections of all considered forces are banded (if only combined with another basis that satisfies the appropriate orthogonality).
 
 ```@autodocs
 Modules = [Limace.ViscousBasis]
+```
+
+
+
+To define the viscous basis, using a polynomial truncation `N = 10`, simply run
+```@example bases
+u = Viscous(N)
+```
+
+The basis `u` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
+
+```@example bases
+u = Viscous(N; m=1)
 ```
 
 ## Insulating magnetic field basis
@@ -41,8 +84,24 @@ t_{lmn}\bigg|_{\partial\mathcal{V}} &= 0.
 ```
 for all $l,m,n$.
 
+The basis is orthonormal w.r.t the vector Laplacian, so that
+```math
+\int_{\mathbb{R}^3} \mathbf{B}_i^*\cdot\boldsymbol{\nabla}^2\mathbf{B}_j\,\mathrm{d}V = \delta_{ij}.
+```
+
 ```@autodocs
 Modules = [Limace.InsulatingBasis]
+```
+
+To define the insulating basis, using a polynomial truncation `N = 10`, simply run
+```@example bases
+b = Insulating(N)
+```
+
+The basis `b` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
+
+```@example bases
+b = Insulating(N; m=1)
 ```
 
 ## Perfectly conducting magnetic field basis
@@ -50,7 +109,7 @@ Modules = [Limace.InsulatingBasis]
 This basis is appropriate for the magnetic field, when the exterior is a perfect conductor. In that case, the boundary condition is identical to the non-penetration condition for an inviscid flow. 
 
 ```math
-\mathbf{b}\cdot\mathbf{n}\bigg|_{\delta \mathcal{V}} = 0,
+\mathbf{B}\cdot\mathbf{n}\bigg|_{\delta \mathcal{V}} = 0,
 ```
 which is equivalent to the condition
 
@@ -58,17 +117,52 @@ which is equivalent to the condition
 s\bigg|_{\delta \mathcal{V}} = 0.
 ```
 
-
+The basis is orthonormal on the unit sphere $\mathcal{V}$, so that
+```math
+\int_\mathcal{V} \mathbf{B}_i^*\cdot\mathbf{B}_j\,\mathrm{d}V = \delta_{ij}.
+```
 
 ```@autodocs
 Modules = [Limace.PerfectlyConductingBasis]
 ```
 
+
+To define the perfectly conducting basis, using a polynomial truncation `N = 10`, simply run
+```@example bases
+b = PerfectlyConducting(N)
+```
+
+The basis `b` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
+
+```@example bases
+b = PerfectlyConducting(N; m=1)
+```
+
 ## Unconstrained
+
+This basis does not impose any boundary condition. It is a useful starting point for imposing custom boundary conditions explicitly in the linear operator.
+
+The basis is orthonormal on the unit sphere $\mathcal{V}$, so that
+```math
+\int_\mathcal{V} \mathbf{u}_i^*\cdot\mathbf{u}_j\,\mathrm{d}V = \delta_{ij}.
+```
 
 ```@autodocs
 Modules = [Limace.UnconstrainedBasis]
 ```
+
+
+To define the unconstrained basis, using a polynomial truncation `N = 10`, simply run
+```@example bases
+u = Unconstrained(N)
+```
+
+The basis `u` will include all azimuthal wave numbers `m`. To restrict to a single wave number (e.g. `m=1`), one can do
+
+```@example bases
+u = Unconstrained(N; m=1)
+```
+
 
 ## Implementing a new basis
 
@@ -143,7 +237,42 @@ end #module
 
 Here, these are given as evaluations at the surface, `b.V.r1 = 1.0`. We use automatic differentiation to compute the derivatives in `r` using `ForwardDiff.jl`.
 
+## Boundary conditions
 
-```@autodocs
-Modules = [Limace.Bases]
+The boundary condition is indicated in the basis, e.g.
+
+```@example bases
+u = Inviscid(N)
+u.BC
 ```
+
+Currently, only [Limace.Bases.NoBC](@ref) has a significant difference to the other boundary conditions.  
+
+```@docs
+Limace.Bases.NoBC
+```
+
+When a basis has a `NoBC` boundary condition, it considers that the basis elements do not contain a boundary condition themselves.
+During the assembly of the linear operators (as introduced in [Implementing a new basis](@ref)), explicit lines for the boundary conditions will be left empty.
+The boundary conditions then need to be added separately, as outlined in [Explicit boundary condition operator](@ref).
+
+All boundary conditions are a subtype of
+```@docs
+Limace.Bases.BoundaryCondition
+```
+
+The other "placeholder" boundary conditions, currently implemented, are
+```@docs
+Limace.Bases.InsulatingBC
+Limace.Bases.InviscidBC
+Limace.Bases.NoSlipBC
+Limace.Bases.PerfectlyConductingBC
+```
+
+## Basis elements
+
+Single elements of a basis are wrapped into a `BasisElement` structure
+```@docs
+Limace.Bases.BasisElement
+```
+

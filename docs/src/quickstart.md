@@ -5,7 +5,7 @@ The four main steps to solve for hydromagnetic modes are outlined here:
 
 ## Definition/Choice of appropriate bases.
 
-Chose a polynomial truncation, e.g. `N=10`, and an appropriate bases (see [Bases](@ref) for implemented bases) for the velocity (and magnetic field).
+Chose a polynomial truncation, e.g. `N=10`, and appropriate bases (see [Bases](@ref) for implemented bases) for the velocity (and magnetic field).
 Let us use the [`Inviscid`](@ref "Inviscid velocity basis") basis for the velocity and the [`PerfectlyConducting`](@ref "Perfectly conducting magnetic field basis") for the magnetic field.
 
 ```julia
@@ -31,6 +31,10 @@ forcings = [Limace.Inertial(u),
 	Limace.Lorentz(u,b,B0), 
 	Limace.InductionB0(b,u,B0)]
 ```
+
+In this way, one can adapt the problem setup to include the relevant physical ingredients in a flexible way. 
+Each of the defined forcings will be assembled to a linear operator (sparse matrix) that is then combined to the total sparse matrix used to solve the defined problem.
+For the available terms that are currently implemented see the [Forces](@ref) section.
 
 We can combine the `bases` and `forcings` in a [`Limace.LimaceProblem`](@ref).
 ```julia

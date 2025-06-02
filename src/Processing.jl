@@ -278,8 +278,7 @@ end
 """
 $(SIGNATURES)
 
-	Get all `(l,m,n)` that correspond to the poloidal and toroidal component of `u` and `b` basis at each Cartesian
-	degree `ñ ∈ 1:N`.
+Get all `(l,m,n)` that correspond to the poloidal and toroidal component of `u` and `b` basis at each Cartesian degree `ñ ∈ 1:N`.
 """
 function lmn_n(u::Basis{TU}, b::Basis{TB}) where {TU, TB}
     N = u.N
@@ -356,6 +355,17 @@ function epeak_etrunc_cartesian(evecs, u, b)
         @views ratios[i, :] .= (maximum(spec[end-1:end, :], dims=1)[:] ./ maxima)
     end
     return ratios
+end
+
+"""
+$(SIGNATURES)
+
+Find all indices of eigenvectors `evecs` for which the ratio of peak energy to energy at truncation degree
+(max between two last Cartesian degrees) in toroidal/poloidal kinetic/magnetic energy is below `thresh`.
+"""
+function eigenvector_filter(evecs, u, b; thresh=1e-2)
+    ratios = epeak_etrunc_cartesian(evecs, u, b)
+    return eachindex(ratios)[ratios .< thresh]
 end
 
 """

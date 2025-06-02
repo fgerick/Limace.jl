@@ -11,11 +11,12 @@ export wigner3j, adamgaunt, elsasser, jacobi, ylm, ∂, p, _∂ll, D, innert, in
 """
     adamgaunt(la,lb,lc,ma,mb,mc)
 
-Adam-Gaunt integral [james_adams_1973](@citep)
+Adam-Gaunt integral [james_adams_1973](@citep), given by
 
 ```math
-A_{abc} = \\oint\\int Y_aY_bY_c\\sin\\theta\\,\\mathrm{d}\\theta\\mathrm{d}\\phi
+A_{abc} = \\oint\\int Y_aY_bY_c\\sin\\theta\\,\\mathrm{d}\\theta\\mathrm{d}\\phi,
 ```
+where the spherical harmonics are abbreviated, so that ``Y_a = Y_{l_a}^{m_a}``.
 """
 @inline function adamgaunt(la,lb,lc,ma,mb,mc)::ComplexF64
     return (-1)^(mc)*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*wigner3j(Float64,Int(la), Int(lb), Int(lc), 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc))
@@ -26,25 +27,25 @@ end
 """
     elsasser(la,lb,lc,ma,mb,mc)
 
-Elsasser integral [james_adams_1973](@citep)
+Elsasser integral [james_adams_1973](@citep), given by
 
 ```math
-E_{abc} = \\oint\\int Y_c\\left( \\frac{\\partial Y_a}{\\partial \\theta} \\frac{\\partial Y_b}{\\partial \\phi} - \\frac{\\partial Y_a}{\\partial \\phi}\\frac{\\partial Y_b}{\\partial \\theta} \\right)\\,\\mathrm{d}\\theta\\mathrm{d}\\phi
+E_{abc} = \\oint\\int Y_c\\left( \\frac{\\partial Y_a}{\\partial \\theta} \\frac{\\partial Y_b}{\\partial \\phi} - \\frac{\\partial Y_a}{\\partial \\phi}\\frac{\\partial Y_b}{\\partial \\theta} \\right)\\,\\mathrm{d}\\theta\\mathrm{d}\\phi,
 ```
-
+where the spherical harmonics are abbreviated, so that ``Y_a = Y_{l_a}^{m_a}``.
 """
 @inline function elsasser(la,lb,lc,ma,mb,mc)::ComplexF64
     return -(-1)^(mc)*im*sqrt((2la + 1)*(2lb + 1)*(2lc + 1)/4π)*_Δ(la,lb,lc)*wigner3j(Float64,Int(la)+1, Int(lb)+1, Int(lc)+1, 0, 0, 0)*wigner3j(Float64,Int(la),Int(lb),Int(lc),Int(ma),Int(mb),-Int(mc)) 
 end
 
 """
-$(TYPEDSIGNATURES)
+    jacobi(n,a,b,x)
 
 Jacobi polynomial 
 
 ```math
 J_n^{(a,b)}(x)
-````
+```
 """
 @inline function jacobi(n,a,b,x)
     ox = one(x)
@@ -164,7 +165,7 @@ Below equation (31) in [ivers_scalar_2008](@citet).
 $(TYPEDSIGNATURES)
 
 ```math
-l(l+1)t t_2
+r\\rightarrow l(l+1) t(r) t_2(r)
 ```
 
 Radial function to be integrated in radius when computing the inner product of two toroidal vectors.
@@ -177,7 +178,7 @@ end
 $(TYPEDSIGNATURES)
 
 ```math
-\\frac{l(l+1)}{r^2}\\left( l(l+1)s s_2 + \\frac{\\partial r s}{\\partial r}\\frac{\\partial r s_2}{\\partial r}\\right)
+r\\rightarrow \\frac{l(l+1)}{r^2}\\left( l(l+1)s(r) s_2(r) + \\frac{\\partial r s(r)}{\\partial r}\\frac{\\partial r s_2(r)}{\\partial r}\\right)
 ```
 
 Radial function to be integrated in radius when computing the inner product of two poloidal vectors.

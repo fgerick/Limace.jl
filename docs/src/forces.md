@@ -32,6 +32,7 @@ Limace.inertial
 \int \mathbf{u}_i^* \cdot \left(\left(\boldsymbol{\nabla}\times\mathbf{u}_j\right)\times\mathbf{U}_0 + \left(\boldsymbol{\nabla}\times\mathbf{U}_0\right)\times\mathbf{u}_j \right)\,\mathrm{d}V
 ```
 
+This equivalent to the projection of the operator $\left(\mathbf{u}\cdot\boldsymbol{\nabla}\right)\mathbf{U}_0+\left(\mathbf{U}_0\cdot\boldsymbol{\nabla}\right)\mathbf{u}$, when $\boldsymbol{\nabla}\cdot\mathbf{u} = \boldsymbol{\nabla}\cdot\mathbf{U}_0 = 0$.
 ```@docs
 Limace.Advection
 Limace.advection
@@ -66,16 +67,23 @@ Limace.diffusion
 \int \mathbf{b}_i^* \cdot \boldsymbol{\nabla}\times\left(\mathbf{u}_j\times\mathbf{B}_0\right)\,\mathrm{d}V
 ```
 
+```@docs
+Limace.InductionB0
+```
+
 ```math
 \int \mathbf{b}_i^* \cdot \boldsymbol{\nabla}\times\left(\mathbf{U}_0\times\mathbf{b}_j\right)\,\mathrm{d}V
 ```
 
+```@docs
+Limace.InductionU0
+```
 
 ```@docs
-Limace.InductionB0
-Limace.InductionU0
 Limace.induction
 ```
+
+
 
 ## Lorentz
 
@@ -95,3 +103,29 @@ Limace.lorentz
 Modules = [Limace]
 Pages = ["forces/bc.jl"]
 ```
+
+## Assembly
+
+All forcings are constructed without being assembled (i.e. the projections of each forcing onto the relevant basis are not done at the definition of the forcing).
+
+The projections are done explicitly through `Limace.assemble!`, that saves the assembled sparse matrix in the forcing structure (`f`).
+
+```@example forces
+using Limace #hide
+
+N = 10
+u = Inviscid(N)
+b = Insulating(N)
+B0 = BasisElement(b, Poloidal, (1,0,1))
+f = Limace.Lorentz(u,b,B0)
+Limace.assemble!(f)
+```
+
+This can also be done in parallel, by using the keyword argument `threads=true`.
+
+```@example forces
+Limace.assemble!(f; threads=true)
+nothing #hide
+```
+
+When the forcings are wrapped into a [LimaceProblem](@ref), it is not necessary to call `Limace.assembly!` on each forcing by hand, but one can simply call `Limace.assembly!(problem)`, as outlined in the [Quickstart](@ref "Quickstart through high-level interface").

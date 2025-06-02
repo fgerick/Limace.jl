@@ -40,9 +40,15 @@ function toroidal_discretize(::Type{Basis{T, Vol}}, V::Vol, l, m, n, r, θ, ϕ) 
 end
 
 """
-    discretize(b::BasisElement{TB,TP,T}, r, θ, ϕ, V::Volume=Sphere()) where {TB<:Basis,TP<:Helmholtz,T<:Number}
+    discretize(b, r, θ, ϕ, V::Volume=Sphere())
 
-Discretize a basis element `b` at the given coordinates `(r, θ, ϕ)` in the volume `V`.
+Discretize a basis element (or a vector of `BasisElement`'s), `b` at the given coordinates `(r, θ, ϕ)` in the volume `V`.
+
+## Example usage
+```julia
+b = BasisElement(Basis{Inviscid,Sphere}, Poloidal, (2,0,1))
+Limace.Discretization.discretize(b, 0.9, π/4, 3π/2)
+```
 """
 function discretize(b::BasisElement{TB,TP,T}, r, θ, ϕ, V::Volume=Sphere()) where {TB<:Basis,TP<:Helmholtz,T<:Number}
     if TP <: Poloidal
@@ -56,6 +62,12 @@ function discretize(bs::AbstractVector{T}, r, θ, ϕ, V::Volume=Sphere()) where 
     return mapreduce(b -> discretize(b, r, θ, ϕ, V), +, bs)
 end
 
+"""
+    discretize(αs::Vector{T}, u::TU, rs, θ, ϕ) where {T<:Number,TU<:Basis}
+
+Discretize an eigenvector `αs`, for a basis `u` at the given radii `rs`, latitudes `θ`, and longitudes `ϕ`.
+
+"""
 function discretize(αs::Vector{T}, u::TU, rs, θ, ϕ) where {T<:Number,TU<:Basis}
     @assert length(αs) == length(u)
     nr = length(rs)
@@ -180,89 +192,6 @@ function discretize(αs::Vector{T}, u::TU, b::TB, r, θ, ϕ) where {T<:Number,TU
 
     return ur, uθ, uϕ, br, bθ, bϕ
 end
-
-function discretization_map(u::T, r, θ, ϕ) where {T<:Basis}
-    nr = length(r)
-    nθ = length(θ)
-    nϕ = length(ϕ)
-
-    nu = length(u)
-
-    lmnp_u = lmn_p(u)
-    lmnt_u = lmn_t(u)
-
-    Mr = zeros(ComplexF64, nr * nθ * nϕ, nu)
-    Mθ = zeros(ComplexF64, nr * nθ * nϕ, nu)
-    Mϕ = zeros(ComplexF64, nr * nθ * nϕ, nu)
-
-
-    i = 1
-    for ϕ in ϕ, θ in θ, r in r
-        j = 1
-        for (l, m, n) in lmnp_u
-            Mr[i, j], Mθ[i, j], Mϕ[i, j] = poloidal_discretize(T, u.V, l, m, n, r, θ, ϕ)
-            j += 1
-        end
-        for (l, m, n) in lmnt_u
-            Mr[i, j], Mθ[i, j], Mϕ[i, j] = toroidal_discretize(T, u.V, l, m, n, r, θ, ϕ)
-            j += 1
-        end
-        i += 1
-    end
-
-
-    return Mr, Mθ, Mϕ
-end
-
-function discretization_map(u::Basis, b::Basis, r, θ, ϕ)
-    nr = length(r)
-    nθ = length(θ)
-    nϕ = length(ϕ)
-
-    nu = length(u)
-    nb = length(b)
-
-    lmnp_u = lmn_p(u)
-    lmnt_u = lmn_t(u)
-
-    lmnp_b = lmn_p(b)
-    lmnt_b = lmn_t(b)
-
-
-    Mr = zeros(ComplexF64, 2nr * nθ * nϕ, nu + nb)
-    Mθ = zeros(ComplexF64, 2nr * nθ * nϕ, nu + nb)
-    Mϕ = zeros(ComplexF64, 2nr * nθ * nϕ, nu + nb)
-
-
-    i = 1
-    for r in r, θ in θ, ϕ in ϕ
-        j = 1
-        for (l, m, n) in lmnp_u
-            Mr[i, j], Mθ[i, j], Mϕ[i, j] = poloidal_discretize(typeof(u), u.V, l, m, n, r, θ, ϕ)
-            j += 1
-        end
-        for (l, m, n) in lmnt_u
-            Mr[i, j], Mθ[i, j], Mϕ[i, j] = toroidal_discretize(typeof(u), u.V, l, m, n, r, θ, ϕ)
-            j += 1
-        end
-        i += 1
-    end
-    for r in r, θ in θ, ϕ in ϕ
-        j = nu + 1
-        for (l, m, n) in lmnp_b
-            Mr[i, j], Mθ[i, j], Mϕ[i, j] = poloidal_discretize(typeof(b), b.V, l, m, n, r, θ, ϕ)
-            j += 1
-        end
-        for (l, m, n) in lmnt_b
-            Mr[i, j], Mθ[i, j], Mϕ[i, j] = toroidal_discretize(typeof(b), b.V, l, m, n, r, θ, ϕ)
-            j += 1
-        end
-        i += 1
-    end
-
-    return Mr, Mθ, Mϕ
-end
-
 
 function coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb, lmnpu, lmntu, lmnpb, lmntb, coeffs, sht, u::TU, b::TB, r) where {TU<:Basis, TB<:Basis}
 
@@ -443,7 +372,7 @@ function _spectospat_shtns(coeffs::Vector{T}, sht, rgrid, u::TU, b::TB) where {T
 end
 
 """
-$(TYPEDSIGNATURES)
+    spectospat(coeffs::Vector{T}, u::TU, nr::Int, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, T<:ComplexF64}
 
 Transform eigenvector containing spectral coefficients to three-dimensional vector field at `nr x nθ x nϕ` grid points.
 Returns `ur,uθ,uϕ, r,θ,ϕ`.
@@ -455,7 +384,7 @@ function spectospat(coeffs::Vector{T}, u::TU, nr::Int, nθ::Int, nϕ::Int; kwarg
 end
 
 """
-$(TYPEDSIGNATURES)
+    spectospat(coeffs::Vector{T}, u::TU, r::Float64, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, T<:ComplexF64}
 
 Transform eigenvector containing spectral coefficients to two-dimensional vector field at `1 x nθ x nϕ` grid points at radius `r`.
 Returns `ur,uθ,uϕ, θ,ϕ`.
@@ -467,9 +396,9 @@ function spectospat(coeffs::Vector{T}, u::TU, r::Float64, nθ::Int, nϕ::Int; kw
 end
 
 """
-$(TYPEDSIGNATURES)
+    spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
 
-Transform eigenvector containing spectral coefficients to three-dimensional vector fields at `nr x nθ x nϕ` grid points at radius `r`.
+Transform eigenvector containing spectral coefficients to three-dimensional vector fields at `nr x nθ x nϕ` grid points.
 Returns `ur,uθ,uϕ, br,bθ,bϕ, r,θ,ϕ`.
 """
 function spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, TB<:Basis, T<:ComplexF64}
@@ -479,9 +408,9 @@ function spectospat(coeffs::Vector{T}, u::TU, b::TB, nr::Int, nθ::Int, nϕ::Int
 end
 
 """
-$(TYPEDSIGNATURES)
+    spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Tr, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, TB<:Basis, T<:ComplexF64, Tr<:Union{AbstractVector{Float64},Float64}}
 
-Transform eigenvector containing spectral coefficients to two-dimensional vector fields at `1 x nθ x nϕ` grid points at radius `r`.
+Transform eigenvector containing spectral coefficients to two-dimensional vector fields at `1 x nθ x nϕ` grid points at radius (or radii) `r`.
 Returns `ur,uθ,uϕ, br,bθ,bϕ, θ,ϕ`.
 """
 function spectospat(coeffs::Vector{T}, u::TU, b::TB, r::Tr, nθ::Int, nϕ::Int; kwargs...) where {TU<:Basis, TB<:Basis, T<:ComplexF64, Tr<:Union{AbstractVector{Float64},Float64}}

@@ -94,23 +94,23 @@ If `LHS` is a unit matrix, we can solve the problem as
 
 A native Julia implementation of the Arnoldi method (with Krylov-Schur restarts) is implemented in [ArnoldiMethod.jl](https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl).
 In the `EigenSolve` submodule of `Limace.jl`, an implementation of the shift-invert method is available through the [`Limace.EigenSolve.eigstarget`](@ref) function.
-The shift-invert method shifts the spectrum around a given target eigenvalue ``\sigma`` and inverts the operator on the left-hand-side, so that
+The shift-invert method shifts the spectrum around a given target eigenvalue ``\delta`` and inverts the operator on the left-hand-side, so that
 ```math
-\frac{1}{\lambda-\sigma}\mathbf{x} = (\mathbf{A}-\sigma\mathbf{B})^{-1}\mathbf{B}\mathbf{x}.
+\frac{1}{\lambda-\delta}\mathbf{x} = (\mathbf{A}-\delta\mathbf{B})^{-1}\mathbf{B}\mathbf{x}.
 ```
 Which is a standard eigenvalue problem
 ```math
 \hat{\lambda}\mathbf{x} = \mathbf{C}\mathbf{x},
 ```
-with ``\hat{\lambda} = (\lambda-\sigma)^{-1}``, and ``\mathbf{C} = (\mathbf{A}-\sigma\mathbf{B})^{-1}\mathbf{B}``. 
-When computing the largest-amplitude eigenvalues to this problem, we find the eigenvalues closest in amplitude to the target eigenvalue ``\sigma``.
+with ``\hat{\lambda} = (\lambda-\delta)^{-1}``, and ``\mathbf{C} = (\mathbf{A}-\delta\mathbf{B})^{-1}\mathbf{B}``. 
+When computing the largest-amplitude eigenvalues to this problem, we find the eigenvalues closest in amplitude to the target eigenvalue ``\delta``.
 
 
 ```@docs
 Limace.EigenSolve.eigstarget
 ```
 
-Using the same matrices assembled previously, we can calculate solutions close to a target ``\sigma = \mathrm{i}`` (frequency ``\omega=1``).
+Using the same matrices assembled previously, we can calculate solutions close to a target ``\delta = \mathrm{i}`` (frequency ``\omega=1``).
 ```julia
 target = 1.0im
 

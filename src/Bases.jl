@@ -3,7 +3,7 @@ module Bases
 using DocStringExtensions
 
 export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
-export Volume
+export Volume, Sphere, SphericalShell
 export LimaceBasis, Basis, BasisElement, isaxisymmetric, Helmholtz, Poloidal, Toroidal
 # export nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
@@ -83,7 +83,12 @@ abstract type LimaceBasis end
 """
 $(TYPEDEF)
 
-$(TYPEDFIELDS)
+- `N::Int`: truncation degree
+- `m::UnitRange{Int}`: spherical harmonic orders, default `-N:N``
+- `n::UnitRange{Int}`: radial degrees, default `0:0` to make `n = n(N,l)`.
+- `BC::BoundaryCondition`: boundary condition, default `NoBC()`
+- `V::Vol`: volume, default `Sphere()`
+- `params::Dict{Symbol,Float64}`: additional parameters, default empty dictionary
 
 """
 Base.@kwdef struct Basis{T,Vol<:Volume} <: LimaceBasis
@@ -204,9 +209,25 @@ lmn2k_p_dict(b::Basis) = lmn2k_dict(lmn_p(b))
 lmn2k_t_dict(b::Basis) = lmn2k_dict(lmn_t(b))
 
 function _lmn2cdeg_p(b::Basis, l, m, n)
+    for N in 1:b.N
+        _m = length(b.m) == 1 ? b.m : -N:N
+        _n = b.n
+        if (l,m,n) ∈ lmn_p(typeof(b)(;N, m=_m, n=_n))
+            return N
+        end
+    end
+    return nothing
 end
 
 function _lmn2cdeg_t(b::Basis, l, m, n)
+    for N in 1:b.N
+        _m = length(b.m) == 1 ? b.m : -N:N
+        _n = b.n
+        if (l,m,n) ∈ lmn_t(typeof(b)(;N, m=_m, n=_n))
+            return N
+        end
+    end
+    return nothing
 end
 
 # function t(::Type{Basis}, l, m, n, r)
@@ -278,7 +299,23 @@ struct Toroidal <: Helmholtz end
 """
 $(TYPEDEF)
 
-$(TYPEDFIELDS)
+- `TB<:Basis`: basis type
+- `PT<:Helmholtz`: Helmholtz type, either `Poloidal` or `Toroidal`
+- `lmn::NTuple{3,Int}`: spherical harmonic degree, order and radial degree, i.e `(l, m, n)`
+- `factor::T`: factor, default `1.0`, can be used to scale the basis element
+
+## Example
+```julia
+b = Insulating(10)
+B0 = BasisElement(b, Poloidal, (1, 0, 0))
+B1 = BasisElement(b, Toroidal, (2, 1, 2), 2.0)
+```
+
+Or without constructing a `Basis` object:
+```julia
+l, m, n = 1, 0, 1
+B0 = BasisElement(Basis{Insulating,Sphere}, Poloidal, (l, m, n))
+```
 
 """
 struct BasisElement{TB<:Basis,PT<:Helmholtz,T<:Number}

@@ -15,7 +15,7 @@ export Unconstrained
 
 struct Unconstrained; end
 
-Unconstrained(N; r=1.0, kwargs...) = Basis{Unconstrained, Sphere}(;N, BC=NoBC(), V=Sphere(; r), kwargs...)
+Unconstrained(N; r=1.0, kwargs...) = Basis{Unconstrained, Sphere}(;N, BC=NoBC(), V=Sphere(; r1=r), kwargs...)
 
 """
     t(::Type{Basis{Unconstrained, Sphere}}, V::Sphere, l,m,n,r)

@@ -67,7 +67,9 @@ problem = LimaceProblem([u], [Limace.Inertial(u), Limace.Coriolis(u)]);
 Limace.assemble!(problem);
 Limace.solve!(problem; method=:dense);
 λ2, x2 = problem.sol.values, problem.sol.vectors;
-(λ ≈ λ2) && (x ≈ x2)
+per = sortperm(λ,by=abs);
+per2 = sortperm(λ2,by=abs);
+(λ[per] ≈ λ2[per2]) && (x[:,per] ≈ x2[:,per2])
 
 # We can compare some of the numerically calculated eigenvalues `λ` to the analytical equation 
 # given by [zhang_inertial_2001](@citet) for equatorially symmetric inertial modes.
@@ -92,6 +94,9 @@ r, nθ, nϕ = 1.0, 100, 200
 imode = findmin(x->abs(x-λ_analytical(3,1)), λ)[2];
 
 ur, uθ, uϕ, θ, ϕ = spectospat(x[:,imode], u, r, nθ, nϕ);
+
+# Here, we have used [`Limace.Discretization.spectospat`](@ref) to convert the spectral coefficients of the mode to a spatial representation on a grid with `nθ` and `nϕ` points in the latitudinal and azimuthal direction, respectively. 
+# The radial coordinate is fixed at `r=1.0`, i.e. the surface of the sphere.
 
 let
 	lons, lats = rad2deg.(ϕ).-180, rad2deg.(θ);
