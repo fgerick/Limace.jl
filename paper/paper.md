@@ -9,15 +9,18 @@ tags:
 authors:
   - name: Felix Gerick
     orcid: 0000-0001-9924-0562
-    affiliation: "1, 2"
+    affiliation: "1, 2, 3"
 affiliations:
- - name: National Centre for Space Studies, France
+ - name: Paris Institute of Earth Physics (IPGP)
    index: 1
+   ror: 004gzqz66
+ - name: National Centre for Space Studies (CNES), France
+   index: 2
    ror: 04h1h0y33
  - name: Royal Observatory of Belgium, Belgium
-   index: 2
+   index: 3
    ror: 00hjks330
-date: 5 May 2024
+date: 10 June 2024
 bibliography: paper.bib
 ---
 
