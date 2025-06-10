@@ -365,7 +365,14 @@ Find all indices of eigenvectors `evecs` for which the ratio of peak energy to e
 """
 function eigenvector_filter(evecs, u, b; thresh=1e-2)
     ratios = epeak_etrunc_cartesian(evecs, u, b)
-    return eachindex(ratios)[ratios .< thresh]
+    return all(ratios .< thresh,dims=1)[:]
+end
+
+function eigenvector_filter(problem::LimaceProblem; thresh=1e-2)
+    @assert problem.solved
+    @assert length(problem.bases) == 2
+    evecs = problem.sol.vectors
+    return eigenvector_filter(evecs, problem.bases...; thresh)
 end
 
 """
