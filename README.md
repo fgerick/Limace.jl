@@ -3,7 +3,7 @@
 _**L**inear **I**nertial **MA**gneto **C**oriolis **E**igenmodes_
 <!-- _**L**inear **I**nertial **M**agneto **A**rchimedes **C**oriolis **E**igenmodes_ -->
 
-[![Docs](https://img.shields.io/badge/documentation-blue.svg)](https://fgerick.github.io/Limace.jl/dev/) [![Build Status](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/fgerick/Limace.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/fgerick/Limace.jl)
+[![Docs](https://img.shields.io/badge/documentation-blue.svg)](https://fgerick.github.io/Limace.jl/dev/) [![Build Status](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/fgerick/Limace.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/fgerick/Limace.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/fgerick/Limace.jl) [![DOI](https://joss.theoj.org/papers/10.21105/joss.07593/status.svg)](https://doi.org/10.21105/joss.07593)
 
 <img src="limace_logo.jpg" width="40%">
 
@@ -111,3 +111,36 @@ More examples are in the [documentation](https://fgerick.github.io/Limace.jl/dev
 See the [guidelines in the documentation](https://fgerick.github.io/Limace.jl/dev/contribute/) on how to contribute to this project.
 
 ## Citation
+
+```
+@article{gerick_limacejl_2025,
+  title = {Limace.Jl: {{A Julia}} Package to Compute Hydromagnetic Modes in Spherical Domains},
+  shorttitle = {Limace.Jl},
+  author = {Gerick, Felix},
+  year = {2025},
+  month = jun,
+  journal = {Journal of Open Source Software},
+  volume = {10},
+  number = {110},
+  pages = {7593},
+  issn = {2475-9066},
+  doi = {10.21105/joss.07593},
+  langid = {english}
+}
+```
+
+```
+@article{gerick_interannual_2024b,
+  title = {Interannual {{Magneto}}--{{Coriolis}} Modes and Their Sensitivity on the Magnetic Field within the {{Earth}}'s Core},
+  author = {Gerick, F. and Livermore, P. W.},
+  year = {2024},
+  month = oct,
+  journal = {Proceedings of the Royal Society A: Mathematical, Physical and Engineering Sciences},
+  volume = {480},
+  number = {2299},
+  pages = {20240184},
+  publisher = {Royal Society},
+  doi = {10.1098/rspa.2024.0184}
+}
+
+```
