@@ -405,7 +405,7 @@ end
 
 
 @inline function _crossterm_m_adamgaunt!(bbi::Basis{Ti,V}, U0::BasisElement{Basis{T0,V},PT,T}, buj::Basis{Tj,V}, is, js, aijs, i0, j0,
-    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti, Tj, T0, PT<:Helmholtz,T, V<:Volume}
     l0,m0,n0 = U0.lmn
     As = ComplexF64[]
     for mi in intersect(bbi.m, -li:li)
@@ -435,7 +435,7 @@ end
 end
 
 @inline function _crossterm_m_elsasser!(bbi::Basis{Ti,V}, U0::BasisElement{Basis{T0,V},PT,T}, buj::Basis{Tj,V}, is, js, aijs, i0, j0,
-    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti, Tj, T0, PT<:Helmholtz,T, V<:Volume}
     l0,m0,n0 = U0.lmn
     Es = ComplexF64[] 
     for mi in intersect(bbi.m, -li:li)
