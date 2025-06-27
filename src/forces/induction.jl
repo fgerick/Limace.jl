@@ -343,6 +343,127 @@ Fallback functions for `_crossterm!` term for `B0`. Write specialized function t
     return nothing
 end
 
+@inline function _crossterm_m_adamgaunt!(bbi::Basis{Ti,V}, buj::Basis{Tj,V}, B0::BasisElement{Basis{T0,V},PT,T}, is, js, aijs, i0, j0,
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti, Tj, T0, PT<:Helmholtz,T, V<:Volume}
+    l0,m0,n0 = B0.lmn
+    As = ComplexF64[]
+    for mi in intersect(bbi.m, -li:li)
+        mj = adamgaunt_mjs(mi, m0)
+        ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
+        if lj ∈ ljsa
+            push!(As,adamgaunt(lj,l0,li, mj, m0, mi))
+        end
+    end
+    for nj in nrangefj(buj,lj)
+        r, wr = rwrs[min(max(bbi.N,buj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+        aij = indf(Basis{Tj,V}, Basis{T0,V}, Basis{Ti,V}, bbi.V, (lj, 0, nj), B0.lmn,  (li, 0, ni), r, wr; kwargs...)
+        iA = 1
+        for mi in intersect(bbi.m, -li:li)
+            mj = adamgaunt_mjs(mi, m0)
+            ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
+            if lj ∈ ljsa
+                A = As[iA]
+                iA+=1
+                lmni = (li, mi, ni)
+                lmnj = (lj, mj, nj)
+                appendit!(is, js, aijs, lmn2k_bi[lmni]+i0, lmn2k_uj[lmnj]+j0, aij*A*B0.factor)
+            end
+        end
+    end
+    return nothing
+end
+
+@inline function _crossterm_m_elsasser!(bbi::Basis{Ti,V}, buj::Basis{Tj,V}, B0::BasisElement{Basis{T0,V},PT,T}, is, js, aijs, i0, j0,
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj,lptmax, indf; kwargs...) where {Ti, Tj, T0, PT<:Helmholtz,T, V<:Volume}
+    l0,m0,n0 = B0.lmn
+    Es = ComplexF64[]
+    for mi in intersect(bbi.m, -li:li)
+        mj = elsasser_mjs(mi, m0)
+        ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
+        if lj ∈ ljse
+            push!(Es,elsasser(lj,l0,li, mj, m0, mi))
+        end
+    end
+    for nj in nrangefj(buj,lj)
+        r, wr = rwrs[min(max(bbi.N,buj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+        aij = indf(Basis{Tj,V}, Basis{T0,V}, Basis{Ti,V}, bbi.V, (lj, 0, nj), B0.lmn,  (li, 0, ni), r, wr; kwargs...)
+        iE = 1
+        for mi in intersect(bbi.m, -li:li)
+            mj = elsasser_mjs(mi, m0)
+            ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
+            if lj ∈ ljse
+                E = Es[iE]
+                iE+=1
+                lmni = (li, mi, ni)
+                lmnj = (lj, mj, nj)
+                appendit!(is, js, aijs, lmn2k_bi[lmni]+i0, lmn2k_uj[lmnj]+j0, aij*E*B0.factor)
+            end
+        end
+    end
+    return nothing
+end
+
+
+@inline function _crossterm_m_adamgaunt!(bbi::Basis{Ti,V}, U0::BasisElement{Basis{T0,V},PT,T}, buj::Basis{Tj,V}, is, js, aijs, i0, j0,
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    l0,m0,n0 = U0.lmn
+    As = ComplexF64[]
+    for mi in intersect(bbi.m, -li:li)
+        mj = adamgaunt_mjs(mi, m0)
+        ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
+        if lj ∈ ljsa
+            push!(As,adamgaunt(l0,lj,li, m0, mj, mi))
+        end
+    end
+    for nj in nrangefj(buj,lj)
+        r, wr = rwrs[min(max(bbi.N,buj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+        aij = indf(Basis{T0,V}, Basis{Tj,V}, Basis{Ti,V}, bbi.V, U0.lmn, (lj, 0, nj), (li, 0, ni), r, wr; kwargs...)
+        iA = 1
+        for mi in intersect(bbi.m, -li:li)
+            mj = adamgaunt_mjs(mi, m0)
+            ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
+            if lj ∈ ljsa
+                A = As[iA]
+                iA +=1
+                lmni = (li, mi, ni)
+                lmnj = (lj, mj, nj)
+                appendit!(is, js, aijs, lmn2k_bi[lmni]+i0, lmn2k_uj[lmnj]+j0, aij*A*U0.factor)
+            end
+        end
+    end
+    return nothing
+end
+
+@inline function _crossterm_m_elsasser!(bbi::Basis{Ti,V}, U0::BasisElement{Basis{T0,V},PT,T}, buj::Basis{Tj,V}, is, js, aijs, i0, j0,
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    l0,m0,n0 = U0.lmn
+    Es = ComplexF64[] 
+    for mi in intersect(bbi.m, -li:li)
+        mj = elsasser_mjs(mi, m0)
+        ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
+        if lj ∈ ljse
+            push!(Es,elsasser(l0,lj,li, m0, mj, mi))
+        end
+    end
+    for nj in nrangefj(buj,lj)
+        r, wr = rwrs[min(max(bbi.N,buj.N), li ÷ 2 + ni + lj ÷ 2 + nj + 1 + l0 + n0)]
+        aij = indf(Basis{T0,V}, Basis{Tj,V}, Basis{Ti,V}, bbi.V, U0.lmn,  (lj, 0, nj), (li, 0, ni), r, wr; kwargs...)
+        iE = 1
+        for mi in intersect(bbi.m, -li:li)
+            mj = elsasser_mjs(mi, m0)
+            ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
+            if lj ∈ ljse
+                E = Es[iE]
+                iE+=1
+                lmni = (li, mi, ni)
+                lmnj = (lj, mj, nj)
+                appendit!(is, js, aijs, lmn2k_bi[lmni]+i0, lmn2k_uj[lmnj]+j0, aij*E*U0.factor)
+            end
+        end
+    end
+    return nothing
+end
+
 
 
 function _induction(::Val{false}, bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
@@ -394,6 +515,52 @@ function _induction(::Val{false}, bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal
     return sparse(is, js, aijs, nmatb, nmatu)
 end
 
+function _induction_new(::Val{false}, bbi::Basis{TI,V}, buj::Basis{TJ,V}, B0::BasisElement{Basis{T0,V},Poloidal,T}; external=true) where {TI,TJ,T0,T, V<:Volume}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_uj = lmn2k_p_dict(buj)
+    lmn2k_t_uj = lmn2k_t_dict(buj)
+
+    l0, m0, n0 = B0.lmn
+    @assert bbi.N == buj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
+
+    npb = length(lmn2k_p_bi)
+    npu = length(lmn2k_p_uj)
+    
+    for li in 1:lpmax(bbi)
+        for ni in nrange_p_bc(bbi, li)
+            for lj in adamgaunt_ljs(li, l0, 0, lpmax(buj))
+               _crossterm_m_adamgaunt!(bbi,buj,B0, is,js,aijs, 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sSS; external)  
+            end
+            for lj in elsasser_ljs(li, l0, 0, ltmax(buj))
+               _crossterm_m_elsasser!(bbi,buj,B0, is,js,aijs, 0,npu, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_t_uj, nrange_t, ltmax, _induction_tSS; external)  
+            end
+        end
+    end
+
+    for li in 1:ltmax(bbi)
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  elsasser_ljs(li, l0, 0, lpmax(buj))
+               _crossterm_m_elsasser!(bbi,buj,B0, is,js,aijs, npb,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sST)  
+            end
+            for lj in  adamgaunt_ljs(li, l0, 0, ltmax(buj))
+               _crossterm_m_adamgaunt!(bbi, buj, B0, is, js, aijs, npb, npu, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_uj, nrange_t, ltmax, _induction_tST)
+            end
+        end
+    end
+
+
+    nmatb = length(bbi)
+    nmatu = length(buj)
+
+    return sparse(is, js, aijs, nmatb, nmatu)
+end
 
 function _induction(::Val{false}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
@@ -439,6 +606,48 @@ function _induction(::Val{false}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal
     return sparse(is, js, aijs, nmatb, nmatu)
 end
 
+function _induction_new(::Val{false}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_uj = lmn2k_p_dict(buj)
+    lmn2k_t_uj = lmn2k_t_dict(buj)
+
+    l0, m0, n0 = B0.lmn
+    @assert bbi.N == buj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 5, bbi.V) for n in 1:N]
+
+    npb = length(lmn2k_p_bi)
+    npu = length(lmn2k_p_uj)
+
+    for li in 1:lpmax(bbi)
+        for ni in nrange_p_bc(bbi, li)
+            for lj in elsasser_ljs(li, l0, 0, lpmax(buj))
+               _crossterm_m_elsasser!(bbi,buj,B0, is,js,aijs, 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sTS)  
+            end
+        end
+    end
+
+    for li in 1:ltmax(bbi)
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  adamgaunt_ljs(li, l0, 0, lpmax(buj))
+               _crossterm_m_adamgaunt!(bbi,buj,B0, is,js,aijs, npb,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sTT)  
+            end
+            for lj in  elsasser_ljs(li, l0, 0, ltmax(buj))
+               _crossterm_m_elsasser!(bbi, buj, B0, is, js, aijs, npb, npu, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_uj, nrange_t, ltmax, _induction_tTT)
+            end
+        end
+    end
+
+    nmatb = length(bbi)
+    nmatu = length(buj)
+
+    return sparse(is, js, aijs, nmatb, nmatu)
+end
 
 function _induction(::Val{false}, bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
@@ -489,6 +698,53 @@ function _induction(::Val{false}, bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj:
     return sparse(is, js, aijs, nmatbi, nmatbj)
 end
 
+function _induction_new(::Val{false}, bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = U0.lmn
+    @assert bbi.N == bbj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
+
+    npbi = length(lmn2k_p_bi)
+    npbj = length(lmn2k_p_bj)
+
+
+
+    for li in 1:lpmax(bbi)
+        for ni in nrange_p_bc(bbi, li)
+            for lj in adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_adamgaunt!(bbi,U0,bbj, is,js,aijs, 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_sSS; external)  
+            end
+            for lj in elsasser_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is,js,aijs, 0,npbj, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_t_bj, nrange_t, ltmax, _induction_sTS)  
+            end
+        end
+    end
+
+    for li in 1:ltmax(bbi)
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  elsasser_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is,js,aijs, npbi,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_sST)  
+            end
+            for lj in  adamgaunt_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_adamgaunt!(bbi,U0,bbj, is, js, aijs, npbi, npbj, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t, ltmax, _induction_sTT)
+            end
+        end
+    end
+
+    nmatbi = length(bbi)
+    nmatbj = length(bbj)
+
+    return sparse(is, js, aijs, nmatbi, nmatbj)
+end
 
 function _induction(::Val{false}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
@@ -533,6 +789,54 @@ function _induction(::Val{false}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj:
 
     return sparse(is, js, aijs, nmatbi, nmatbj)
 end
+
+function _induction_new(::Val{false}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = U0.lmn
+    @assert bbi.N == bbj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
+
+    npbi = length(lmn2k_p_bi)
+    npbj = length(lmn2k_p_bj)
+
+
+
+
+    for li in 1:lpmax(bbi)
+        for ni in nrange_p_bc(bbi, li)
+            for lj in elsasser_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is,js,aijs, 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_tSS; external)  
+            end
+        end
+    end
+
+    for li in 1:ltmax(bbi)
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_adamgaunt!(bbi,U0,bbj, is,js,aijs, npbi,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_tST)  
+            end
+            for lj in  elsasser_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is, js, aijs, npbi, npbj, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t, ltmax, _induction_tTT)
+            end
+        end
+    end
+
+    nmatbi = length(bbi)
+    nmatbj = length(bbj)
+
+    return sparse(is, js, aijs, nmatbi, nmatbj)
+end
+
+## Threaded versions:
 
 function _induction(::Val{true}, bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
@@ -599,6 +903,55 @@ function _induction(::Val{true}, bbi::TI, buj::TJ, B0::BasisElement{T0,Poloidal,
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatb, nmatu)
 end
 
+function _induction_new(::Val{true}, bbi::Basis{TI,V}, buj::Basis{TJ,V}, B0::BasisElement{Basis{T0,V},Poloidal,T}; external=true) where {TI,TJ,T0,T, V<:Volume}
+
+    _nt = Threads.nthreads()
+    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_uj = lmn2k_p_dict(buj)
+    lmn2k_t_uj = lmn2k_t_dict(buj)
+
+    l0, m0, n0 = B0.lmn
+    @assert bbi.N == buj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
+
+    npb = length(lmn2k_p_bi)
+    npu = length(lmn2k_p_uj)
+    Threads.@threads :static for li in 1:lpmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_p_bc(bbi, li)
+            for lj in adamgaunt_ljs(li, l0, 0, lpmax(buj))
+               _crossterm_m_adamgaunt!(bbi,buj,B0, is[id],js[id],aijs[id], 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sSS; external)  
+            end
+            for lj in elsasser_ljs(li, l0, 0, ltmax(buj)) #max(1,li-l0):min(li+l0,ltmax(buj))
+               _crossterm_m_elsasser!(bbi,buj,B0, is[id],js[id],aijs[id], 0,npu, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_t_uj, nrange_t, ltmax, _induction_tSS; external)  
+            end
+        end
+    end
+
+    Threads.@threads :static for li in 1:ltmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  elsasser_ljs(li, l0, 0, lpmax(buj)) #max(1,li-l0):min(li+l0,lpmax(buj))
+               _crossterm_m_elsasser!(bbi,buj,B0, is[id],js[id],aijs[id], npb,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sST)  
+            end
+            for lj in  adamgaunt_ljs(li, l0, 0, ltmax(buj)) #max(1,li-l0):min(li+l0,ltmax(buj))
+               _crossterm_m_adamgaunt!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_uj, nrange_t, ltmax, _induction_tST)
+            end
+        end
+    end
+
+    nmatb = length(bbi)
+    nmatu = length(buj)
+
+    return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatb, nmatu)
+end
+
 function _induction(::Val{true}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     
@@ -645,6 +998,52 @@ function _induction(::Val{true}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,
                 id = Threads.threadid()
                 E = elsasser(lj, l0, li, mj, m0, mi)
                 _crossterm!(bbi, buj, B0, is[id], js[id], aijs[id], npb, npu, li, mi, lj, mj, rwrs, lmn2k_t_bi, lmn2k_t_uj, nrange_t_bc, nrange_t, _induction_tTT, E)
+            end
+        end
+    end
+
+    nmatb = length(bbi)
+    nmatu = length(buj)
+
+    return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatb, nmatu)
+end
+
+function _induction_new(::Val{true}, bbi::TI, buj::TJ, B0::BasisElement{T0,Toroidal,T}; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    _nt = Threads.nthreads()
+    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_uj = lmn2k_p_dict(buj)
+    lmn2k_t_uj = lmn2k_t_dict(buj)
+
+    l0, m0, n0 = B0.lmn
+    @assert bbi.N == buj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 5, bbi.V) for n in 1:N]
+
+    npb = length(lmn2k_p_bi)
+    npu = length(lmn2k_p_uj)
+
+    Threads.@threads :static for li in 1:lpmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_p_bc(bbi, li)
+            for lj in elsasser_ljs(li, l0, 0, lpmax(buj))
+               _crossterm_m_elsasser!(bbi,buj,B0, is[id],js[id],aijs[id], 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sTS)  
+            end
+        end
+    end
+
+    Threads.@threads :static for li in 1:ltmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  adamgaunt_ljs(li, l0, 0, lpmax(buj))
+               _crossterm_m_adamgaunt!(bbi,buj,B0, is[id],js[id],aijs[id], npb,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_uj, nrange_p, lpmax, _induction_sTT)  
+            end
+            for lj in  elsasser_ljs(li, l0, 0, ltmax(buj))
+               _crossterm_m_elsasser!(bbi, buj, B0, is[id],js[id],aijs[id], npb, npu, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_uj, nrange_t, ltmax, _induction_tTT)
             end
         end
     end
@@ -719,6 +1118,58 @@ function _induction(::Val{true}, bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatbi, nmatbj)
 end
 
+function _induction_new(::Val{true}, bbi::TI, U0::BasisElement{T0,Poloidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    _nt = Threads.nthreads()
+    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = U0.lmn
+    @assert bbi.N == bbj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
+
+    npbi = length(lmn2k_p_bi)
+    npbj = length(lmn2k_p_bj)
+
+
+
+    Threads.@threads :static for li in 1:lpmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_p_bc(bbi, li)
+            for lj in adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_adamgaunt!(bbi,U0,bbj, is[id],js[id],aijs[id], 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_sSS; external)  
+            end
+            for lj in elsasser_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is[id],js[id],aijs[id], 0,npbj, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_t_bj, nrange_t, ltmax, _induction_sTS)  
+            end
+        end
+    end
+
+    Threads.@threads :static for li in 1:ltmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  elsasser_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is[id],js[id],aijs[id], npbi,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_sST)  
+            end
+            for lj in  adamgaunt_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_adamgaunt!(bbi,U0,bbj, is[id],js[id],aijs[id], npbi, npbj, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t, ltmax, _induction_sTT)
+            end
+        end
+    end
+
+    nmatbi = length(bbi)
+    nmatbj = length(bbj)
+
+    return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatbi, nmatbj)
+end
+
 function _induction(::Val{true}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     
@@ -775,16 +1226,78 @@ function _induction(::Val{true}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::
     return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatbi, nmatbj)
 end
 
+function _induction_new(::Val{true}, bbi::TI, U0::BasisElement{T0,Toroidal,T}, bbj::TJ; external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    _nt = Threads.nthreads()
+    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+
+
+    lmn2k_p_bi = lmn2k_p_dict(bbi)
+    lmn2k_t_bi = lmn2k_t_dict(bbi)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = U0.lmn
+    @assert bbi.N == bbj.N "Use same resolution for bases!"
+    N = bbi.N
+    rwrs = [rquad(n + l0 + n0 + 1, bbi.V) for n in 1:N]
+
+    npbi = length(lmn2k_p_bi)
+    npbj = length(lmn2k_p_bj)
+
+
+
+
+    Threads.@threads :static for li in 1:lpmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_p_bc(bbi, li)
+            for lj in elsasser_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is[id],js[id],aijs[id], 0,0, li,ni,lj, rwrs, lmn2k_p_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_tSS; external)  
+            end
+        end
+    end
+
+    Threads.@threads :static for li in 1:ltmax(bbi)
+        id = Threads.threadid()
+        for ni in nrange_t_bc(bbi, li)
+            for lj in  adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_adamgaunt!(bbi,U0,bbj, is[id],js[id],aijs[id], npbi,0, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_p_bj, nrange_p, lpmax, _induction_tST)  
+            end
+            for lj in  elsasser_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_elsasser!(bbi,U0,bbj, is[id],js[id],aijs[id], npbi, npbj, li,ni,lj, rwrs, lmn2k_t_bi, lmn2k_t_bj, nrange_t, ltmax, _induction_tTT)
+            end
+        end
+    end
+
+    nmatbi = length(bbi)
+    nmatbj = length(bbj)
+
+    return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatbi, nmatbj)
+end
+
 """
 $(TYPEDSIGNATURES)
 
 Computes the induction term for a poloidal/toroidal background magnetic field `B0`, a magnetic field basis `bbi` and a velocity basis `buj`.
 """
-induction(bbi::TI, buj::TJ, B0::BasisElement{T0,TH,T}; threads=false, external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T} = _induction(Val(threads), bbi, buj, B0; external)
+function induction(bbi::TI, buj::TJ, B0::BasisElement{T0,TH,T}; threads=false, external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T}
+    if length(bbi.m) == length(buj.m) == 1
+        return _induction(Val(threads), bbi, buj, B0; external)
+    else
+        return _induction_new(Val(threads), bbi, buj, B0; external)
+    end
+end
 
 """
 $(TYPEDSIGNATURES)
 
 Computes the induction term for a poloidal/toroidal background velocity `U0`, a magnetic field basis `bbi` and a magnetic field basis `bbj`.
 """
-induction(bbi::TI, U0::BasisElement{T0,TH,T}, bbj::TJ; threads=false, external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T} = _induction(Val(threads), bbi, U0, bbj; external)
+function induction(bbi::TI, U0::BasisElement{T0,TH,T}, bbj::TJ; threads=false, external=true) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T} 
+    if length(bbi.m) == length(bbj.m) == 1
+        return _induction(Val(threads), bbi, U0, bbj; external)
+    else
+        return _induction_new(Val(threads), bbi, U0, bbj; external)
+    end
+end
