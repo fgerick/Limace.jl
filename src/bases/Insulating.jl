@@ -170,24 +170,25 @@ function inner_b0norm(lmn_p, lmn_t)
     nu = np+nt
 
     is,js,aijs = Int[], Int[], Complex{T}[]
+    lck = ReentrantLock()
 
 
     for (i,(l,m,n)) in enumerate(lmn_p)
         aij = _inertial_ss(l,n,n)
-        appendit!(is,js,aijs,i,i,aij)
+        appendit!(is,js,aijs,lck,i,i,aij)
         aijs[end]/=unitspherenorm(l,n)^2
         if n>1
             aij = _inertial_ss(l,n,n-1)
-            appendit!(is,js,aijs,i,i-1,aij)
+            appendit!(is,js,aijs,lck,i,i-1,aij)
         end
     end
 
     for (i,(l,m,n)) in enumerate(lmn_t)
         aij = _inertial_tt(l,n,n)
-        appendit!(is,js,aijs,i+np,i+np,aij)
+        appendit!(is,js,aijs,lck,i+np,i+np,aij)
         if n>1
             aij = _inertial_tt(l,n,n-1)
-            appendit!(is,js,aijs,i+np,i-1+np,aij)
+            appendit!(is,js,aijs,lck,i+np,i-1+np,aij)
         end
     end
 

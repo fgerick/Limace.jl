@@ -7,3 +7,4 @@
 /coverage
 .DS_Store
 /docs/.DS_Store
+.vscode/
