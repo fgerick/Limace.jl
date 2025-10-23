@@ -72,8 +72,8 @@ end
     u = Inviscid(N; m)
     b = Insulating(N; m)
 
-    B0s = [BasisElement(b, Poloidal, (1,0,1), 1.0), BasisElement(b, Toroidal, (1,0,1), 1.0)]
-	U0s = [BasisElement(u, Poloidal, (1,0,1), 1.0), BasisElement(u, Toroidal, (1,0,1), 1.0)]
+    B0s = [BasisElement(b, Poloidal, (1,0,1), 1.0), BasisElement(b, Toroidal, (1,0,1), 1.0), BasisElement(b, Poloidal, (2,1,2), 1.0), BasisElement(b, Toroidal, (2,1,2), 1.0)]
+	U0s = [BasisElement(u, Poloidal, (1,0,1), 1.0), BasisElement(u, Toroidal, (1,0,1), 1.0), BasisElement(u, Poloidal, (2,1,2), 1.0), BasisElement(u, Toroidal, (2,1,2), 1.0)]
 
 
 	@test Limace.diffusion(u) ≈ Limace._diffusion(Val(true),u)
