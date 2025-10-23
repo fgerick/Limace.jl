@@ -142,35 +142,35 @@ function _coriolis_st(l,l2,m,m2,n,n2; Ω = 2.0)
     return aij
 end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, lmn2k_p, l, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, lck, lmn2k_p, l, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         aij = _coriolis_ss(T(l), T(m); Ω)
-        appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n)], aij)
+        appendit!(is, js, aijs, lck, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n)], aij)
     end
     return nothing
 end
 
-function _coriolis_poloidal_toroidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_toroidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l), n2 in nrange_t(b,l2)
         aij = _coriolis_st(T(l),T(l2),T(m),T(m),T(n),T(n2); Ω)
-        appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_t[(l2,m,n2)] + _np, aij)
+        appendit!(is, js, aijs, lck, lmn2k_p[(l,m,n)], lmn2k_t[(l2,m,n2)] + _np, aij)
     end
     return nothing
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, lck, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l)
         aij = _coriolis_tt(T(l), T(m); Ω)
-        appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n)] + _np, aij)
+        appendit!(is, js, aijs, lck, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n)] + _np, aij)
     end
     return nothing
 end
 
-function _coriolis_toroidal_poloidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_poloidal!(b::Basis{Inviscid,Sphere}, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l), n2 in nrange_p(b,l2)
         aij = _coriolis_ts(T(l),T(l2),T(m),T(m),T(n),T(n2); Ω)
-        appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_p[(l2,m,n2)], aij)
+        appendit!(is, js, aijs, lck, lmn2k_t[(l,m,n)] + _np, lmn2k_p[(l2,m,n2)], aij)
     end
     return nothing
 end

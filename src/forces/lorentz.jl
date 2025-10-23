@@ -196,6 +196,7 @@ Computes the Lorentz term for a poloidal background magnetic field `B0`, a veloc
 function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
 
     lmn2k_p_ui = lmn2k_p_dict(bui)
     lmn2k_t_ui = lmn2k_t_dict(bui)
@@ -215,14 +216,14 @@ function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
+            _crossterm!(bui, bbj, B0, is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
             A = adamgaunt(l0,lj,li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
+            _crossterm!(bui, B0, bbj, is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
             E = elsasser(l0, lj, li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
+            _crossterm!(bui, B0, bbj, is, js, aijs, lck, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
         end
     end
 
@@ -230,14 +231,64 @@ function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             A = adamgaunt(l0,lj,li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
+            _crossterm!(bui, B0, bbj, is, js, aijs, lck, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+            _crossterm!(bui, bbj, B0, is, js, aijs, lck, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
             E = elsasser(l0, lj, li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+            _crossterm!(bui, B0, bbj, is, js, aijs, lck, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+        end
+    end
+
+    nmatu = length(bui)
+    nmatb = length(bbj)
+
+    return sparse(is, js, aijs, nmatu, nmatb)
+end
+
+function _lorentz_new(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
+
+    lmn2k_p_ui = lmn2k_p_dict(bui)
+    lmn2k_t_ui = lmn2k_t_dict(bui)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = B0.lmn
+    # @assert bui.N == bbj.N "Use same resolution for bases!"
+    N = max(bui.N,bbj.N)
+    rwrs = [rquad(n + l0 + n0 + 1, bui.V) for n in 1:N]
+
+    npu = length(lmn2k_p_ui)
+    npb = length(lmn2k_p_bj)
+
+
+    for li in 1:lpmax(bui)
+        for ni in nrange_p_bc(bui, li)
+            for lj in adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_adamgaunt!(bui,bbj,B0, is, js, aijs, lck, 0,0, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSs)  
+               _crossterm_m_adamgaunt!(bui,B0,bbj, is, js, aijs, lck, 0,0, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSs)  
+            end
+            for lj in elsasser_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_elsasser!(bui,B0,bbj, is, js, aijs, lck, 0,npb, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_STs)  
+            end
+        end
+    end
+
+    for li in 1:ltmax(bui)
+        for ni in nrange_t_bc(bui, li)
+            for lj in  elsasser_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_elsasser!(bui,bbj,B0, is, js, aijs, lck, npu,0, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSt)  
+               _crossterm_m_elsasser!(bui,B0,bbj, is, js, aijs, lck, npu,0, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSt)  
+            end
+            for lj in  adamgaunt_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_adamgaunt!(bui, B0,bbj, is, js, aijs, lck, npu, npb, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_STt)
+            end
         end
     end
 
@@ -255,6 +306,7 @@ Computes the Lorentz term for a toroidal background magnetic field `B0`, a veloc
 function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
 
     lmn2k_p_ui = lmn2k_p_dict(bui)
     lmn2k_t_ui = lmn2k_t_dict(bui)
@@ -274,14 +326,14 @@ function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
+            _crossterm!(bui, bbj, B0, is, js, aijs, lck, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
             A = adamgaunt(l0,lj,li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
+            _crossterm!(bui, B0, bbj, is, js, aijs, lck, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_STs, E)
+            _crossterm!(bui, bbj, B0, is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_STs, E)
         end
     end
 
@@ -289,14 +341,14 @@ function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             A = adamgaunt(lj,l0,li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_STt, A)
+            _crossterm!(bui, bbj, B0, is, js, aijs, lck, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_STt, A)
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
             E = elsasser(lj, l0, li, mj, m0, mi)
-            _crossterm!(bui, bbj, B0, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
+            _crossterm!(bui, bbj, B0, is, js, aijs, lck, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
             E = elsasser(l0, lj, li, m0, mj, mi)
-            _crossterm!(bui, B0, bbj, is, js, aijs, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
+            _crossterm!(bui, B0, bbj, is, js, aijs, lck, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
         end
     end
 
@@ -306,6 +358,55 @@ function _lorentz(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T
     return sparse(is, js, aijs, nmatu, nmatb)
 end
 
+function _lorentz_new(::Val{false}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
+
+    lmn2k_p_ui = lmn2k_p_dict(bui)
+    lmn2k_t_ui = lmn2k_t_dict(bui)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = B0.lmn
+    # @assert bui.N == bbj.N "Use same resolution for bases!"
+    N = max(bui.N,bbj.N)
+    rwrs = [rquad(n + l0 + n0 + 1, bui.V) for n in 1:N]
+
+    npu = length(lmn2k_p_ui)
+    npb = length(lmn2k_p_bj)
+
+
+    for li in 1:lpmax(bui)
+        for ni in nrange_p_bc(bui, li)
+            for lj in elsasser_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_elsasser!(bui,bbj,B0, is, js, aijs, lck, 0,0, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_STs)  
+            end
+            for lj in adamgaunt_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_adamgaunt!(bui,bbj,B0, is, js, aijs, lck, 0,npb, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTs)  
+               _crossterm_m_adamgaunt!(bui,B0,bbj, is, js, aijs, lck, 0,npb, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTs)  
+            end
+        end
+    end
+
+    for li in 1:ltmax(bui)
+        for ni in nrange_t_bc(bui, li)
+            for lj in  adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+               _crossterm_m_adamgaunt!(bui,bbj,B0, is, js, aijs, lck, npu,0, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_STt)  
+            end
+            for lj in  elsasser_ljs(li, l0, 0, ltmax(bbj))
+               _crossterm_m_elsasser!(bui, B0,bbj, is, js, aijs, lck, npu, npb, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTt)
+               _crossterm_m_elsasser!(bui,bbj,B0, is, js, aijs, lck, npu, npb, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTt)
+            end
+        end
+    end
+
+    nmatu = length(bui)
+    nmatb = length(bbj)
+
+    return sparse(is, js, aijs, nmatu, nmatb)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -314,8 +415,8 @@ Computes the Lorentz term for a poloidal background magnetic field `B0`, a veloc
 """
 function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
-    _nt = Threads.nthreads()
-    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
 
     lmn2k_p_ui = lmn2k_p_dict(bui)
     lmn2k_t_ui = lmn2k_t_dict(bui)
@@ -335,22 +436,19 @@ function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 A = adamgaunt(lj,l0,li, mj, m0, mi)
-                _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
+                _crossterm!(bui, bbj, B0 , is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
             end
             Threads.@spawn begin
 				A = adamgaunt(l0,lj,li, m0, mj, mi)
-                id = Threads.threadid()
-                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
+                _crossterm!(bui, B0, bbj , is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_SSs, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 E = elsasser(l0, lj, li, m0, mj, mi)
-                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
+                _crossterm!(bui, B0, bbj , is, js, aijs, lck, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_STs, E)
             end
         end
     end
@@ -359,22 +457,19 @@ function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 A = adamgaunt(l0,lj,li, m0, mj, mi)
-                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
+                _crossterm!(bui, B0, bbj , is, js, aijs, lck, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_STt, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 E = elsasser(lj, l0, li, mj, m0, mi)
-                _crossterm!(bui, bbj, B0 , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+                _crossterm!(bui, bbj, B0 , is, js, aijs, lck, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
             end
             Threads.@spawn begin
-                id = Threads.threadid()
                 E = elsasser(l0, lj, li, m0, mj, mi)
-                _crossterm!(bui, B0, bbj , is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
+                _crossterm!(bui, B0, bbj , is, js, aijs, lck, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_SSt, E)
             end
         end
     end
@@ -382,9 +477,60 @@ function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}
     nmatu = length(bui)
     nmatb = length(bbj)
 
-    return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatu, nmatb)
+    return sparse(is, js, aijs, nmatu, nmatb)
 end
 
+function _lorentz_new(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Poloidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
+
+    lmn2k_p_ui = lmn2k_p_dict(bui)
+    lmn2k_t_ui = lmn2k_t_dict(bui)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = B0.lmn
+    # @assert bui.N == bbj.N "Use same resolution for bases!"
+    N = max(bui.N,bbj.N)
+    rwrs = [rquad(n + l0 + n0 + 1, bui.V) for n in 1:N]
+
+    npu = length(lmn2k_p_ui)
+    npb = length(lmn2k_p_bj)
+
+
+    @sync begin
+        for li in 1:lpmax(bui)
+            for ni in nrange_p_bc(bui, li)
+                for lj in adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+                    Threads.@spawn _crossterm_m_adamgaunt!(bui,bbj,B0, is, js, aijs, lck, 0,0, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSs)  
+                    Threads.@spawn _crossterm_m_adamgaunt!(bui,B0,bbj, is, js, aijs, lck, 0,0, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSs)  
+                end
+                for lj in elsasser_ljs(li, l0, 0, ltmax(bbj))
+                    Threads.@spawn _crossterm_m_elsasser!(bui,B0,bbj, is, js, aijs, lck, 0,npb, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_STs)  
+                end
+            end
+        end
+
+        for li in 1:ltmax(bui)
+            for ni in nrange_t_bc(bui, li)
+                for lj in  elsasser_ljs(li, l0, 0, lpmax(bbj))
+                    Threads.@spawn _crossterm_m_elsasser!(bui,bbj,B0, is, js, aijs, lck, npu,0, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSt)  
+                    Threads.@spawn _crossterm_m_elsasser!(bui,B0,bbj, is, js, aijs, lck, npu,0, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_SSt)  
+                end
+                for lj in  adamgaunt_ljs(li, l0, 0, ltmax(bbj))
+                    Threads.@spawn _crossterm_m_adamgaunt!(bui, B0,bbj, is, js, aijs, lck, npu, npb, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_STt)
+                end
+            end
+        end
+    end
+
+    nmatu = length(bui)
+    nmatb = length(bbj)
+
+    return sparse(is, js, aijs, nmatu, nmatb)
+end
 """
 $(TYPEDSIGNATURES)
 
@@ -392,8 +538,8 @@ Computes the Lorentz term for a toroidal background magnetic field `B0`, a veloc
 """
 function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
-    _nt = Threads.nthreads()
-    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [complex(T)[] for _ in 1:_nt]
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
 
     lmn2k_p_ui = lmn2k_p_dict(bui)
     lmn2k_t_ui = lmn2k_t_dict(bui)
@@ -413,22 +559,19 @@ function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, ltmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 A = adamgaunt(lj,l0,li, mj, m0, mi)
-                _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
+                _crossterm!(bui, bbj, B0, is, js, aijs, lck, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
             end
             Threads.@spawn begin
-                id = Threads.threadid()
                 A = adamgaunt(l0,lj,li, m0, mj, mi)
-                _crossterm!(bui, B0, bbj, is[id], js[id], aijs[id], 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
+                _crossterm!(bui, B0, bbj, is, js, aijs, lck, 0, npb, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_p_bc, nrange_t, _lorentz_TTs, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, lpmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 E = elsasser(lj, l0, li, mj, m0, mi)
-                _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_STs, E)
+                _crossterm!(bui, bbj, B0, is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p_bc, nrange_p, _lorentz_STs, E)
             end
         end
     end
@@ -437,22 +580,19 @@ function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}
         mj = adamgaunt_mjs(mi, m0)
         for lj in adamgaunt_ljs(li, l0, mj, lpmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 A = adamgaunt(lj,l0,li, mj, m0, mi)
-                _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_STt, A)
+                _crossterm!(bui, bbj, B0, is, js, aijs, lck, npu, 0, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_t_bc, nrange_p, _lorentz_STt, A)
             end
         end
         mj = elsasser_mjs(mi, m0)
         for lj in elsasser_ljs(li, l0, mj, ltmax(bbj))
             Threads.@spawn begin
-                id = Threads.threadid()
                 E = elsasser(lj, l0, li, mj, m0, mi)
-                _crossterm!(bui, bbj, B0, is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
+                _crossterm!(bui, bbj, B0, is, js, aijs, lck, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
             end
             Threads.@spawn begin
                 E = elsasser(l0, lj, li, m0, mj, mi)
-                id = Threads.threadid()
-                _crossterm!(bui, B0, bbj, is[id], js[id], aijs[id], npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
+                _crossterm!(bui, B0, bbj, is, js, aijs, lck, npu, npb, li, mi, lj, mj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t_bc, nrange_t, _lorentz_TTt, E)
             end
         end
     end
@@ -460,7 +600,58 @@ function _lorentz(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}
     nmatu = length(bui)
     nmatb = length(bbj)
 
-    return sparse(vcat(is...), vcat(js...), vcat(aijs...), nmatu, nmatb)
+    return sparse(is, js, aijs, nmatu, nmatb)
+end
+
+function _lorentz_new(::Val{true}, bui::TI, bbj::TJ, B0::BasisElement{T0,Toroidal,T}) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
+
+    lmn2k_p_ui = lmn2k_p_dict(bui)
+    lmn2k_t_ui = lmn2k_t_dict(bui)
+
+    lmn2k_p_bj = lmn2k_p_dict(bbj)
+    lmn2k_t_bj = lmn2k_t_dict(bbj)
+
+    l0, m0, n0 = B0.lmn
+    # @assert bui.N == bbj.N "Use same resolution for bases!"
+    N = max(bui.N,bbj.N)
+    rwrs = [rquad(n + l0 + n0 + 1, bui.V) for n in 1:N]
+
+    npu = length(lmn2k_p_ui)
+    npb = length(lmn2k_p_bj)
+
+    @sync begin
+        for li in 1:lpmax(bui)
+            for ni in nrange_p_bc(bui, li)
+                for lj in elsasser_ljs(li, l0, 0, lpmax(bbj))
+                    Threads.@spawn _crossterm_m_elsasser!(bui,bbj,B0, is, js, aijs, lck, 0,0, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_STs)  
+                end
+                for lj in adamgaunt_ljs(li, l0, 0, ltmax(bbj))
+                    Threads.@spawn _crossterm_m_adamgaunt!(bui,bbj,B0, is, js, aijs, lck, 0,npb, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTs)  
+                    Threads.@spawn _crossterm_m_adamgaunt!(bui,B0,bbj, is, js, aijs, lck, 0,npb, li,ni,lj, rwrs, lmn2k_p_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTs)  
+                end
+            end
+        end
+
+        for li in 1:ltmax(bui)
+            for ni in nrange_t_bc(bui, li)
+                for lj in  adamgaunt_ljs(li, l0, 0, lpmax(bbj))
+                    Threads.@spawn _crossterm_m_adamgaunt!(bui,bbj,B0, is, js, aijs, lck, npu,0, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_p_bj, nrange_p, lpmax, _lorentz_STt)  
+                end
+                for lj in  elsasser_ljs(li, l0, 0, ltmax(bbj))
+                    Threads.@spawn _crossterm_m_elsasser!(bui, B0,bbj, is, js, aijs, lck, npu, npb, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTt)
+                    Threads.@spawn _crossterm_m_elsasser!(bui,bbj,B0, is, js, aijs, lck, npu, npb, li,ni,lj, rwrs, lmn2k_t_ui, lmn2k_t_bj, nrange_t, ltmax, _lorentz_TTt)
+                end
+            end
+        end
+    end
+
+    nmatu = length(bui)
+    nmatb = length(bbj)
+
+    return sparse(is, js, aijs, nmatu, nmatb)
 end
 
 """
@@ -468,4 +659,11 @@ $(TYPEDSIGNATURES)
 
 Computes the Lorentz term for a poloidal/toroidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
 """
-lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,TH,T}; threads=false) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T} = _lorentz(Val(threads), bui, bbj, B0)
+function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,TH,T}; threads=false) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T}
+    if length(bui.m) == length(bbj.m) == 1
+        return _lorentz(Val(threads), bui, bbj, B0)
+    else
+        return _lorentz_new(Val(threads), bui, bbj, B0)
+    end
+end
+

@@ -23,7 +23,7 @@ mutable struct LimaceProblem{T}
     forcings 
     RHS::SparseMatrixCSC{T}
     LHS::SparseMatrixCSC{T}
-    sol::Union{Eigen{T, T, Matrix{T}, Vector{T}}, GeneralizedEigen{T, T, Matrix{T}, Vector{T}}}
+    sol::Union{Eigen{T}, GeneralizedEigen{T}}
     preassembled::Bool
     assembled::Bool
     solved::Bool

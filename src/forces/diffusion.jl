@@ -76,6 +76,7 @@ end
 @inline function _diffusion(::Val{false}, b::Basis; external=false)
     T = typeof(b.V.r1)
     is, js, aijs = Int[], Int[], Complex{T}[]
+    lck = ReentrantLock()
     lmn2k_p = lmn2k_p_dict(b)
     lmn2k_t = lmn2k_t_dict(b)
     _np = np(b)
@@ -88,7 +89,7 @@ end
         for m in intersect(b.m, -l:l)
             for n in nrange_p_bc(b,l), n2 in nrange_p(b,l)
                 aij = _diffusion_ss(b, (l,m,n), (l,m,n2), r,wr; external)
-                appendit!(is, js, aijs, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
+                appendit!(is, js, aijs, lck, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
             end
         end
     end
@@ -97,7 +98,7 @@ end
         for m in intersect(b.m, -l:l)
             for n in nrange_t_bc(b,l), n2 in nrange_t(b,l)
                 aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
-                appendit!(is, js, aijs, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
+                appendit!(is, js, aijs, lck, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
             end
         end
     end
@@ -110,8 +111,7 @@ end
     T = typeof(b.V.r1)
 
     is, js, aijs = Int[], Int[], Complex{T}[]
-    _nt = Threads.nthreads()
-    is, js, aijs = [Int[] for _ in 1:_nt], [Int[] for _ in 1:_nt], [Complex{T}[] for _ in 1:_nt]
+    lck = ReentrantLock()
 
     lmn2k_p = lmn2k_p_dict(b)
     lmn2k_t = lmn2k_t_dict(b)
@@ -124,10 +124,9 @@ end
         for l in 1:lpmax(b)
             for m in intersect(b.m, -l:l)
                 Threads.@spawn begin
-                    id = Threads.threadid()
                     for n in nrange_p_bc(b,l), n2 in nrange_p(b,l)
                         aij = _diffusion_ss(b, (l,m,n), (l,m,n2), r,wr; external)
-                        appendit!(is[id], js[id], aijs[id], lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
+                        appendit!(is, js, aijs, lck, lmn2k_p[(l,m,n)], lmn2k_p[(l,m,n2)], aij)
                     end
                 end
             end
@@ -136,10 +135,9 @@ end
         for l in 1:ltmax(b)
             for m in intersect(b.m, -l:l)
                 Threads.@spawn begin
-                    id = Threads.threadid()
                     for n in nrange_t_bc(b,l), n2 in nrange_t(b,l)
                         aij = _diffusion_tt(b, (l,m,n), (l,m,n2), r,wr)
-                        appendit!(is[id], js[id], aijs[id], lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
+                        appendit!(is, js, aijs, lck, lmn2k_t[(l,m,n)] + _np, lmn2k_t[(l,m,n2)] + _np, aij)
                     end
                 end
             end
