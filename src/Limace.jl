@@ -33,6 +33,8 @@ include("forces/coriolis.jl")
 include("forces/diffusion.jl")
 include("forces/induction.jl")
 include("forces/lorentz.jl")
+include("forces/scalaradvection.jl")
+include("forces/buoyancy.jl")
 include("forces/bc.jl")
 
 # bases
@@ -62,13 +64,16 @@ include("bases/InsulatingNoBC.jl")
 using .InsulatingBasisNoBC
 
 include("bases/ViscousNoBC.jl")
-@reexport using .ViscousBasisNoBC
+using .ViscousBasisNoBC
 
 include("bases/ThinWall.jl")
 using .ThinWallBasis
 
 include("bases/ViscousShell.jl")
-@reexport using .ViscousShellBasis
+using .ViscousShellBasis
+
+include("bases/Temperature.jl")
+using .TemperatureBasis
 
 include("forces/specializations.jl")
 

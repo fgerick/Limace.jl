@@ -2,10 +2,9 @@ module Bases
 
 using DocStringExtensions
 
-export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
+export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC, DirichletBC
 export Volume, Sphere, SphericalShell
 export LimaceBasis, Basis, BasisElement, isaxisymmetric, Helmholtz, Poloidal, Toroidal
-# export nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
 import Base: length
 
@@ -56,6 +55,12 @@ $(TYPEDFIELDS)
 """
 struct InsulatingBC <: BoundaryCondition end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
+struct DirichletBC <: BoundaryCondition end
 
 abstract type Volume end
 
@@ -230,12 +235,6 @@ function _lmn2cdeg_t(b::Basis, l, m, n)
     return nothing
 end
 
-# function t(::Type{Basis}, l, m, n, r)
-# end
-
-# function s(::Type{Basis}, l, m, n, r)
-# end
-
 function t(::Type{Basis}, V::Volume, l, m, n, r)
 end
 
@@ -333,8 +332,6 @@ BasisElement(::TB, ::Type{PT}, lmn::NTuple{3,Int}, factor::T=1.0) where {TB<:Bas
 BasisElement(::Type{TB}, ::Type{PT}, lmn::NTuple{3,Int}, factor::T=1.0) where {TB<:Basis,PT<:Helmholtz,T<:Number} = BasisElement{TB,PT,T}(lmn, factor)
 
 
-# s(b::T, l, m, n, r) where T<:Basis = s(T,l,m,n,r)
-# t(b::T, l, m, n, r) where T<:Basis = t(T,l,m,n,r)
 s(b::BasisElement{T,Poloidal}, V::Volume, r) where {T} = s(T, V, b.lmn..., r)
 t(b::BasisElement{T,Toroidal}, V::Volume, r) where {T} = t(T, V, b.lmn..., r)
 
