@@ -23,49 +23,49 @@ function update_and_solve_problem!(problem, α, update_f!)::ComplexF64
 	end
 end
 
+function solve_for_parameters(params; T0factor=2√π)
+	(; Ek, Pr, N, m, Ra_interval) = params
+
+	T = Limace.Temperature(N; m)
+	u = Limace.Viscous(N; m)
+	T0 = BasisElement(Basis{FP83, Limace.Sphere}, Toroidal, (0,0,3), T0factor)
+
+	bases = [u,T]
+	forcings = [Inertial(u), Coriolis(u, 1/Ek), Buoyancy(u,T), Diffusion(u),
+				Inertial(T,Pr), ScalarAdvectionT0(T,u,T0), Diffusion(T)]
+
+	problem = LimaceProblem(bases, forcings)
+	Limace.assemble!(problem; threads=true)
+
+	_ωc = [0.0]
+
+	function f!(Ra,p)
+		λ = update_and_solve_problem!(problem, Ra, update_Ra!)
+		_ωc[1] = imag(λ)
+		return real(λ)
+	end
+	interval_problem = IntervalNonlinearProblem(f!, Ra_interval)
+
+	Ra_c = solve(interval_problem, ITP()).u	
+	ω_c = _ωc[1]*Ek
+	return Ra_c, ω_c
+end
 
 # T₀ = -r²/2, so that ∇T₀ = -𝐫
 struct FP83; end
 Limace.Bases.t(::Type{Basis{FP83, Limace.Sphere}}, V::Limace.Sphere, l, m, n, r) = -1/2*r^2
 
 
-# see Table 1 in https://journals.aps.org/prl/supplemental/10.1103/PhysRevLett.119.094501
+# Table 1 in https://journals.aps.org/prl/supplemental/10.1103/PhysRevLett.119.094501
 # factor 2 in gravity?
 @testset "Kaplan et al. (2017)" begin
 
-	function solve_for_parameters(params)
-		(; Ek, Pr, N, m, Ra_interval) = params
-
-		T = Limace.Temperature(N; m)
-		u = Limace.Viscous(N; m)
-		T0 = BasisElement(Basis{FP83, Limace.Sphere}, Toroidal, (0,0,3), 4√π)
-
-		bases = [u,T]
-		forcings = [Inertial(u), Coriolis(u, 1/Ek), Buoyancy(u,T), Diffusion(u),
-					Inertial(T,Pr), ScalarAdvectionT0(T,u,T0), Diffusion(T)]
-
-		problem = LimaceProblem(bases, forcings)
-		Limace.assemble!(problem; threads=true)
-
-		_ωc = [0.0]
-
-		function f!(Ra,p)
-			λ = update_and_solve_problem!(problem, Ra, update_Ra!)
-			_ωc[1] = imag(λ)
-			return real(λ)
-		end
-		interval_problem = IntervalNonlinearProblem(f!, Ra_interval)
-
-		Ra_c = solve(interval_problem, ITP()).u	
-		ω_c = _ωc[1]*Ek
-		return Ra_c, ω_c
-	end
 	
 	parameters = [(; Ek=1e-5, Pr=0.1, m=11, Ra_interval=(1e5,1e8), N=50),
 				  (; Ek=3e-6, Pr=0.03, m=12, Ra_interval=(1e5,1e8), N=80),
 				  (; Ek=1e-6, Pr=0.01, m=11, Ra_interval=(1e5,1e9), N=100)]
 	
-	sols = solve_for_parameters.(parameters)
+	sols = solve_for_parameters.(parameters; T0factor = 4√π)
 
 	Ra_cs = getindex.(sols,1)
 	ω_cs = getindex.(sols,2)
@@ -169,3 +169,61 @@ end
 
 
 # end
+
+@testset "Kore, onset viscous hydro, m=1,2,3" begin
+
+	Ta = 1e9
+	Ek = √(4/Ta)
+	Pr = 1.0
+	N = 50
+	ms = 1:3
+	Ra_interval = (1e6, 1e7)
+	sols = [solve_for_parameters((; N, Ek, Pr, m, Ra_interval)) for m in 1:3]
+
+	Ra_cs = getindex.(sols,1)
+	ω_cs = getindex.(sols,2)
+
+
+	#computed using kore (Ra_c, m, ω_c)
+	kore_ref = [8.25010970e+06 1 -5.70072886e-03
+				6.61663621e+06 2 -9.24957284e-03
+				5.79607663e+06 3 -1.18798295e-02]
+
+	Ra_cs_ref = kore_ref[:,1]
+	ω_cs_ref = kore_ref[:,3]
+
+
+	@test Ra_cs ≈ Ra_cs_ref rtol=1e-5
+	@test ω_cs ≈ ω_cs_ref rtol=1e-5
+	#tolerances can be lower for higher resolutions, but enough for CI.
+
+end
+
+
+#Table 1 in Maffei et al. (2024), https://doi.org/10.1093/gji/ggae294
+@testset "Maffei et al. (2024)" begin
+	parameters = [(; Ek=5e-4, Pr=0.1, m=3, Ra_interval=(1e4,1e7), N=30),
+					(; Ek=1e-4, Pr=0.1, m=5, Ra_interval=(1e4,1e7), N=40),
+					(; Ek=5e-5, Pr=0.1, m=6, Ra_interval=(1e5,1e7), N=60),
+					(; Ek=1e-5, Pr=0.1, m=11, Ra_interval=(1e6,1e8), N=80),
+					(; Ek=5e-6, Pr=0.1, m=13, Ra_interval=(1e6,1e8), N=100),
+					(; Ek=1e-6, Pr=0.1, m=23, Ra_interval=(1e7,1e9), N=120),
+					(; Ek=5e-4, Pr=1.0, m=4, Ra_interval=(1e5,1e7), N=30),
+					(; Ek=5e-5, Pr=1.0, m=9, Ra_interval=(1e6,1e7), N=50)]
+
+	sols = solve_for_parameters.(parameters)
+	Ra_cs = getindex.(sols,1)
+	ω_cs = getindex.(sols,2)
+
+	Ra_cs_ref = [1.589e5, 9.642e5, 2.304e6, 1.688e7, 4.072e7, 3.245e8, 3.534e5, 6.308e6]
+	ω_cs_ref = [-0.1213, -0.07855, -0.06354, -0.04025, -0.03145, -0.01909, -0.02878, -0.01812]
+
+
+	for (Ra_c, Ra_c_ref) in zip(Ra_cs, Ra_cs_ref)
+		@test Ra_c ≈ Ra_c_ref rtol=1e-3
+	end
+	for (ω_c, ω_c_ref) in zip(ω_cs, ω_cs_ref)
+		@test ω_c ≈ ω_c_ref rtol=1e-3
+	end
+end
+
