@@ -341,4 +341,31 @@ import Base: +, -, *
 -(u::BasisElement{TB,PT}) where {TB<:Basis,PT<:Helmholtz} = BasisElement(TB, PT, u.lmn, -u.factor)
 *(x::Number, u::BasisElement{TB,PT}) where {TB<:Basis,PT<:Helmholtz} = BasisElement(TB, PT, u.lmn, x * u.factor)
 
+
+#implement b[i] to get a BasisElement from a Basis. Very inefficient right now (allocates arrays of all (l,m,n)...)
+import Base: getindex
+
+Base.axes(A::Basis) = (Base.OneTo(length(A)),)
+function Base.axes(A::Basis, d) 
+    @inline d::Integer == 1 ? axes(A)[d] : OneTo(1)
+end
+Base.size(A::Basis) = (length(A),)
+Base.IndexStyle(::Type{<:Basis}) = IndexLinear()
+Base.checkbounds(::Type{Bool}, A::Basis, i) = i in axes(A)
+
+Base.@propagate_inbounds function Base.getindex(b::Basis, i::Int)
+    @boundscheck checkbounds(Bool, b, i)
+    nb = length(b)
+    _np = np(b)
+    if i>nb
+       return  
+    elseif i>_np
+        lmn = lmn_t(b)[i-_np]
+        return BasisElement(b, Toroidal, lmn)
+    else
+        lmn = lmn_p(b)[i]
+        return BasisElement(b, Poloidal, lmn)
+    end
+end
+
 end #module
