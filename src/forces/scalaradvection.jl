@@ -225,6 +225,35 @@ function _scalaradvection(::Val{false}, bti::TI, U0::BasisElement{T0,Toroidal,T}
     return sparse(is, js, aijs, nmatti, nmattj)
 end
 
+function _scalaradvection(::Val{true}, bti::TI, U0::BasisElement{T0,Toroidal,T}, btj::TJ) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
+
+    lmn2k_t_ti = lmn2k_t_dict(bti)
+    lmn2k_t_tj = lmn2k_t_dict(btj)
+
+    l0, m0, n0 = U0.lmn
+    @assert bti.N == btj.N "Use same resolution for bases!"
+    N = bti.N
+    rwrs = [rquad(n + l0 + n0 + 5, bti.V) for n in 1:N]
+
+    @sync for li in 1:ltmax(bti), mi in intersect(bti.m, -li:li)
+        mj = elsasser_mjs(mi, m0)
+        for lj in elsasser_ljs(li, l0, mj, ltmax(btj))
+            Threads.@spawn begin
+                E = elsasser(l0, lj, li, m0, mj, mi)
+                _crossterm!(bti, U0, btj, is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_t_ti, lmn2k_t_tj, nrange_t_bc, nrange_t, _scalaradvection_tTT, E)
+            end
+        end
+    end
+
+    nmatti = length(bti)
+    nmattj = length(btj)
+
+    return sparse(is, js, aijs, nmatti, nmattj)
+end
+
 function _scalaradvection(::Val{false}, bti::TI, U0::BasisElement{T0,Poloidal,T}, btj::TJ) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
@@ -252,6 +281,34 @@ function _scalaradvection(::Val{false}, bti::TI, U0::BasisElement{T0,Poloidal,T}
     return sparse(is, js, aijs, nmatti, nmattj)
 end
 
+function _scalaradvection(::Val{true}, bti::TI, U0::BasisElement{T0,Poloidal,T}, btj::TJ) where {TI<:Basis,TJ<:Basis,T0<:Basis,T}
+
+    is, js, aijs = Int[], Int[], complex(T)[]
+    lck = ReentrantLock()
+
+    lmn2k_t_ti = lmn2k_t_dict(bti)
+    lmn2k_t_tj = lmn2k_t_dict(btj)
+
+    l0, m0, n0 = U0.lmn
+    @assert bti.N == btj.N "Use same resolution for bases!"
+    N = bti.N
+    rwrs = [rquad(n + l0 + n0 + 5, bti.V) for n in 1:N]
+
+    @sync for li in 1:ltmax(bti), mi in intersect(bti.m, -li:li)
+		mj = adamgaunt_mjs(mi, m0)
+        for lj in adamgaunt_ljs(li, l0, mj, ltmax(btj))
+            Threads.@spawn begin
+                A = adamgaunt(l0,lj,li, m0, mj, mi)
+                _crossterm!(bti, U0, btj, is, js, aijs, lck, 0, 0, li, mi, lj, mj, rwrs, lmn2k_t_ti, lmn2k_t_tj, nrange_t_bc, nrange_t, _scalaradvection_sTT, A)
+            end
+        end
+    end
+
+    nmatti = length(bti)
+    nmattj = length(btj)
+
+    return sparse(is, js, aijs, nmatti, nmattj)
+end
 
 """
 $(TYPEDSIGNATURES)
