@@ -115,12 +115,12 @@ end
 
 function usection(::Val{true}, λ, λ2, evecs, evecs2, u0, b0, u1, b1; threshc=0.99, threshλ=0.1)
     @assert u1.N > u0.N
-    nth = Threads.nthreads()
+    nth = Threads.nworkers()
     is = [Int[] for _ in 1:nth]
     is2 = [Int[] for _ in 1:nth]
     inds = getindices(u1, b1, u0, b0)[2]
 
-    Threads.@threads for i in eachindex(λ)
+    Threads.@threads :static for i in eachindex(λ)
         it = Threads.threadid()
         found = false
         ω = λ[i]
@@ -382,11 +382,11 @@ Find all indices of `evals1` and `evals2` for which `findall(y->any(x->isapprox(
 Multithreaded.
 """
 function eigenvalue_filter(evals1, evals2; λtol=1e-3)
-    nt = Threads.nthreads()
+    nt = Threads.nworkers()
     is1 = [Int[] for _ in 1:nt]
     is2 = [Int[] for _ in 1:nt]
 
-    Threads.@threads for i1 in eachindex(evals1)
+    Threads.@threads :static for i1 in eachindex(evals1)
         λ1 = evals1[i1]
         δ, i2 = findmin(x -> abs(x - λ1), evals2)
         if δ / abs(λ1) < λtol
