@@ -193,6 +193,74 @@ function discretize(αs::Vector{T}, u::TU, b::TB, r, θ, ϕ) where {T<:Number,TU
     return ur, uθ, uϕ, br, bθ, bϕ
 end
 
+function discretize(αs::Vector{T}, u::TU, b::TB, r::T2, θ::T2, ϕ::T2) where {T<:Number,T2<:Number, TU<:Basis, TB<:Basis}
+    @assert length(αs) == length(u)+length(b)
+    nr = length(r)
+    nθ = length(θ)
+    nϕ = length(ϕ)
+
+    #velocity
+
+    nu = length(u)
+    lmnp_u = lmn_p(u)
+    lmnt_u = lmn_t(u)
+
+    ur = zero(T2)
+    uθ = zero(T2) 
+    uϕ = zero(T2) 
+
+    _np = length(lmnp_u)
+    αspu = @view αs[1:_np]
+    αstu = @view αs[_np+1:nu]
+
+
+    for _i in eachindex(lmnp_u)
+        (l, m, n) , α= lmnp_u[_i], αspu[_i]
+        _ur,_uθ,_uϕ = poloidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
+        ur += α*_ur
+        uθ += α*_uθ
+        uϕ += α*_uϕ
+    end
+    for _i in eachindex(lmnt_u)
+        (l, m, n) ,α = lmnt_u[_i], αstu[_i]
+        _ur,_uθ,_uϕ = toroidal_discretize(TU, u.V, l, m, n, r, θ, ϕ)
+        ur += α*_ur
+        uθ += α*_uθ
+        uϕ += α*_uϕ
+    end
+
+    #mag. field
+    
+    lmnp_b = lmn_p(b)
+    lmnt_b = lmn_t(b)
+
+    br = zero(T2)
+    bθ = zero(T2)
+    bϕ = zero(T2)
+
+    _npb = length(lmnp_b)
+    αspb = @view αs[nu+1:nu+_npb]
+    αstb = @view αs[nu+_npb+1:end]
+
+
+    for _i in eachindex(lmnp_b)
+        (l, m, n) , α= lmnp_b[_i], αspb[_i]
+        _ur,_uθ,_uϕ = poloidal_discretize(TB, b.V, l, m, n, r, θ, ϕ)
+        br += α*_ur
+        bθ += α*_uθ
+        bϕ += α*_uϕ
+    end
+    for _i in eachindex(lmnt_b)
+        (l, m, n) ,α = lmnt_b[_i], αstb[_i]
+        _ur,_uθ,_uϕ = toroidal_discretize(TB, b.V, l, m, n, r, θ, ϕ)
+        br += α*_ur
+        bθ += α*_uθ
+        bϕ += α*_uϕ
+    end
+
+    return ur, uθ, uϕ, br, bθ, bϕ
+end
+
 function coeffs_to_SHTnSlmTlm!(Qlmu, Slmu, Tlmu, Qlmb, Slmb, Tlmb, lmnpu, lmntu, lmnpb, lmntb, coeffs, sht, u::TU, b::TB, r) where {TU<:Basis, TB<:Basis}
 
 	npu = length(lmnpu)
