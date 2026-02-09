@@ -10,6 +10,14 @@ iterate(f::Forcing, ::Any) = nothing
 
 Base.show(io::IO, f::T) where T <: Forcing = print(io, "$T(N = $(getfield(f,1).N), factor = $(f.factor))")
 
+abstract type NonLinearForcing{T} end
+
+length(f::NonLinearForcing) = 1
+iterate(f::NonLinearForcing) = (f, nothing)
+iterate(f::NonLinearForcing, ::Any) = nothing
+
+Base.show(io::IO, f::T) where T <: NonLinearForcing = print(io, "$T(N = $(getfield(f,1).N))")
+
 ## LimaceProblem
 
 """
@@ -99,18 +107,22 @@ function add!(problem::LimaceProblem, f::Forcing)
 end
 
 function _add_to_premat!(problem::LimaceProblem, premat, f::TF) where {TF <: Forcing{1}}
-    basis = getfield(f,1)
-    ib = last(findfirst(isequal(basis),problem.bases))
-    premat[ib,ib] += f.mat*f.factor
+    if abs(f.factor) != 0
+        basis = getfield(f,1)
+        ib = last(findfirst(isequal(basis),problem.bases))
+        premat[ib,ib] += f.mat*f.factor
+    end
     return nothing
 end
 
 function _add_to_premat!(problem::LimaceProblem, premat, f::TF) where {TF <: Forcing{2}}
-    basis1 = getfield(f,1)
-    basis2 = getfield(f,2)
-    ib1 = last(findfirst(isequal(basis1),problem.bases))
-    ib2 = last(findfirst(isequal(basis2),problem.bases))
-    premat[ib1,ib2] += f.mat*f.factor
+    if abs(f.factor) != 0
+        basis1 = getfield(f,1)
+        basis2 = getfield(f,2)
+        ib1 = last(findfirst(isequal(basis1),problem.bases))
+        ib2 = last(findfirst(isequal(basis2),problem.bases))
+        premat[ib1,ib2] += f.mat*f.factor
+    end
     return nothing
 end
 
@@ -165,10 +177,28 @@ function solve_dense!(problem::LimaceProblem)
 end
 
 function solve_sparse!(problem::LimaceProblem; target=Inf, kwargs...)
-    if isinf(target) 
-        λ, x = EigenSolve.eigs(problem.RHS, problem.LHS; kwargs...)
+    if typeof(target) <: Number
+        if isinf(target) 
+            λ, x = EigenSolve.eigs(problem.RHS, problem.LHS; kwargs...)
+        else
+            λ, x = EigenSolve.eigstarget(problem.RHS, problem.LHS, target; kwargs...)
+        end
+    elseif typeof(target)<:AbstractVector
+        Tc = complex(eltype(problem.LHS))
+        C = problem.RHS - first(target)*problem.LHS
+        P = lu(C)
+        λ, x = EigenSolve._eigstargetumfpack(P, problem.LHS, first(target); kwargs...)
+        for t in target[2:end]
+            _λ, _x = EigenSolve._eigstargetumfpack(problem.RHS, problem.LHS, C, P, t; kwargs...)
+            for (i,λi) in enumerate(_λ)
+                if !any(isapprox(λi, atol=10sqrt(eps())), λ)
+                    append!(λ,λi)
+                    @views x = hcat(x,_x[:,i])
+                end
+            end
+        end
     else
-        λ, x = EigenSolve.eigstarget(problem.RHS, problem.LHS, target; kwargs...)
+        @error "target should be a complex or real number, or an AbstractVector of real/complex numbers."
     end
 
     problem.sol = GeneralizedEigen(λ, x)
