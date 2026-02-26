@@ -38,6 +38,17 @@ Limace.Advection
 Limace.advection
 ```
 
+## Buoyancy
+
+```math
+\int \mathbf{u}_i^* \cdot \left(T_j\mathbf{r} \right)\,\mathrm{d}V
+```
+
+```@docs
+Limace.Buoyancy
+Limace.buoyancy
+```
+
 ## Coriolis
 
 

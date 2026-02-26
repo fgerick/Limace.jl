@@ -57,6 +57,12 @@ function _buoyancy_sTs(::Type{TB}, ::Type{TC}, V::Volume, lmnb, lmnc, r, wr) whe
     return aij
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the advection term for a spherically symmetric gravity acceleration (eq. (115) in Ivers & Phillips (2008)) 
+for a velocity basis `ub` and Temperature basis `tb`.
+"""
 function buoyancy(ub::TI, tb::TJ; kwargs...) where {TI<:Basis, TJ<:Basis}
 	nu = length(ub)
 	nt = length(tb)
