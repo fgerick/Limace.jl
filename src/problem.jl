@@ -10,14 +10,6 @@ iterate(f::Forcing, ::Any) = nothing
 
 Base.show(io::IO, f::T) where T <: Forcing = print(io, "$T(N = $(getfield(f,1).N), factor = $(f.factor))")
 
-abstract type NonLinearForcing{T} end
-
-length(f::NonLinearForcing) = 1
-iterate(f::NonLinearForcing) = (f, nothing)
-iterate(f::NonLinearForcing, ::Any) = nothing
-
-Base.show(io::IO, f::T) where T <: NonLinearForcing = print(io, "$T(N = $(getfield(f,1).N))")
-
 ## LimaceProblem
 
 """
