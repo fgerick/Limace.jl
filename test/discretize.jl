@@ -93,6 +93,13 @@ end
 	@test uθ ≈ uθ2
 	@test uϕ ≈ uϕ2
 
+	
+	ur3,uθ3,uϕ3, br3, bθ3, bϕ3 = discretize(x, u, b, r[1], π/2 - θ[1], ϕ[1])
+
+	@test ur[1] ≈ ur3
+	@test uθ[1] ≈ uθ3
+	@test uϕ[1] ≈ uϕ3
+
 end
 
 
