@@ -169,30 +169,11 @@ function solve_dense!(problem::LimaceProblem)
 end
 
 function solve_sparse!(problem::LimaceProblem; target=Inf, kwargs...)
-    if typeof(target) <: Number
-        if isinf(target) 
-            λ, x = EigenSolve.eigs(problem.RHS, problem.LHS; kwargs...)
-        else
-            λ, x = EigenSolve.eigstarget(problem.RHS, problem.LHS, target; kwargs...)
-        end
-    elseif typeof(target)<:AbstractVector
-        Tc = complex(eltype(problem.LHS))
-        C = problem.RHS - first(target)*problem.LHS
-        P = lu(C)
-        λ, x = EigenSolve._eigstargetumfpack(P, problem.LHS, first(target); kwargs...)
-        for t in target[2:end]
-            _λ, _x = EigenSolve._eigstargetumfpack(problem.RHS, problem.LHS, C, P, t; kwargs...)
-            for (i,λi) in enumerate(_λ)
-                if !any(isapprox(λi, atol=10sqrt(eps())), λ)
-                    append!(λ,λi)
-                    @views x = hcat(x,_x[:,i])
-                end
-            end
-        end
+    if isinf(target) 
+        λ, x = EigenSolve.eigs(problem.RHS, problem.LHS; kwargs...)
     else
-        @error "target should be a complex or real number, or an AbstractVector of real/complex numbers."
+        λ, x = EigenSolve.eigstarget(problem.RHS, problem.LHS, target; kwargs...)
     end
-
     problem.sol = GeneralizedEigen(λ, x)
     problem.solved = true
 
