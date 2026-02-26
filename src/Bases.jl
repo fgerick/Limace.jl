@@ -2,10 +2,9 @@ module Bases
 
 using DocStringExtensions
 
-export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC
+export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC, DirichletBC
 export Volume, Sphere, SphericalShell
 export LimaceBasis, Basis, BasisElement, isaxisymmetric, Helmholtz, Poloidal, Toroidal
-# export nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
 import Base: length
 
@@ -56,6 +55,12 @@ $(TYPEDFIELDS)
 """
 struct InsulatingBC <: BoundaryCondition end
 
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
+struct DirichletBC <: BoundaryCondition end
 
 abstract type Volume end
 
@@ -169,37 +174,37 @@ end
 end
 
 @inline function lpmax(b::Basis)
-    @error "define"
+    throw(MethodError(lpmax, (b,)))
 end
 
 @inline function ltmax(b::Basis)
-    @error "define"
+    throw(MethodError(ltmax, (b,)))
 end
 
-function _lmn_l(lmn, L::Int)
-    lmnk = Vector{NTuple{4,Int}}[]
-    for _ in 1:L
-        push!(lmnk, NTuple{4,Int}[])
-    end
+# function _lmn_l(lmn, L::Int)
+#     lmnk = Vector{NTuple{4,Int}}[]
+#     for _ in 1:L
+#         push!(lmnk, NTuple{4,Int}[])
+#     end
 
-    for k in eachindex(lmn)
-        l, m, n = lmn[k]
-        push!(lmnk[l], (k, l, m, n))
-    end
-    return lmnk
-end
+#     for k in eachindex(lmn)
+#         l, m, n = lmn[k]
+#         push!(lmnk[l], (k, l, m, n))
+#     end
+#     return lmnk
+# end
 
-function lmn_t_l(b::Basis)
-    lmn = lmn_t(b)
-    L = ltmax(b)
-    return _lmn_l(lmn, L)
-end
+# function lmn_t_l(b::Basis)
+#     lmn = lmn_t(b)
+#     L = ltmax(b)
+#     return _lmn_l(lmn, L)
+# end
 
-function lmn_p_l(b::Basis)
-    lmn = lmn_p(b)
-    L = lpmax(b)
-    return _lmn_l(lmn, L)
-end
+# function lmn_p_l(b::Basis)
+#     lmn = lmn_p(b)
+#     L = lpmax(b)
+#     return _lmn_l(lmn, L)
+# end
 
 function lmn2k_dict(lmns)
     return Dict(lmn => i for (i, lmn) in enumerate(lmns))
@@ -230,16 +235,12 @@ function _lmn2cdeg_t(b::Basis, l, m, n)
     return nothing
 end
 
-# function t(::Type{Basis}, l, m, n, r)
-# end
-
-# function s(::Type{Basis}, l, m, n, r)
-# end
-
-function t(::Type{Basis}, V::Volume, l, m, n, r)
+function t(::Type{Basis{T, VT}}, V::VT, l, m, n, r) where {T, VT<:Volume}
+    throw(MethodError(t, (Basis{T,VT}, V, l, m, n, r)))
 end
 
-function s(::Type{Basis}, V::Volume, l, m, n, r)
+function s(::Type{Basis{T, VT}}, V::VT, l, m, n, r) where {T, VT<:Volume}
+    throw(MethodError(t, (Basis{T,VT}, V, l, m, n, r)))
 end
 
 t(b::T, l, m, n, r) where {T<:Basis} = t(T, b.V, l, m, n, r)
@@ -247,11 +248,11 @@ s(b::T, l, m, n, r) where {T<:Basis} = s(T, b.V, l, m, n, r)
 
 
 function bcs_p(b::Basis)
-    @error "implement"
+   throw(MethodError(bcs_p, (b,)))
 end
 
 function bcs_t(b::Basis)
-    @error "implement"
+   throw(MethodError(bcs_t, (b,)))
 end
 
 
@@ -333,15 +334,42 @@ BasisElement(::TB, ::Type{PT}, lmn::NTuple{3,Int}, factor::T=1.0) where {TB<:Bas
 BasisElement(::Type{TB}, ::Type{PT}, lmn::NTuple{3,Int}, factor::T=1.0) where {TB<:Basis,PT<:Helmholtz,T<:Number} = BasisElement{TB,PT,T}(lmn, factor)
 
 
-# s(b::T, l, m, n, r) where T<:Basis = s(T,l,m,n,r)
-# t(b::T, l, m, n, r) where T<:Basis = t(T,l,m,n,r)
 s(b::BasisElement{T,Poloidal}, V::Volume, r) where {T} = s(T, V, b.lmn..., r)
 t(b::BasisElement{T,Toroidal}, V::Volume, r) where {T} = t(T, V, b.lmn..., r)
 
+helmholtz(b::BasisElement{TB,PT,T}) where {TB, PT<:Helmholtz, T} = PT
 
 import Base: +, -, *
 
 -(u::BasisElement{TB,PT}) where {TB<:Basis,PT<:Helmholtz} = BasisElement(TB, PT, u.lmn, -u.factor)
 *(x::Number, u::BasisElement{TB,PT}) where {TB<:Basis,PT<:Helmholtz} = BasisElement(TB, PT, u.lmn, x * u.factor)
+*(u::BasisElement{TB,PT}, x::Number) where {TB<:Basis,PT<:Helmholtz} = x*u
+
+
+#implement b[i] to get a BasisElement from a Basis. Very inefficient right now (allocates arrays of all (l,m,n)...)
+import Base: getindex
+
+Base.axes(A::Basis) = (Base.OneTo(length(A)),)
+function Base.axes(A::Basis, d) 
+    @inline d::Integer == 1 ? axes(A)[d] : OneTo(1)
+end
+Base.size(A::Basis) = (length(A),)
+Base.IndexStyle(::Type{<:Basis}) = IndexLinear()
+Base.checkbounds(::Type{Bool}, A::Basis, i) = i in axes(A)
+
+Base.@propagate_inbounds function Base.getindex(b::Basis, i::Int)
+    @boundscheck checkbounds(Bool, b, i)
+    nb = length(b)
+    _np = np(b)
+    if i>nb
+       return  
+    elseif i>_np
+        lmn = lmn_t(b)[i-_np]
+        return BasisElement(b, Toroidal, lmn)
+    else
+        lmn = lmn_p(b)[i]
+        return BasisElement(b, Poloidal, lmn)
+    end
+end
 
 end #module

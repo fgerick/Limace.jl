@@ -2,8 +2,12 @@ module EigenSolve
 
 using DocStringExtensions
 
-using ArnoldiMethod, LinearMaps, LinearAlgebra, SparseArrays
+using ArnoldiMethod
+using LinearMaps
 
+using LinearAlgebra
+using SparseArrays
+using Statistics
 
 """
 $(TYPEDSIGNATURES)
@@ -52,6 +56,5 @@ function eigs(A; kwargs...)
     λ, x = partialeigen(pschur)
     return λ, x
 end
-
 
 end #module

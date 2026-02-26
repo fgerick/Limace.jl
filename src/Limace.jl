@@ -13,7 +13,7 @@ using .Poly
 
 include("Bases.jl")
 @reexport using .Bases
-using .Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p_l, lmn_t_l, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
+using .Bases: nrange_p, nrange_t, nrange_p_bc, nrange_t_bc, np, nt, t, s, bcs_p, bcs_t, lmn_p, lmn_t, lmn2k_p_dict, lmn2k_t_dict, lpmax, ltmax
 
 include("Quadrature.jl")
 using .Quadrature
@@ -31,8 +31,11 @@ include("forces/advection.jl")
 include("forces/inertial.jl")
 include("forces/coriolis.jl")
 include("forces/diffusion.jl")
+include("forces/crossterm.jl")
 include("forces/induction.jl")
 include("forces/lorentz.jl")
+include("forces/scalaradvection.jl")
+include("forces/buoyancy.jl")
 include("forces/bc.jl")
 
 # bases
@@ -62,13 +65,16 @@ include("bases/InsulatingNoBC.jl")
 using .InsulatingBasisNoBC
 
 include("bases/ViscousNoBC.jl")
-@reexport using .ViscousBasisNoBC
+using .ViscousBasisNoBC
 
 include("bases/ThinWall.jl")
 using .ThinWallBasis
 
 include("bases/ViscousShell.jl")
-@reexport using .ViscousShellBasis
+using .ViscousShellBasis
+
+include("bases/Temperature.jl")
+using .TemperatureBasis
 
 include("forces/specializations.jl")
 

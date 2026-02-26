@@ -11,6 +11,7 @@ export appendit!
         end
     end
 end
+
 @inline function appendit!(is::Vector{Int}, js::Vector{Int}, aijs::Union{Vector{T},Vector{Complex{T}}}, lck::ReentrantLock, i::Int, j::Int, aij::T; thresh=sqrt(eps())) where T
     if (abs(aij) > thresh)
         lock(lck) do 
@@ -20,6 +21,24 @@ end
         end
     end
 end
+
+# @inline function appendit!(is, aijs, lck::ReentrantLock, i, aij; thresh=sqrt(eps()))
+#     if !isnothing(aij) && (abs(aij) > thresh)
+#         lock(lck) do
+#             push!(is, i)
+#             push!(aijs, aij)
+#         end
+#     end
+# end
+
+# @inline function appendit!(is::Vector{Int}, aijs::Union{Vector{T},Vector{Complex{T}}}, lck::ReentrantLock, i::Int, aij::T; thresh=sqrt(eps())) where T
+#     if (abs(aij) > thresh)
+#         lock(lck) do 
+#             push!(is, i)
+#             push!(aijs, aij)
+#         end
+#     end
+# end
 
 
 end #module

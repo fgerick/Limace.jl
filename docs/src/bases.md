@@ -138,6 +138,22 @@ The basis `b` will include all azimuthal wave numbers `m`. To restrict to a sing
 b = PerfectlyConducting(N; m=1)
 ```
 
+## Temperature basis
+
+This basis implements a scalar field with Dirichlet boundary condition at the surface
+
+```math
+T_{\delta \mathcal{V}}=0,
+```
+i.e. constant temperature.
+
+This is currently implemented as a vector basis with only a toroidal field/scalar.
+
+```@autodocs
+Modules = [Limace.TemperatureBasis]
+```
+
+
 ## Unconstrained
 
 This basis does not impose any boundary condition. It is a useful starting point for imposing custom boundary conditions explicitly in the linear operator.
@@ -267,6 +283,7 @@ Limace.Bases.InsulatingBC
 Limace.Bases.InviscidBC
 Limace.Bases.NoSlipBC
 Limace.Bases.PerfectlyConductingBC
+Limace.Bases.DirichletBC
 ```
 
 ## Basis elements

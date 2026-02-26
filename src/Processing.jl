@@ -339,6 +339,36 @@ function spectrum_cartesian(evecs, u, b)
     return specup, specut, specbp, specbt
 end
 
+function spectrum_cartesian(evecs, u)
+    N = u.N
+    nev = size(evecs, 2)
+    spec = zeros(2N, nev)
+    spec_fac = zeros(Int, 2N)
+
+    lmnpu = lmn_p(u)
+    np = length(lmnpu)
+    lmntu = lmn_t(u)
+    j = 1
+    @inbounds for k in axes(evecs, 1)
+        if k <= np
+            j = _lmn2cdeg_p(u,lmnpu[k]...) 
+        else
+            j = _lmn2cdeg_t(u,lmntu[k-np]...) + N 
+        end
+        for i in axes(evecs, 2)
+            α = abs(evecs[k, i])^2
+            spec[j, i] += α
+        end
+        spec_fac[j] += 1
+    end
+    spec_fac[spec_fac.==0] .= 1
+    spec ./= spec_fac
+
+    specup, specut = spec[1:N, :], spec[N+1:2N, :]
+    return specup, specut
+end
+
+
 """
 $(SIGNATURES)
 
@@ -357,6 +387,18 @@ function epeak_etrunc_cartesian(evecs, u, b)
     return ratios
 end
 
+function epeak_etrunc_cartesian(evecs, u)
+    ratios = zeros(2, size(evecs, 2))
+
+    specs = spectrum_cartesian(evecs, u)
+    maxima = maximum(vcat(maximum.(specs, dims=1)...), dims=1)[:]
+    for (i, spec) in enumerate(specs)
+        @views ratios[i, :] .= (maximum(spec[end-1:end, :], dims=1)[:] ./ maxima)
+    end
+    return ratios
+end
+
+
 """
 $(SIGNATURES)
 
@@ -368,9 +410,15 @@ function eigenvector_filter(evecs, u, b; thresh=1e-2)
     return all(ratios .< thresh,dims=1)[:]
 end
 
+function eigenvector_filter(evecs, u; thresh=1e-2)
+    ratios = epeak_etrunc_cartesian(evecs, u)
+    return all(ratios .< thresh,dims=1)[:]
+end
+
+
 function eigenvector_filter(problem::LimaceProblem; thresh=1e-2)
     @assert problem.solved
-    @assert length(problem.bases) == 2
+    @assert length(problem.bases) <= 2
     evecs = problem.sol.vectors
     return eigenvector_filter(evecs, problem.bases...; thresh)
 end

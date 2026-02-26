@@ -99,18 +99,22 @@ function add!(problem::LimaceProblem, f::Forcing)
 end
 
 function _add_to_premat!(problem::LimaceProblem, premat, f::TF) where {TF <: Forcing{1}}
-    basis = getfield(f,1)
-    ib = last(findfirst(isequal(basis),problem.bases))
-    premat[ib,ib] += f.mat*f.factor
+    if abs(f.factor) != 0
+        basis = getfield(f,1)
+        ib = last(findfirst(isequal(basis),problem.bases))
+        premat[ib,ib] += f.mat*f.factor
+    end
     return nothing
 end
 
 function _add_to_premat!(problem::LimaceProblem, premat, f::TF) where {TF <: Forcing{2}}
-    basis1 = getfield(f,1)
-    basis2 = getfield(f,2)
-    ib1 = last(findfirst(isequal(basis1),problem.bases))
-    ib2 = last(findfirst(isequal(basis2),problem.bases))
-    premat[ib1,ib2] += f.mat*f.factor
+    if abs(f.factor) != 0
+        basis1 = getfield(f,1)
+        basis2 = getfield(f,2)
+        ib1 = last(findfirst(isequal(basis1),problem.bases))
+        ib2 = last(findfirst(isequal(basis2),problem.bases))
+        premat[ib1,ib2] += f.mat*f.factor
+    end
     return nothing
 end
 
@@ -170,7 +174,6 @@ function solve_sparse!(problem::LimaceProblem; target=Inf, kwargs...)
     else
         λ, x = EigenSolve.eigstarget(problem.RHS, problem.LHS, target; kwargs...)
     end
-
     problem.sol = GeneralizedEigen(λ, x)
     problem.solved = true
 
