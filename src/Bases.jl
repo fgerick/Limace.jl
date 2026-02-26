@@ -335,6 +335,7 @@ BasisElement(::Type{TB}, ::Type{PT}, lmn::NTuple{3,Int}, factor::T=1.0) where {T
 s(b::BasisElement{T,Poloidal}, V::Volume, r) where {T} = s(T, V, b.lmn..., r)
 t(b::BasisElement{T,Toroidal}, V::Volume, r) where {T} = t(T, V, b.lmn..., r)
 
+helmholtz(b::BasisElement{TB,PT,T}) where {TB, PT<:Helmholtz, T} = PT
 
 import Base: +, -, *
 
