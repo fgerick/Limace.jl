@@ -83,22 +83,22 @@ Fallback functions for `_crossterm!` term for `B0`. Write specialized function t
     return nothing
 end
 
-"""
-$(TYPEDSIGNATURES)
+# """
+# $(TYPEDSIGNATURES)
 
-"""
-@inline function _crossterm!(bi::TI, B1::BasisElement{T1,PT,T}, B2::BasisElement{T2,PT,T}, is, aijs, lck, i0, 
-							 li, mi, rwrs, lmn2k_bi, nrangefi, indf, EA; kwargs...) where {TI<:Basis,T1<:Basis,T2<:Basis,PT<:Helmholtz,T}
-    l1,m1,n1 = B1.lmn
-    l2,m2,n2 = B2.lmn
-    for ni in nrangefi(bi, li)
-		r, wr = rwrs[min(bi.N, li ÷ 2 + ni + l1 + n1 + l2 + n2 + 1)]
-		lmni = (li, mi, ni)
-		aij = indf(T1, T2, TI, bi.V, B1.lmn, B2.lmn, lmni, r, wr; kwargs...)*EA
-		appendit!(is, aijs, lck, lmn2k_bi[lmni] + i0, aij*B1.factor*B2.factor)
-    end
-    return nothing
-end
+# """
+# @inline function _crossterm!(bi::TI, B1::BasisElement{T1,PT,T}, B2::BasisElement{T2,PT,T}, is, aijs, lck, i0, 
+# 							 li, mi, rwrs, lmn2k_bi, nrangefi, indf, EA; kwargs...) where {TI<:Basis,T1<:Basis,T2<:Basis,PT<:Helmholtz,T}
+#     l1,m1,n1 = B1.lmn
+#     l2,m2,n2 = B2.lmn
+#     for ni in nrangefi(bi, li)
+# 		r, wr = rwrs[min(bi.N, li ÷ 2 + ni + l1 + n1 + l2 + n2 + 1)]
+# 		lmni = (li, mi, ni)
+# 		aij = indf(T1, T2, TI, bi.V, B1.lmn, B2.lmn, lmni, r, wr; kwargs...)*EA
+# 		appendit!(is, aijs, lck, lmn2k_bi[lmni] + i0, aij*B1.factor*B2.factor)
+#     end
+#     return nothing
+# end
 
 @inline function _crossterm_m_adamgaunt!(bbi::Basis{Ti,V}, buj::Basis{Tj,V}, B0::BasisElement{Basis{T0,V},PT,T}, is, js, aijs, lck, i0, j0,
     									 li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti, Tj, T0, PT<:Helmholtz,T, V<:Volume}
