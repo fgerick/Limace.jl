@@ -96,6 +96,26 @@ Limace.Lorentz
 Limace.lorentz
 ```
 
+## Scalar advection
+
+```math
+\int T_i^* \left(\mathbf{u}_j\boldsymbol{\cdot}\nabla T_0\right)\,\mathrm{d}V
+```
+
+```@docs
+Limace.ScalarAdvectionT0
+```
+
+```math
+\int T_i^* \left(\mathbf{U}_0\boldsymbol{\cdot}\nabla T_j\right)\,\mathrm{d}V
+```
+
+```@docs
+Limace.ScalarAdvectionU0
+```
+```@docs
+Limace.scalaradvection
+```
 
 ## Explicit boundary condition operator
 
