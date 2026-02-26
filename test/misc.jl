@@ -105,13 +105,44 @@ end
 end
 
 
+@testset "Basis utils" begin
+	N = 5
+	u = Inviscid(N; m=0)
+	nu = length(u)
+	up100 = BasisElement(u, Poloidal, (1,0,0))
+	ut100 = BasisElement(u, Toroidal, (1,0,0))
+
+	@test size(u) == (nu,)
+	@test u[1] == up100
+	@test 2*up100 == BasisElement(u, Poloidal, (1,0,0), 2.0)
+	@test -up100 == BasisElement(u, Poloidal, (1,0,0), -1.0)
+	@test Limace.Bases.helmholtz(up100) == Poloidal
+	@test Limace.Bases.helmholtz(ut100) == Toroidal 
+	@test Limace.Bases.s(up100, u.V, 0.9) == Limace.Bases.s(u, 1,0,0, 0.9)
+	@test Limace.Bases.t(ut100, u.V, 0.9) == Limace.Bases.t(u, 1,0,0, 0.9)
+
+
+	# check missing implementations for custom basis
+	struct TestB; end
+	b = Limace.Basis{TestB, Limace.Sphere}(; N=1)
+	@test_throws MethodError Limace.Bases.lpmax(b)
+	@test_throws MethodError Limace.Bases.ltmax(b)
+	@test_throws MethodError Limace.Bases.s(b, 1,0,0, 1.0)
+	@test_throws MethodError Limace.Bases.t(b, 1,0,0, 1.0)
+	@test_throws MethodError Limace.Bases.bcs_p(b)
+	@test_throws MethodError Limace.Bases.bcs_t(b)
+end
 
 @testset "eigs" begin
     N = 10
     b = Limace.Inviscid(N)
     RHS = Limace.coriolis(b)
 	max_eval = first(first(Limace.EigenSolve.eigs(RHS; nev=1)))
+	max_eval2 = first(first(Limace.EigenSolve.eigs(RHS, sparse(1.0*I(size(RHS,1))); nev=1)))
 	max_eval_dense = maximum(abs, eigvals(Matrix(RHS)))
 	@test abs(max_eval) ≤ 2.0
 	@test abs(max_eval) ≈ abs(max_eval_dense)
+	@test abs(max_eval) ≈ abs(max_eval2)
+
+
 end

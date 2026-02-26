@@ -95,3 +95,31 @@ end
 
 end
 
+
+@testset "hydro spectospat (SHTns) vs. discretize (no SHTns)" begin
+	N = 6
+    Le = 1e-1
+
+    u = Inviscid(N)
+    bases = [u]
+
+    forcings = [Limace.Inertial(u), Limace.Coriolis(u)]
+
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem)
+	Limace.solve!(problem)
+
+	x = problem.sol.vectors[:,1]
+	nr,nθ,nϕ = 20,30,40
+	ur,uθ,uϕ, r,θ,ϕ = spectospat(x, u, nr, nθ, nϕ)
+
+	ur2,uθ2,uϕ2 = discretize(x, u, r, π/2 .- θ, ϕ)
+
+	@test ur ≈ ur2
+	@test uθ ≈ uθ2
+	@test uϕ ≈ uϕ2
+
+end
+
+
+

@@ -174,37 +174,37 @@ end
 end
 
 @inline function lpmax(b::Basis)
-    @error "define"
+    throw(MethodError(lpmax, (b,)))
 end
 
 @inline function ltmax(b::Basis)
-    @error "define"
+    throw(MethodError(ltmax, (b,)))
 end
 
-function _lmn_l(lmn, L::Int)
-    lmnk = Vector{NTuple{4,Int}}[]
-    for _ in 1:L
-        push!(lmnk, NTuple{4,Int}[])
-    end
+# function _lmn_l(lmn, L::Int)
+#     lmnk = Vector{NTuple{4,Int}}[]
+#     for _ in 1:L
+#         push!(lmnk, NTuple{4,Int}[])
+#     end
 
-    for k in eachindex(lmn)
-        l, m, n = lmn[k]
-        push!(lmnk[l], (k, l, m, n))
-    end
-    return lmnk
-end
+#     for k in eachindex(lmn)
+#         l, m, n = lmn[k]
+#         push!(lmnk[l], (k, l, m, n))
+#     end
+#     return lmnk
+# end
 
-function lmn_t_l(b::Basis)
-    lmn = lmn_t(b)
-    L = ltmax(b)
-    return _lmn_l(lmn, L)
-end
+# function lmn_t_l(b::Basis)
+#     lmn = lmn_t(b)
+#     L = ltmax(b)
+#     return _lmn_l(lmn, L)
+# end
 
-function lmn_p_l(b::Basis)
-    lmn = lmn_p(b)
-    L = lpmax(b)
-    return _lmn_l(lmn, L)
-end
+# function lmn_p_l(b::Basis)
+#     lmn = lmn_p(b)
+#     L = lpmax(b)
+#     return _lmn_l(lmn, L)
+# end
 
 function lmn2k_dict(lmns)
     return Dict(lmn => i for (i, lmn) in enumerate(lmns))
@@ -235,10 +235,12 @@ function _lmn2cdeg_t(b::Basis, l, m, n)
     return nothing
 end
 
-function t(::Type{Basis}, V::Volume, l, m, n, r)
+function t(::Type{Basis{T, VT}}, V::VT, l, m, n, r) where {T, VT<:Volume}
+    throw(MethodError(t, (Basis{T,VT}, V, l, m, n, r)))
 end
 
-function s(::Type{Basis}, V::Volume, l, m, n, r)
+function s(::Type{Basis{T, VT}}, V::VT, l, m, n, r) where {T, VT<:Volume}
+    throw(MethodError(t, (Basis{T,VT}, V, l, m, n, r)))
 end
 
 t(b::T, l, m, n, r) where {T<:Basis} = t(T, b.V, l, m, n, r)
@@ -246,11 +248,11 @@ s(b::T, l, m, n, r) where {T<:Basis} = s(T, b.V, l, m, n, r)
 
 
 function bcs_p(b::Basis)
-    @error "implement"
+   throw(MethodError(bcs_p, (b,)))
 end
 
 function bcs_t(b::Basis)
-    @error "implement"
+   throw(MethodError(bcs_t, (b,)))
 end
 
 
@@ -341,6 +343,7 @@ import Base: +, -, *
 
 -(u::BasisElement{TB,PT}) where {TB<:Basis,PT<:Helmholtz} = BasisElement(TB, PT, u.lmn, -u.factor)
 *(x::Number, u::BasisElement{TB,PT}) where {TB<:Basis,PT<:Helmholtz} = BasisElement(TB, PT, u.lmn, x * u.factor)
+*(u::BasisElement{TB,PT}, x::Number) where {TB<:Basis,PT<:Helmholtz} = x*u
 
 
 #implement b[i] to get a BasisElement from a Basis. Very inefficient right now (allocates arrays of all (l,m,n)...)
