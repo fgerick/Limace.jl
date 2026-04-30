@@ -207,9 +207,6 @@ Final array of `B0fac` will ensure that (4π/3)⁻¹ ∫₀¹ B⋅B dV = 1.
 """
 function norm_B0fac!(B0fac, lmn_p, lmn_t)
     A = inner_b0norm(lmn_p, lmn_t)
-    # for (i,(l,m,n)) in enumerate(lmn_p)
-    #     B0fac[i] *= unitspherenorm(l,n)
-    # end
     _n = sqrt(B0fac'*A*B0fac)
     B0fac.*=√(4π/3)/_n
     return nothing
