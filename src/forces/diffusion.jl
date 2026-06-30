@@ -46,7 +46,8 @@ function _diffusion_ss(b::T, lmna, lmnb, r,wr; external=false) where T<:Basis
 
     if external
         r1 = b.V.r1
-        aij += la^2*(la+1)*(∂(r->∂(r->r*_sb(r),r),r1)-lb*(lb+1)/r1*_sb(r1))*_sa(r1)
+        __sb, _dsb, _d2sb = derivatives012(_sb,r1)
+        aij += la^2*(la+1)*((r1*_d2sb+2*_dsb)-lb*(lb+1)/r1*__sb)*_sa(r1)
     end
     
     return aij

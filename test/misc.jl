@@ -146,3 +146,23 @@ end
 
 
 end
+
+@testset "poly derivatives" begin
+	f = sin
+	x = 0.1
+	_f, _df = Limace.Poly.derivatives01(f,x)
+	@test _f ≈ sin(x)
+	@test _df ≈ cos(x)
+
+	_f, _df, _d2f = Limace.Poly.derivatives012(f,x)
+	@test _f ≈ sin(x)
+	@test _df ≈ cos(x)
+	@test _d2f ≈ -sin(x)
+
+	_f, _df, _d2f, _d3f = Limace.Poly.derivatives0123(f,x)
+	@test _f ≈ sin(x)
+	@test _df ≈ cos(x)
+	@test _d2f ≈ -sin(x)
+	@test _d3f ≈ -cos(x)
+
+end

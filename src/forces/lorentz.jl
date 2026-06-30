@@ -53,14 +53,26 @@ function _lorentz_SSs(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb,
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Sa = r->s(TA,V,la,ma,na,r)
-    @inline _Sb = r->s(TB,V,lb,mb,nb,r)
-    @inline _sc = r->s(TC,V,lc,mc,nc,r)
+    @inline sc = r->s(TC,V,lc,mc,nc,r)
+    @inline Sa = r->s(TA,V,la,ma,na,r)
+    @inline Sb = r->s(TB,V,lb,mb,nb,r)
 
-    @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*D(_Sa,la,r)*∂(r->r*_Sb(r),r) + 
-                        p(lb)*(p(la)-p(lb)+p(lc))*r*∂(r->D(_Sa,la,r)*_Sb(r),r))/(2r^2*p(lc))
+    @inline function f1(r)
+        _Sa, _dSa, _d2Sa, _d3Sa = derivatives0123(Sa,r)
+        _Sb, _dSb = derivatives01(Sb,r)
 
-    @inline f = r-> -innert(_sc,f1, lc, r)
+    
+        _Da = D(_Sa,_dSa, _d2Sa, la,r)
+        _dDa = dD(_Sa,_dSa, _d2Sa, _d3Sa, la,r)
+
+        return  (p(lc)*(p(la)+p(lb)-p(lc))*_Da*(r*_dSb+_Sb) + 
+                            p(lb)*(p(la)-p(lb)+p(lc))*r*(_dDa*_Sb+_Da*_dSb))/(2r^2*p(lc))
+    end
+
+    # @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*D(_Sa,la,r)*∂(r->r*_Sb(r),r) + 
+    #                     p(lb)*(p(la)-p(lb)+p(lc))*r*∂(r->D(_Sa,la,r)*_Sb(r),r))/(2r^2*p(lc))
+
+    @inline f = r-> -innert(sc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)
     return aij
@@ -75,20 +87,34 @@ function _lorentz_STs(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb,
     lc,mc,nc = lmnc
 
 
-    @inline _Sa = r->s(TA,V,la,ma,na,r)
-    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
-    @inline _sc = r->s(TC,V,lc,mc,nc,r)
+    @inline Sa = r->s(TA,V,la,ma,na,r)
+    @inline Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline sc = r->s(TC,V,lc,mc,nc,r)
 
-    @inline f1 = r -> (p(lc)*r^2*D(_Sa,la,r)*_Tb(r) + 
-                        (p(la)+p(lb)+p(lc))*_Sa(r)*_Tb(r) - 
-                        (p(la)+p(lb)-p(lc))*(r*_Sa(r)*∂(_Tb,r) + 
-                                            r*∂(_Sa,r)*_Tb(r) +
-                                            r^2*∂(_Sa,r)*∂(_Tb,r)) - 
-                        p(lb)*r^2*∂(r->∂(_Sa,r),r)*_Tb(r) - 
-                        p(la)*r^2*∂(r->∂(_Tb,r),r)*_Sa(r)
+    @inline function f1(r)
+
+        _Sa, _dSa, _d2Sa = derivatives012(Sa,r)
+        _Tb, _dTb, _d2Tb = derivatives012(Tb,r)
+        _Da = D(_Sa, _dSa, _d2Sa, la, r)
+        return (p(lc)*r^2*_Da*_Tb + 
+                        (p(la)+p(lb)+p(lc))*_Sa*_Tb - 
+                        (p(la)+p(lb)-p(lc))*(r*_Sa*_dTb + 
+                                            r*_dSa*_Tb +
+                                            r^2*_dSa*_dTb) - 
+                        p(lb)*r^2*_d2Sa*_Tb - 
+                        p(la)*r^2*_d2Tb*_Sa
                         )/(r^3*p(lc))
+    end
+    # @inline f1 = r -> (p(lc)*r^2*D(_Sa,la,r)*_Tb(r) + 
+    #                     (p(la)+p(lb)+p(lc))*_Sa(r)*_Tb(r) - 
+    #                     (p(la)+p(lb)-p(lc))*(r*_Sa(r)*∂(_Tb,r) + 
+    #                                         r*∂(_Sa,r)*_Tb(r) +
+    #                                         r^2*∂(_Sa,r)*∂(_Tb,r)) - 
+    #                     p(lb)*r^2*∂(r->∂(_Sa,r),r)*_Tb(r) - 
+    #                     p(la)*r^2*∂(r->∂(_Tb,r),r)*_Sa(r)
+    #                     )/(r^3*p(lc))
     
-    @inline f = r-> -innert(_sc, f1, lc,r)
+    @inline f = r-> -innert(sc, f1, lc,r)
     
     aij = ∫dr(f,r,wr)
     return aij
@@ -102,14 +128,20 @@ function _lorentz_TTs(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb,
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Ta = r->t(TA,V,la,ma,na,r)
-    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
-    @inline _sc = r->s(TC,V,lc,mc,nc,r)
+    @inline Ta = r->t(TA,V,la,ma,na,r)
+    @inline Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline sc = r->s(TC,V,lc,mc,nc,r)
+
+    @inline function f1(r)
+        _Ta, _dTa = derivatives01(Ta,r)
+        _Tb, _dTb = derivatives01(Tb,r)
+        return (p(lc)*(p(la)+p(lb)-p(lc))*(r*_dTa+_Ta)*_Tb + p(la)*(-p(la)+p(lb)+p(lc))*r*(_dTa*_Tb+_Ta*_dTb))/(2r^2*p(lc))
+    end
 
 
-    @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*∂(r->r*_Ta(r),r)*_Tb(r) + p(la)*(-p(la)+p(lb)+p(lc))*r*∂(r->_Ta(r)*_Tb(r),r))/(2r^2*p(lc))
+    # @inline f1 = r -> (p(lc)*(p(la)+p(lb)-p(lc))*∂(r->r*_Ta(r),r)*_Tb(r) + p(la)*(-p(la)+p(lb)+p(lc))*r*∂(r->_Ta(r)*_Tb(r),r))/(2r^2*p(lc))
 
-    @inline f = r->-innert(_sc,f1,lc,r)
+    @inline f = r->-innert(sc,f1,lc,r)
     
     aij = ∫dr(f,r,wr)
     return aij
@@ -129,14 +161,14 @@ function _lorentz_SSt(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb,
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Sa = r->s(TA,V,la,ma,na,r)
-    @inline _Sb = r->s(TB,V,lb,mb,nb,r)
-    @inline _tc = r->t(TC,V,lc,mc,nc,r)
+    @inline Sa = r->s(TA,V,la,ma,na,r)
+    @inline Sb = r->s(TB,V,lb,mb,nb,r)
+    @inline tc = r->t(TC,V,lc,mc,nc,r)
 
 
-    @inline f1 = r -> -p(lb)*D(_Sa,la,r)*_Sb(r)/(r*p(lc))
+    @inline f1 = r -> -p(lb)*D(Sa,la,r)*Sb(r)/(r*p(lc))
     
-    @inline f = r-> innert(_tc,f1, lc, r)
+    @inline f = r-> innert(tc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)
     return aij
@@ -150,14 +182,19 @@ function _lorentz_STt(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb,
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Sa = r->s(TA,V,la,ma,na,r)
-    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
-    @inline _tc = r->t(TC,V,lc,mc,nc,r)
+    @inline Sa = r->s(TA,V,la,ma,na,r)
+    @inline Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline tc = r->t(TC,V,lc,mc,nc,r)
 
+    @inline function f1(r)
+        _Sa, _dSa = derivatives01(Sa,r)
+        _Tb, _dTb = derivatives01(Tb,r)
+        return (p(lb)*(p(lb)-p(la)-p(lc))*(r*_dSa+_Sa)*_Tb - p(la)*(p(la)-p(lb)-p(lc))*_Sa*(r*_dTb+_Tb))/(2r^2*p(lc))
+    end
 
-    @inline f1 = r -> (p(lb)*(p(lb)-p(la)-p(lc))*∂(r->r*_Sa(r),r)*_Tb(r) - p(la)*(p(la)-p(lb)-p(lc))*_Sa(r)*∂(r->r*_Tb(r),r))/(2r^2*p(lc))
+    # @inline f1 = r -> (p(lb)*(p(lb)-p(la)-p(lc))*∂(r->r*_Sa(r),r)*_Tb(r) - p(la)*(p(la)-p(lb)-p(lc))*_Sa(r)*∂(r->r*_Tb(r),r))/(2r^2*p(lc))
 
-    @inline f = r-> innert(_tc,f1, lc, r)
+    @inline f = r-> innert(tc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)
     return aij
@@ -171,14 +208,14 @@ function _lorentz_TTt(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmnb,
     lb,mb,nb = lmnb
     lc,mc,nc = lmnc
 
-    @inline _Ta = r->t(TA,V,la,ma,na,r)
-    @inline _Tb = r->t(TB,V,lb,mb,nb,r)
-    @inline _tc = r->t(TC,V,lc,mc,nc,r)
+    @inline Ta = r->t(TA,V,la,ma,na,r)
+    @inline Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline tc = r->t(TC,V,lc,mc,nc,r)
 
 
-    @inline f1 = r -> p(la)*_Ta(r)*_Tb(r)/(r*p(lc))
+    @inline f1 = r -> p(la)*Ta(r)*Tb(r)/(r*p(lc))
 
-    @inline f = r-> innert(_tc,f1, lc, r)
+    @inline f = r-> innert(tc,f1, lc, r)
 
     aij = ∫dr(f,r,wr)
     return aij
