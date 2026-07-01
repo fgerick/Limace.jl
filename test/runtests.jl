@@ -11,6 +11,8 @@ using Limace.Bases: Sphere
 struct LJ22; end
 Limace.Bases.s(::Type{Basis{LJ22, Sphere}}, V::Sphere, l, m, n, r) = r^2 * (157 - 296r^2 + 143r^4) / (16 * sqrt(182 / 3))
 
+using Aqua
+Aqua.test_all(Limace)
 
 include("discretize.jl")
 include("misc.jl")

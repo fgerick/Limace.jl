@@ -20,12 +20,31 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 WignerSymbols = "9f57e263-0b3d-5e2e-b1be-24f2bb48858b"
 
 [compat]
-julia = "1"
+Aqua = "0.8.14"
+ArnoldiMethod = "0.4"
+BracketingNonlinearSolve = "1.12"
+DocStringExtensions = "0.9"
+FastGaussQuadrature = "1.2"
+ForwardDiff = "1.4.1"
+FunctionZeros = "1.1"
+LinearAlgebra = "1.10"
+LinearMaps = "3.11"
+Random = "1.10"
+Reexport = "1.2"
+SHTns = "0.3"
+SparseArrays = "1.10"
+SpecialFunctions = "2.7"
+StaticArrays = "1.9"
+Statistics = "1.10"
+Test = "1.10"
+WignerSymbols = "2.0"
+julia = "1.10"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 BracketingNonlinearSolve = "70df07ce-3d50-431d-a3e7-ca6ddb60ac1e"
 FunctionZeros = "b21f74c0-b399-568f-9643-d20f4fa2c814"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "FunctionZeros", "BracketingNonlinearSolve"]
+test = ["Test", "FunctionZeros", "BracketingNonlinearSolve", "Aqua"]

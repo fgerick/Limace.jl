@@ -3,7 +3,7 @@ const Tunion = Union{Insulating, Inviscid, Viscous, ThinWall} #all bases that ca
 # only assemble cross terms that are neigboring up to max(ni-(n0+1)-l0,first(njs_all)):min(ni+n0+1+l0,last(njs_all))
 
 @inline function _crossterm!(bbi::Basis{Ti,V}, U0::BasisElement{Basis{T0,V},PT,T}, bbj::Basis{Tj,V}, is, js, aijs, lck, i0, j0,
-    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_bj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_bj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Sphere}
     l0,m0,n0 = U0.lmn
     for ni in nrangefi(bbi, li)
         njs_all = nrangefj(bbj,lj)
@@ -19,7 +19,7 @@ const Tunion = Union{Insulating, Inviscid, Viscous, ThinWall} #all bases that ca
 end
 
 @inline function _crossterm!(bbi::Basis{Ti,V}, buj::Basis{Tj,V}, B0::BasisElement{Basis{T0,V},PT,T}, is, js, aijs, lck, i0, j0,
-    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_uj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, mi, lj, mj, rwrs, lmn2k_bi, lmn2k_uj, nrangefi, nrangefj, indf, EA; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Sphere}
     l0,m0,n0 = B0.lmn
     for ni in nrangefi(bbi, li)
         # for nj in nrangefj(bbj, lj)
@@ -37,7 +37,7 @@ end
 
 
 @inline function _crossterm_m_adamgaunt!(bbi::Basis{Ti,V}, buj::Basis{Tj,V}, B0::BasisElement{Basis{T0,V},PT,T}, is, js, aijs, lck, i0, j0,
-    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Sphere}
     l0,m0,n0 = B0.lmn
     njs_all = nrangefj(buj,lj)
     As = ComplexF64[]
@@ -68,7 +68,7 @@ end
 end
 
 @inline function _crossterm_m_elsasser!(bbi::Basis{Ti,V}, buj::Basis{Tj,V}, B0::BasisElement{Basis{T0,V},PT,T}, is, js, aijs, lck, i0, j0,
-    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Sphere}
     l0,m0,n0 = B0.lmn
     njs_all = nrangefj(buj,lj)
     Es = ComplexF64[] 
@@ -101,7 +101,7 @@ end
 
 
 @inline function _crossterm_m_adamgaunt!(bbi::Basis{Ti,V}, U0::BasisElement{Basis{T0,V},PT,T}, buj::Basis{Tj,V}, is, js, aijs, lck, i0, j0,
-    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Sphere}
     l0,m0,n0 = U0.lmn
     njs_all = nrangefj(buj,lj)
     As = ComplexF64[]
@@ -132,7 +132,7 @@ end
 end
 
 @inline function _crossterm_m_elsasser!(bbi::Basis{Ti,V}, U0::BasisElement{Basis{T0,V},PT,T}, buj::Basis{Tj,V}, is, js, aijs, lck, i0, j0,
-    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Volume}
+    li, ni, lj, rwrs, lmn2k_bi, lmn2k_uj, nrangefj, lptmax, indf; kwargs...) where {Ti<:Tunion, Tj<:Tunion, T0<:Tunion, PT<:Helmholtz,T, V<:Sphere}
     l0,m0,n0 = U0.lmn
     njs_all = nrangefj(buj,lj)
     Es = ComplexF64[] 

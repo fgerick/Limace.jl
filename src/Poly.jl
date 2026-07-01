@@ -5,7 +5,7 @@ using WignerSymbols
 using ForwardDiff
 using DocStringExtensions
 
-export wigner3j, adamgaunt, elsasser, jacobi, ylm, ∂, p, _∂ll, D, innert, inners
+export wigner3j, adamgaunt, elsasser, jacobi, ylm, ∂, p, _∂ll, D, dD, innert, inners, derivatives01, derivatives012, derivatives0123
 
 
 """
@@ -80,6 +80,56 @@ end
 
 const ∂ =  ForwardDiff.derivative
 
+using ForwardDiff: Dual, Tag, value, partials
+
+function derivatives01(f::F, x::T) where {F, T<:Real}
+    # Outer perturbation (carries f')
+    Touter = typeof(Tag(f, T))
+    x1 = Dual{Touter}(x, one(x))            # x + δ
+
+    y = f(x1)                               # <-- the only call to f
+
+    f0 = value(y)
+    f1 = partials(y, 1)
+    return f0, f1
+end
+
+function derivatives012(f::F, x::T) where {F, T<:Real}
+    # Outer perturbation (carries f')
+    Touter = typeof(Tag(f, T))
+    x1 = Dual{Touter}(x, one(x))            # x + δ
+
+    # Inner perturbation, nested over the outer dual (carries f'')
+    Tinner = typeof(Tag(f, typeof(x1)))
+    x2 = Dual{Tinner}(x1, one(x1))          # (x + δ) + ε
+
+    y = f(x2)                               # <-- the only call to f
+
+    f0 = value(value(y))
+    f1 = value(partials(y, 1))
+    f2 = partials(partials(y, 1), 1)
+    return f0, f1, f2
+end
+
+function derivatives0123(f::F, x::T) where {F, T<:Real}
+    T1 = typeof(Tag(f, T))
+    x1 = Dual{T1}(x, one(x))            # x + ε₁
+
+    T2 = typeof(Tag(f, typeof(x1)))
+    x2 = Dual{T2}(x1, one(x1))          # x + ε₁ + ε₂
+
+    T3 = typeof(Tag(f, typeof(x2)))
+    x3 = Dual{T3}(x2, one(x2))          # x + ε₁ + ε₂ + ε₃
+
+    y = f(x3)
+
+    f0 = value(value(value(y)))
+    f1 = value(value(partials(y, 1)))
+    f2 = value(partials(partials(y, 1), 1))
+    f3 = partials(partials(partials(y, 1), 1), 1)
+    return f0, f1, f2, f3
+end
+
 """
 $(TYPEDSIGNATURES)
 
@@ -142,10 +192,11 @@ Equation (25) in [ivers_scalar_2008](@citet).
 """
 @inline function _∂ll(f,l,l1,r)
     # @assert l1 ∈ (l-1, l+1)
+    _f, _df = derivatives01(f,r)
     if l1 == l-1
-        return ∂(f,r) + (l+1)/r*f(r) 
+        return _df + (l+1)/r*_f
     elseif l1 == l+1
-        return ∂(f,r)-l/r*f(r)
+        return _df-l/r*_f
     end
     return 0.0
 end
@@ -159,7 +210,18 @@ D_l(f) = \\frac{\\partial^2 f}{\\partial r^2} +\\frac{2}{r}\\frac{\\partial f}{\
 
 Below equation (31) in [ivers_scalar_2008](@citet).
 """
-@inline D(f,l,r) = ∂(r->∂(f,r),r) + 2/r * ∂(f,r) - l*(l+1)/r^2 *f(r)
+@inline function D(f,l,r)
+    _f, _df, _d2f = derivatives012(f,r)
+    return D(_f, _df, _d2f,l,r)
+end
+# @inline D(f,l,r) = ∂(r->∂(f,r),r) + 2/r * ∂(f,r) - l*(l+1)/r^2 *f(r)
+@inline function D(_f, _df, _d2f,l,r)
+    return _d2f + 2/r*_df - l*(l+1)/r^2*_f
+end
+
+@inline function dD(_f, _df, _d2f, _d3f, l, r)
+    return _d3f -2/r^2*_df + 2/r*_d2f + 2l*(l+1)/r^3*_f - l*(l+1)/r^2*_df
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -184,7 +246,9 @@ r\\rightarrow \\frac{l(l+1)}{r^2}\\left( l(l+1)s(r) s_2(r) + \\frac{\\partial r 
 Radial function to be integrated in radius when computing the inner product of two poloidal vectors.
 """
 @inline function inners(s,s2, l, r) 
-    return l*(l+1)*(s(r)*s2(r)*l*(l+1)+∂(r->r*s(r),r)*∂(r->r*s2(r),r))/r^2
+    _s, _ds = derivatives01(s,r)
+    _s2, _ds2 = derivatives01(s2,r)
+    return l*(l+1)*(_s*_s2*l*(l+1)+(r*_ds+_s)*(r*_ds2+_s2))/r^2
 end
 
 end #module

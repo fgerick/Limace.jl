@@ -91,15 +91,28 @@ function _induction_sSS(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline f1 = r -> (-p(la) * (-p(la) + p(lb) + p(lc)) * s(TA, V, la, ma, na, r) * ∂(r -> r * s(TB, V, lb, mb, nb, r), r) +
-                       p(lb) * (p(la) - p(lb) + p(lc)) * s(TB, V, lb, mb, nb, r) * ∂(r -> r * s(TA, V, la, ma, na, r), r)) / (2r^2 * p(lc))
+    @inline sa = r->s(TA,V,la,ma,na,r)
+    @inline Sb = r->s(TB,V,lb,mb,nb,r)
+    @inline Sc = r->s(TC,V,lc,mc,nc,r)
 
-    @inline f = r -> inners(f1, r -> s(TC, V, lc, mc, nc, r), lc, r)
+    @inline function f1(r)
+        _sa, _dsa = derivatives01(sa, r)
+        _Sb, _dSb = derivatives01(Sb, r)
+
+        return (-p(la) * (-p(la) + p(lb) + p(lc)) * _sa * (r*_dSb + _Sb) +
+                       p(lb) * (p(la) - p(lb) + p(lc)) * _Sb * (r*_dsa + _sa)) / (2r^2 * p(lc))
+    end
+
+    # @inline f1 = r -> (-p(la) * (-p(la) + p(lb) + p(lc)) * s(TA, V, la, ma, na, r) * ∂(r -> r * s(TB, V, lb, mb, nb, r), r) +
+    #                    p(lb) * (p(la) - p(lb) + p(lc)) * s(TB, V, lb, mb, nb, r) * ∂(r -> r * s(TA, V, la, ma, na, r), r)) / (2r^2 * p(lc))
+
+    @inline f = r -> inners(Sc, f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
 
     if external
-        aij += f1(V.r1) * s(TC, V, lc, mc, nc, V.r1) * p(lc) * lc 
+        r1 = V.r1
+        aij += f1(r1) * Sc(r1) * p(lc) * lc 
     end
     return aij
 end
@@ -116,8 +129,12 @@ function _induction_sTS(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline f1 = r -> p(la) * s(TA, V, la, ma, na, r) * t(TB, V, lb, mb, nb, r) / (r * p(lc))
-    @inline f = r -> inners(r -> s(TC, V, lc, mc, nc, r), f1, lc, r)
+    @inline sa = r->s(TA,V,la,ma,na,r)
+    @inline Tb = r->t(TB,V,lb,mb,nb,r)
+    @inline Sc = r->s(TC,V,lc,mc,nc,r)
+
+    @inline f1 = r -> p(la) * sa(r) * Tb(r) / (r * p(lc))
+    @inline f = r -> inners(Sc, f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
     return aij
@@ -135,8 +152,12 @@ function _induction_tSS(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline f1 = r -> p(lb) * t(TA, V, la, ma, na, r) * s(TB, V, lb, mb, nb, r) / (r * p(lc))
-    @inline f = r -> inners(r -> s(TC, V, lc, mc, nc, r), f1, lc, r)
+    @inline ta = r->t(TA,V,la,ma,na,r)
+    @inline Sb = r->s(TB,V,lb,mb,nb,r)
+    @inline Sc = r->s(TC,V,lc,mc,nc,r)
+
+    @inline f1 = r -> p(lb) * ta(r) * Sb(r) / (r * p(lc))
+    @inline f = r -> inners(Sc, f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
 
@@ -144,7 +165,8 @@ function _induction_tSS(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     #if toroidal velocity is not 0 at r=11 
 
     if external
-        aij += f1(V.r1) * s(TC,V, lc, mc, nc, V.r1) * lc * p(lc) 
+        r1 = V.r1
+        aij += f1(r1) * Sc(r1) * lc * p(lc) 
     end
 
     return aij
@@ -170,15 +192,23 @@ function _induction_sST(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _sa = r -> s(TA, V, la, ma, na, r)
-    @inline _Sb = r -> s(TB, V, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
+    @inline sa = r -> s(TA, V, la, ma, na, r)
+    @inline Sb = r -> s(TB, V, lb, mb, nb, r)
+    @inline Tc = r -> t(TC, V, lc, mc, nc, r)
 
-    @inline f1 = r -> ((p(la) + p(lb) + p(lc)) * _sa(r) * _Sb(r) -
-                       (p(la) + p(lb) - p(lc)) * (r * ∂(_sa, r) * _Sb(r) + r * _sa(r) * ∂(_Sb, r) + r^2 * ∂(_sa, r) * ∂(_Sb, r)) -
-                       p(la) * r^2 * _sa(r) * ∂(r -> ∂(_Sb, r), r) - p(lb) * r^2 * _Sb(r) * ∂(r -> ∂(_sa, r), r)) / (r^3 * p(lc))
+    @inline function f1(r)
+        _sa, _dsa, _d2sa = derivatives012(sa, r)
+        _Sb, _dSb, _d2Sb = derivatives012(Sb, r)
+        return ((p(la) + p(lb) + p(lc)) * _sa * _Sb -
+                       (p(la) + p(lb) - p(lc)) * (r * _dsa * _Sb + r * _sa * _dSb + r^2 * _dsa * _dSb) -
+                       p(la) * r^2 * _sa * _d2Sb - p(lb) * r^2 * _Sb * _d2sa) / (r^3 * p(lc))
+    end
 
-    @inline f = r -> innert(_Tc, f1, lc, r)
+    # @inline f1 = r -> ((p(la) + p(lb) + p(lc)) * _sa(r) * _Sb(r) -
+    #                    (p(la) + p(lb) - p(lc)) * (r * ∂(_sa, r) * _Sb(r) + r * _sa(r) * ∂(_Sb, r) + r^2 * ∂(_sa, r) * ∂(_Sb, r)) -
+    #                    p(la) * r^2 * _sa(r) * ∂(r -> ∂(_Sb, r), r) - p(lb) * r^2 * _Sb(r) * ∂(r -> ∂(_sa, r), r)) / (r^3 * p(lc))
+
+    @inline f = r -> innert(Tc, f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
     return aij
@@ -196,14 +226,21 @@ function _induction_sTT(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _sa = r -> s(TA, V, la, ma, na, r)
-    @inline _Tb = r -> t(TB, V, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
+    @inline sa = r -> s(TA, V, la, ma, na, r)
+    @inline Tb = r -> t(TB, V, lb, mb, nb, r)
+    @inline Tc = r -> t(TC, V, lc, mc, nc, r)
 
-    @inline f1 = r -> (-p(lc) * (p(la) + p(lb) - p(lc)) * (_sa(r) * _Tb(r) + r * ∂(_sa, r) * _Tb(r)) +
-                       p(la) * (p(la) - p(lb) - p(lc)) * (r * ∂(_sa, r) * _Tb(r) + r * _sa(r) * ∂(_Tb, r))) / (2r^2 * p(lc))
+    @inline function f1(r)
 
-    @inline f = r -> innert(_Tc, f1, lc, r)
+        _sa, _dsa = derivatives01(sa, r)
+        _Tb, _dTb = derivatives01(Tb, r)
+        return (-p(lc) * (p(la) + p(lb) - p(lc)) * (_sa * _Tb + r * _dsa * _Tb) +
+                       p(la) * (p(la) - p(lb) - p(lc)) * (r * _dsa * _Tb + r * _sa * _dTb)) / (2r^2 * p(lc))
+    end
+    # @inline f1 = r -> (-p(lc) * (p(la) + p(lb) - p(lc)) * (_sa(r) * _Tb(r) + r * ∂(_sa, r) * _Tb(r)) +
+    #                    p(la) * (p(la) - p(lb) - p(lc)) * (r * ∂(_sa, r) * _Tb(r) + r * _sa(r) * ∂(_Tb, r))) / (2r^2 * p(lc))
+
+    @inline f = r -> innert(Tc, f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
     return aij
@@ -220,14 +257,20 @@ function _induction_tST(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _ta = r -> t(TA, V, la, ma, na, r)
-    @inline _Sb = r -> s(TB, V, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
+    @inline ta = r -> t(TA, V, la, ma, na, r)
+    @inline Sb = r -> s(TB, V, lb, mb, nb, r)
+    @inline Tc = r -> t(TC, V, lc, mc, nc, r)
 
-    @inline f1 = r -> (p(lc) * (p(la) + p(lb) - p(lc)) * (_ta(r) * _Sb(r) + r * _ta(r) * ∂(_Sb, r)) -
-                       p(lb) * (p(lb) - p(la) - p(lc)) * (r * ∂(_ta, r) * _Sb(r) + r * _ta(r) * ∂(_Sb, r))) / (2r^2 * p(lc))
+    @inline function f1(r)
+        _ta, _dta = derivatives01(ta, r)
+        _Sb, _dSb = derivatives01(Sb, r)
+        return (p(lc) * (p(la) + p(lb) - p(lc)) * (_ta * _Sb + r * _ta * _dSb) -
+                       p(lb) * (p(lb) - p(la) - p(lc)) * (r * _dta * _Sb + r * _ta * _dSb)) / (2r^2 * p(lc))
+    end
+    # @inline f1 = r -> (p(lc) * (p(la) + p(lb) - p(lc)) * (_ta(r) * _Sb(r) + r * _ta(r) * ∂(_Sb, r)) -
+    #                    p(lb) * (p(lb) - p(la) - p(lc)) * (r * ∂(_ta, r) * _Sb(r) + r * _ta(r) * ∂(_Sb, r))) / (2r^2 * p(lc))
 
-    @inline f = r -> innert(_Tc, f1, lc, r)
+    @inline f = r -> innert(Tc, f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
     return aij
@@ -244,12 +287,12 @@ function _induction_tTT(::Type{TA}, ::Type{TB}, ::Type{TC}, V::Volume, lmna, lmn
     lb, mb, nb = lmnb
     lc, mc, nc = lmnc
 
-    @inline _ta = r -> t(TA, V, la, ma, na, r)
-    @inline _Tb = r -> t(TB, V, lb, mb, nb, r)
-    @inline _Tc = r -> t(TC, V, lc, mc, nc, r)
+    @inline ta = r -> t(TA, V, la, ma, na, r)
+    @inline Tb = r -> t(TB, V, lb, mb, nb, r)
+    @inline Tc = r -> t(TC, V, lc, mc, nc, r)
 
-    @inline f1 = r -> _ta(r) * _Tb(r) / r
-    @inline f = r -> innert(_Tc, f1, lc, r)
+    @inline f1 = r -> ta(r) * Tb(r) / r
+    @inline f = r -> innert(Tc, f1, lc, r)
 
     aij = ∫dr(f, r, wr) 
     return aij
