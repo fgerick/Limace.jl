@@ -297,4 +297,4 @@ $(TYPEDSIGNATURES)
 
 Compute the sparse Galerkin projection matrix, by projecting the basis `b` onto the Coriolis operator.
 """
-coriolis(b::Basis; threads=false, Ω::T=2.0) where {T<:Number} = _coriolis(Val(threads), b; Ω)
+coriolis(b::Basis; threads=false, Ω::T=2.0, external=false) where {T<:Number} = _coriolis(Val(threads), b; Ω)

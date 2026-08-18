@@ -2,7 +2,7 @@ module Bases
 
 using DocStringExtensions
 
-export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC, DirichletBC
+export BoundaryCondition, NoBC, InviscidBC, NoSlipBC, PerfectlyConductingBC, InsulatingBC, DirichletBC, ThinWallBC
 export Volume, Sphere, SphericalShell
 export LimaceBasis, Basis, BasisElement, isaxisymmetric, Helmholtz, Poloidal, Toroidal
 
@@ -61,6 +61,13 @@ $(TYPEDEF)
 $(TYPEDFIELDS)
 """
 struct DirichletBC <: BoundaryCondition end
+
+"""
+$(TYPEDEF)
+
+$(TYPEDFIELDS)
+"""
+struct ThinWallBC{q,h} <: BoundaryCondition end
 
 abstract type Volume end
 

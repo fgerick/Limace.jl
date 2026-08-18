@@ -226,7 +226,7 @@ end
     return -ν*((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Viscous,Sphere}; ν::T=1.0, threads=false) where T
+function diffusion(b::Basis{Viscous,Sphere}; ν::T=1.0, threads=false, external=false) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
