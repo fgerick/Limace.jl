@@ -587,7 +587,7 @@ end
 
 
     u = Inviscid(N; m)
-    b = Limace.ThinWall(N; m, q=1.0, h=0.0)
+    b = Limace.ThinWall(N; m, q=0.0)
     
     bases = [u,b]
 

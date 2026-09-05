@@ -19,29 +19,50 @@ import ..Limace: inertial, diffusion
 
 export ThinWall
 
-struct ThinWall{q,h}; end
+struct ThinWall{q}; end
 
-#based on appendix of Guervilly et al. (10.1103/PhysRevE.88.053010)
 
-function ThinWall(N; q=1.0, h = 0.0, kwargs...)
-    params=Dict(:q =>q, :h => h)
-    return Basis{ThinWall{q,h},Sphere}(;N, V=Sphere(), BC=ThinWallBC{q,h}(), params,  kwargs...)
+function ThinWall(N; q=0.0, kwargs...)
+    params=Dict(:q =>q)
+    return Basis{ThinWall{q},Sphere}(;N, V=Sphere(), BC=ThinWallBC{q}(), params,  kwargs...)
 end
 
-function s(::Type{Basis{ThinWall{q,h},Sphere}}, V::Sphere, l,m,n,r) where {q,h}
+function s(::Type{Basis{ThinWall{q},Sphere}}, V::Sphere, l,m,n,r) where q
     fac = 1/(sqrt(2l*(1 + l)*(-3 + 2*l + 4*n)*(-1 + 2*l + 4*n)*(1 + 2*l + 4*n))) # ∫s⋅s dV ≠ 1 for h!=0.
-    coeff1 = (-3 + 2*l + 4*n)*(1 + h*(l + 2*l*(-1 + n)*q + (1 - 3*n + 2*n^2)*q))
-    coeff2 = -(-1 + 2*l + 4*n)*(2 + h*(3 - 2*n + 4*n^2)*q + h*l*(2 + (-2 + 4*n)*q))
-    coeff3 = (1 + 2*l + 4*n)*(1 + h*(l + 2*l*n*q + n*(1 + 2*n)*q)) 
+    coeff1 = (-3 + 2*l + 4*n)*(1 + (-1 + n)*(-1 + 2*l + 2*n)*q)
+    coeff2 = -((-1 + 2*l + 4*n)*(2 + (3 - 2*n + 4*n^2 + l*(-2 + 4*n))*q))
+    coeff3 = (1 + 2*l + 4*n)*(1 + 2*n^2*q + n*(q + 2*l*q))
     return fac*r^l*(coeff1*jacobi(n,0,l+1/2,2r^2-1) + coeff2*jacobi(n-1,0,l+1/2,2r^2-1) + coeff3*jacobi(n-2,0,l+1/2,2r^2-1))
 end
 
-function t(::Type{Basis{ThinWall{q,h},Sphere}}, V::Sphere, l,m,n,r) where {q,h}
+function t(::Type{Basis{ThinWall{q},Sphere}}, V::Sphere, l,m,n,r) where {q}
     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n))) # ∫t⋅t dV ≠ 1 for h!=0.
-    coeff1 = (1 + h*(l + n)*(-1 + 2*n)*q)
-    coeff2 = -(1 + h*(1 + l + n)*(1 + 2*n)*q)
+    coeff1 = (1 + (l + n)*(-1 + 2*n)*q)
+    coeff2 = -(1 + (1 + l + n)*(1 + 2*n)*q)
     return fac*r^l*(jacobi(n,0,l+1/2,2r^2-1) + coeff2/coeff1*jacobi(n-1,0,l+1/2,2r^2-1))
 end
+
+#based on appendix of Guervilly et al. (10.1103/PhysRevE.88.053010)
+
+# function ThinWall(N; q=1.0, h = 0.0, kwargs...)
+#     params=Dict(:q =>q, :h => h)
+#     return Basis{ThinWall{q,h},Sphere}(;N, V=Sphere(), BC=ThinWallBC{q,h}(), params,  kwargs...)
+# end
+
+# function s(::Type{Basis{ThinWall{q,h},Sphere}}, V::Sphere, l,m,n,r) where {q,h}
+#     fac = 1/(sqrt(2l*(1 + l)*(-3 + 2*l + 4*n)*(-1 + 2*l + 4*n)*(1 + 2*l + 4*n))) # ∫s⋅s dV ≠ 1 for h!=0.
+#     coeff1 = (-3 + 2*l + 4*n)*(1 + h*(l + 2*l*(-1 + n)*q + (1 - 3*n + 2*n^2)*q))
+#     coeff2 = -(-1 + 2*l + 4*n)*(2 + h*(3 - 2*n + 4*n^2)*q + h*l*(2 + (-2 + 4*n)*q))
+#     coeff3 = (1 + 2*l + 4*n)*(1 + h*(l + 2*l*n*q + n*(1 + 2*n)*q)) 
+#     return fac*r^l*(coeff1*jacobi(n,0,l+1/2,2r^2-1) + coeff2*jacobi(n-1,0,l+1/2,2r^2-1) + coeff3*jacobi(n-2,0,l+1/2,2r^2-1))
+# end
+
+# function t(::Type{Basis{ThinWall{q},Sphere}}, V::Sphere, l,m,n,r) where {q}
+#     fac = 1/sqrt(l*(1 + l)*(1/(-1 + 2*l + 4*n) + 1/(3 + 2*l + 4*n))) # ∫t⋅t dV ≠ 1 for h!=0.
+#     coeff1 = (1 + h*(l + n)*(-1 + 2*n)*q)
+#     coeff2 = -(1 + h*(1 + l + n)*(1 + 2*n)*q)
+#     return fac*r^l*(jacobi(n,0,l+1/2,2r^2-1) + coeff2/coeff1*jacobi(n-1,0,l+1/2,2r^2-1))
+# end
 
 #based on Roberts et al. (2010)
 
@@ -65,17 +86,17 @@ end
 #     return fac*r^l*(jacobi(n,0,l+1/2,2r^2-1) + coeff2/coeff1*jacobi(n-1,0,l+1/2,2r^2-1))
 # end
 
-@inline _nrange_p(b::Basis{ThinWall{q,h},Sphere},l) where {q,h} = 1:((b.N-l+1)÷2)
-@inline _nrange_t(b::Basis{ThinWall{q,h},Sphere},l) where {q,h} = 1:((b.N-l)÷2)
+@inline _nrange_p(b::Basis{ThinWall{q},Sphere},l) where {q} = 1:((b.N-l+1)÷2)
+@inline _nrange_t(b::Basis{ThinWall{q},Sphere},l) where {q} = 1:((b.N-l)÷2)
 
-lpmax(b::Basis{ThinWall{q,h},Sphere}) where {q,h} = b.N
-ltmax(b::Basis{ThinWall{q,h},Sphere}) where {q,h} = b.N
+lpmax(b::Basis{ThinWall{q},Sphere}) where {q} = b.N
+ltmax(b::Basis{ThinWall{q},Sphere}) where {q} = b.N
 
-_lmn2cdeg_p(b::Basis{ThinWall{q,h},Sphere}, l,m,n) where {q,h}  = l+2n-1
-_lmn2cdeg_t(b::Basis{ThinWall{q,h},Sphere}, l,m,n) where {q,h} = l+2n
+_lmn2cdeg_p(b::Basis{ThinWall{q},Sphere}, l,m,n) where {q}  = l+2n-1
+_lmn2cdeg_t(b::Basis{ThinWall{q},Sphere}, l,m,n) where {q} = l+2n
 
 
-function diffusion(b::Basis{ThinWall{q,h}, Sphere}; η::T=1.0, threads=false, external=true) where {q,h,T}
+function diffusion(b::Basis{ThinWall{q}, Sphere}; η::T=1.0, threads=false, external=true) where {q,T}
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
     r, wr = rquad(b.N+5,b.V)
@@ -85,7 +106,7 @@ function diffusion(b::Basis{ThinWall{q,h}, Sphere}; η::T=1.0, threads=false, ex
     return spdiagm(vcat(diff_s,diff_t))
 end
 
-function inertial(b::Basis{ThinWall{q,h}, Sphere}; threads=false, external=true) where {q,h}
+function inertial(b::Basis{ThinWall{q}, Sphere}; threads=false, external=true) where {q}
     T = typeof(b.V.r1)
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)

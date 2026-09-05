@@ -67,7 +67,7 @@ $(TYPEDEF)
 
 $(TYPEDFIELDS)
 """
-struct ThinWallBC{q,h} <: BoundaryCondition end
+struct ThinWallBC{q} <: BoundaryCondition end
 
 abstract type Volume end
 
