@@ -52,9 +52,9 @@ $(TYPEDSIGNATURES)
 
 Fallback for Coriolis term between toroidal and toroidal component, explicitly calculating the quadrature.
 """
-function _coriolis_tt(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
+function _coriolis_tt(bi::Ti, bj::Tj, lmna, lmnb, r, wr; Ω=2.0) where {Ti<:Basis, Tj<:Basis}
     l, m, n = lmna
-    aij = _inertial_tt(b, lmna, lmnb, r, wr)
+    aij = _inertial_tt(bi, bj, lmna, lmnb, r, wr)
     return im * m * Ω / p(l) * aij
 end
 
@@ -63,9 +63,9 @@ $(TYPEDSIGNATURES)
 
 Fallback for Coriolis term between poloidal and poloidal component, explicitly calculating the quadrature.
 """
-function _coriolis_ss(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
+function _coriolis_ss(bi::Ti, bj::Tj, lmna, lmnb, r, wr; Ω=2.0) where {Ti<:Basis, Tj<:Basis}
     l, m, n = lmna
-    aij = _inertial_ss(b, lmna, lmnb, r, wr)
+    aij = _inertial_ss(bi, bj, lmna, lmnb, r, wr)
     return im * m * Ω / p(l) * aij
 end
 
@@ -75,7 +75,7 @@ $(TYPEDSIGNATURES)
 Fallback for Coriolis term between poloidal and toroidal component, explicitly calculating the quadrature. 
 Following eq. (114) in [ivers_scalar_2008](@citet).
 """
-function _coriolis_st(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
+function _coriolis_st(bi::Ti, bj::Tj, lmna, lmnb, r, wr; Ω=2.0) where {Ti<:Basis, Tj<:Basis}
     la,ma,na = lmna
     lb, mb, nb = lmnb
 
@@ -86,8 +86,8 @@ function _coriolis_st(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
     else
         return nothing
     end
-    @inline _sa = r->s(T,b.V,la,ma,na,r)
-    @inline _tb = r->t(T,b.V,lb,mb,nb,r)
+    @inline _sa = r->s(Ti,bi.V,la,ma,na,r)
+    @inline _tb = r->t(Tj,bj.V,lb,mb,nb,r)
     @inline f1 = r-> _∂ll(_tb,lb,la,r)
     @inline f = r -> innert(_sa,f1, la, r)
     aij = ∫dr(f,r,wr)
@@ -101,7 +101,7 @@ $(TYPEDSIGNATURES)
 Fallback for Coriolis term between toroidal and poloidal component, explicitly calculating the quadrature.
 Following eq. (112) in [ivers_scalar_2008](@citet).
 """
-function _coriolis_ts(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
+function _coriolis_ts(bi::Ti, bj::Tj, lmna, lmnb, r, wr; Ω=2.0) where {Ti<:Basis, Tj<:Basis}
     la,ma,na = lmna
     lb, mb, nb = lmnb
 
@@ -113,64 +113,74 @@ function _coriolis_ts(b::T, lmna, lmnb, r, wr; Ω=2.0) where {T<:Basis}
         return nothing
     end
 
-    @inline _ta = r->t(T,b.V,la,ma,na,r)
-    @inline _sb = r->s(T,b.V,lb,mb,nb,r)
+    @inline _ta = r->t(Ti,bi.V,la,ma,na,r)
+    @inline _sb = r->s(Tj,bj.V,lb,mb,nb,r)
     @inline f1 = r-> _∂ll(_sb,lb,la,r)
     @inline f = r -> innert(_ta,f1, la, r)
     aij = ∫dr(f,r,wr)
     return Ω / p(la) * _C * aij
 end
 
-function _coriolis_poloidal_poloidal!(b::T, is, js, aijs, lck, lmn2k_p, l, m, r, wr, Ω) where T<:Basis
-    for n in nrange_p_bc(b, l), n2 in nrange_p(b, l)
-        aij = _coriolis_ss(b, (l, m, n), (l, m, n2), r, wr; Ω)
-        appendit!(is, js, aijs, lck, lmn2k_p[(l, m, n)], lmn2k_p[(l, m, n2)], aij)
+function _coriolis_poloidal_poloidal!(bi::Ti, bj::Tj, is, js, aijs, lck, lmn2k_pi, lmn2k_pj, l, m, r, wr, Ω) where {Ti<:Basis, Tj<:Basis}
+    for n in nrange_p_bc(bi, l), n2 in nrange_p(bj, l)
+        aij = _coriolis_ss(bi, bj, (l, m, n), (l, m, n2), r, wr; Ω)
+        appendit!(is, js, aijs, lck, lmn2k_pi[(l, m, n)], lmn2k_pj[(l, m, n2)], aij)
     end
 
     return nothing
 end
 
-function _coriolis_poloidal_toroidal!(b::T, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω) where T<:Basis
-    for n in nrange_p_bc(b, l), n2 in nrange_t(b, l2)
-        aij = _coriolis_st(b, (l, m, n), (l2, m, n2), r, wr; Ω)
-        appendit!(is, js, aijs, lck, lmn2k_p[(l, m, n)], lmn2k_t[(l2, m, n2)] + _np, aij)
+_coriolis_poloidal_poloidal!(b::Basis, is, js, aijs, lck, lmn2k_p, l, m, r, wr, Ω) = _coriolis_poloidal_poloidal!(b, b, is, js, aijs, lck, lmn2k_p, lmn2k_p, l, m, r, wr, Ω)
+
+function _coriolis_poloidal_toroidal!(bi::Basis, bj::Basis, is, js, aijs, lck, _npj, lmn2k_pi, lmn2k_tj, l, l2, m, r, wr, Ω)
+    for n in nrange_p_bc(bi, l), n2 in nrange_t(bj, l2)
+        aij = _coriolis_st(bi, bj, (l, m, n), (l2, m, n2), r, wr; Ω)
+        appendit!(is, js, aijs, lck, lmn2k_pi[(l, m, n)], lmn2k_tj[(l2, m, n2)] + _npj, aij)
     end
     return nothing
 end
 
+_coriolis_poloidal_toroidal!(b::Basis, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω) = _coriolis_poloidal_toroidal!(b, b, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω)
 
-function _coriolis_toroidal_toroidal!(b::T, is, js, aijs, lck, _np, lmn2k_t, l, m, r, wr, Ω) where T<:Basis
-    for n in nrange_t_bc(b, l), n2 in nrange_t(b, l)
-        aij = _coriolis_tt(b, (l, m, n), (l, m, n2), r, wr; Ω)
-        appendit!(is, js, aijs, lck, lmn2k_t[(l, m, n)] + _np, lmn2k_t[(l, m, n2)] + _np, aij)
+function _coriolis_toroidal_toroidal!(bi::Basis, bj::Basis, is, js, aijs, lck, _npi, _npj, lmn2k_ti, lmn2k_tj, l, m, r, wr, Ω)
+    for n in nrange_t_bc(bi, l), n2 in nrange_t(bj, l)
+        aij = _coriolis_tt(bi, bj, (l, m, n), (l, m, n2), r, wr; Ω)
+        appendit!(is, js, aijs, lck, lmn2k_ti[(l, m, n)] + _npi, lmn2k_tj[(l, m, n2)] + _npj, aij)
     end
     return nothing
 end
 
-function _coriolis_toroidal_poloidal!(b::T, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω) where T<:Basis
-    for n in nrange_t_bc(b, l), n2 in nrange_p(b, l2)
-        aij = _coriolis_ts(b, (l, m, n), (l2, m, n2), r, wr; Ω)
-        appendit!(is, js, aijs, lck, lmn2k_t[(l, m, n)] + _np, lmn2k_p[(l2, m, n2)], aij)
+_coriolis_toroidal_toroidal!(b::Basis, is, js, aijs, lck, _np, lmn2k_t, l, m, r, wr, Ω) = _coriolis_toroidal_toroidal!(b,b, is, js, aijs, lck, _np, _np, lmn2k_t, lmn2k_t, l, m, r, wr, Ω)
+
+function _coriolis_toroidal_poloidal!(bi::Basis, bj::Basis, is, js, aijs, lck, _npi, lmn2k_ti, lmn2k_pj, l, l2, m, r, wr, Ω)
+    for n in nrange_t_bc(bi, l), n2 in nrange_p(bj, l2)
+        aij = _coriolis_ts(bi, bj, (l, m, n), (l2, m, n2), r, wr; Ω)
+        appendit!(is, js, aijs, lck, lmn2k_ti[(l, m, n)] + _npi, lmn2k_pj[(l2, m, n2)], aij)
     end
     return nothing
 end
 
-@inline function _coriolis_poloidal(b::Basis; Ω::T=2.0) where {T}
+_coriolis_toroidal_poloidal!(b::Basis, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω) = _coriolis_toroidal_poloidal!(b,b, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω)
+
+@inline function _coriolis_poloidal(bi::Basis, bj::Basis; Ω::T=2.0) where {T}
 
     is, js, aijs = Int[], Int[], Complex{T}[]
-    lmn2k_p = lmn2k_p_dict(b)
-    lmn2k_t = lmn2k_t_dict(b)
-    _np = np(b)
-    r, wr = rquad(b.N + 5, b.V)
+    lmn2k_pi = lmn2k_p_dict(bi)
+    lmn2k_ti = lmn2k_t_dict(bi)
+    lmn2k_pj = lmn2k_p_dict(bj)
+    lmn2k_tj = lmn2k_t_dict(bj)
+    _npi = np(bi)
+    _npj = np(bj)
+    r, wr = rquad(max(bi.N,bj.N) + 5, bi.V)
     lck = ReentrantLock()
 
     #m == m2 and only l2 = l-1:l+1 needs to be considered.
-    for l in 1:lpmax(b)
-        for m in intersect(b.m, -l:l)
-            _coriolis_poloidal_poloidal!(b, is, js, aijs, lck, lmn2k_p, l, m, r, wr, Ω)
-            for l2 in ((l == 1) ? (2,) : ((l+1 > ltmax(b)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
+    for l in 1:lpmax(bi)
+        for m in intersect(bi.m, -l:l)
+            _coriolis_poloidal_poloidal!(bi, bj, is, js, aijs, lck, lmn2k_pi, lmn2k_pj, l, m, r, wr, Ω)
+            for l2 in ((l == 1) ? (2,) : ((l+1 > ltmax(bj)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
                 if l2 >= abs(m)
-                    _coriolis_poloidal_toroidal!(b, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω)
+                    _coriolis_poloidal_toroidal!(bi, bj, is, js, aijs, lck, _npi, lmn2k_pi, lmn2k_tj, l, l2, m, r, wr, Ω)
                 end
             end
         end
@@ -179,23 +189,27 @@ end
     return is, js, aijs
 end
 
+_coriolis_poloidal(b::Basis; Ω::T=2.0) where T = _coriolis_poloidal(b, b; Ω)
 
-@inline function _coriolis_toroidal(b::Basis; Ω::T=2.0) where {T}
+@inline function _coriolis_toroidal(bi::Basis, bj::Basis; Ω::T=2.0) where {T}
 
     is, js, aijs = Int[], Int[], Complex{T}[]
-    lmn2k_p = lmn2k_p_dict(b)
-    lmn2k_t = lmn2k_t_dict(b)
-    _np = np(b)
-    r, wr = rquad(b.N + 5, b.V)
+    lmn2k_pi = lmn2k_p_dict(bi)
+    lmn2k_ti = lmn2k_t_dict(bi)
+    lmn2k_pj = lmn2k_p_dict(bj)
+    lmn2k_tj = lmn2k_t_dict(bj)
+    _npi = np(bi)
+    _npj = np(bj)
+    r, wr = rquad(max(bi.N,bj.N) + 5, bi.V)
     lck = ReentrantLock()
 
     #m == m2 and only l2 = l-1:l+1 needs to be considered.
-    for l in 1:ltmax(b)
-        for m in intersect(b.m, -l:l)
-            _coriolis_toroidal_toroidal!(b, is, js, aijs, lck, _np, lmn2k_t, l, m, r, wr, Ω)
-            for l2 in ((l == 1) ? (2,) : ((l+1 > lpmax(b)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
+    for l in 1:ltmax(bi)
+        for m in intersect(bi.m, -l:l)
+            _coriolis_toroidal_toroidal!(bi, bj, is, js, aijs, lck, _npi, _npj, lmn2k_ti, lmn2k_tj, l, m, r, wr, Ω)
+            for l2 in ((l == 1) ? (2,) : ((l+1 > lpmax(bj)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
                 if l2 >= abs(m)
-                    _coriolis_toroidal_poloidal!(b, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω)
+                    _coriolis_toroidal_poloidal!(bi, bj, is, js, aijs, lck, _npi, lmn2k_ti, lmn2k_pj, l, l2, m, r, wr, Ω)
                 end
             end
         end
@@ -204,26 +218,29 @@ end
     return is, js, aijs
 end
 
-@inline function _coriolis_poloidal_threaded(b::Basis; Ω::T=2.0) where {T}
+_coriolis_toroidal(b::Basis; Ω::T=2.0) where T = _coriolis_toroidal(b, b; Ω)
+
+@inline function _coriolis_poloidal_threaded(bi::Basis, bj::Basis; Ω::T=2.0) where {T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
+    lmn2k_pi = lmn2k_p_dict(bi)
+    lmn2k_ti = lmn2k_t_dict(bi)
+    lmn2k_pj = lmn2k_p_dict(bj)
+    lmn2k_tj = lmn2k_t_dict(bj)
+    _npi = np(bi)
+    _npj = np(bj)
+    r, wr = rquad(max(bi.N,bj.N) + 5, bi.V)
     lck = ReentrantLock()
 
 
-    lmn2k_p = lmn2k_p_dict(b)
-    lmn2k_t = lmn2k_t_dict(b)
-    _np = np(b)
-    r, wr = rquad(b.N + 5, b.V)
-
-
     #m == m2 and only l2 = l-1:l+1 needs to be considered.
-    @sync for l in 1:lpmax(b)
-        for m in intersect(b.m, -l:l)
+    @sync for l in 1:lpmax(bi)
+        for m in intersect(bi.m, -l:l)
             Threads.@spawn begin
-                _coriolis_poloidal_poloidal!(b, is, js, aijs, lck, lmn2k_p, l, m, r, wr, Ω)
-                for l2 in ((l == 1) ? (2,) : ((l+1 > ltmax(b)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
+                _coriolis_poloidal_poloidal!(bi, bj, is, js, aijs, lck, lmn2k_pi, lmn2k_pj, l, m, r, wr, Ω)
+                for l2 in ((l == 1) ? (2,) : ((l+1 > ltmax(bj)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
                     if l2 >= abs(m)
-                        _coriolis_poloidal_toroidal!(b, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω)
+                        _coriolis_poloidal_toroidal!(bi, bj, is, js, aijs, lck, _npi, lmn2k_pi, lmn2k_tj, l, l2, m, r, wr, Ω)
                     end
                 end
             end
@@ -234,24 +251,26 @@ end
 end
 
 
-@inline function _coriolis_toroidal_threaded(b::Basis; Ω::T=2.0) where {T}
+@inline function _coriolis_toroidal_threaded(bi::Basis, bj::Basis; Ω::T=2.0) where {T}
 
     is, js, aijs = Int[], Int[], complex(T)[]
+    lmn2k_pi = lmn2k_p_dict(bi)
+    lmn2k_ti = lmn2k_t_dict(bi)
+    lmn2k_pj = lmn2k_p_dict(bj)
+    lmn2k_tj = lmn2k_t_dict(bj)
+    _npi = np(bi)
+    _npj = np(bj)
+    r, wr = rquad(max(bi.N,bj.N) + 5, bi.V)
     lck = ReentrantLock()
 
-    lmn2k_p = lmn2k_p_dict(b)
-    lmn2k_t = lmn2k_t_dict(b)
-    _np = np(b)
-    r, wr = rquad(b.N + 5, b.V)
-
     #m == m2 and only l2 = l-1:l+1 needs to be considered.
-    @sync for l in 1:ltmax(b)
-        for m in intersect(b.m, -l:l)
+    @sync for l in 1:ltmax(bi)
+        for m in intersect(bi.m, -l:l)
             Threads.@spawn begin
-                _coriolis_toroidal_toroidal!(b, is, js, aijs, lck, _np, lmn2k_t, l, m, r, wr, Ω)
-                for l2 in ((l == 1) ? (2,) : ((l+1 > lpmax(b)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
+                _coriolis_toroidal_toroidal!(bi, bj, is, js, aijs, lck, _npi, _npj, lmn2k_ti, lmn2k_tj, l, m, r, wr, Ω)
+                for l2 in ((l == 1) ? (2,) : ((l+1 > lpmax(bi)) ? (l - 1,) : (l - 1, l + 1))) #only consider l-1 and l+1, and taking care of the upper and lower boundaries.
                     if l2 >= abs(m)
-                        _coriolis_toroidal_poloidal!(b, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω)
+                        _coriolis_toroidal_poloidal!(bi, bj, is, js, aijs, lck, _npi, lmn2k_ti, lmn2k_pj, l, l2, m, r, wr, Ω)
                     end
                 end
             end
@@ -262,39 +281,45 @@ end
 end
 
 
-function _coriolis(::Val{false}, b::TB; Ω::T=2.0) where {TB<:Basis,T}
-    nu = length(b)
+function _coriolis(::Val{false}, bi::Basis, bj::Basis; Ω::T=2.0) where T
+    nui = length(bi)
+    nuj = length(bj)
 
-    is, js, aijs = _coriolis_poloidal(b; Ω)
-    is2, js2, aijs2 = _coriolis_toroidal(b; Ω)
-
-    append!(is, is2)
-    append!(js, js2)
-    append!(aijs, aijs2)
-
-    RHS = sparse(is, js, aijs, nu, nu)
-    return RHS
-
-end
-
-function _coriolis(::Val{true}, b::TB; Ω::T=2.0) where {TB<:Basis,T}
-    nu = length(b)
-
-    is, js, aijs = _coriolis_poloidal_threaded(b; Ω)
-    is2, js2, aijs2 = _coriolis_toroidal_threaded(b; Ω)
+    is, js, aijs = _coriolis_poloidal(bi, bj; Ω)
+    is2, js2, aijs2 = _coriolis_toroidal(bi, bj; Ω)
 
     append!(is, is2)
     append!(js, js2)
     append!(aijs, aijs2)
 
-    RHS = sparse(is, js, aijs, nu, nu)
+    RHS = sparse(is, js, aijs, nui, nuj)
     return RHS
 
 end
+
+function _coriolis(::Val{true}, bi::Basis, bj::Basis; Ω::T=2.0) where T 
+    nui = length(bi)
+    nuj = length(bj)
+
+    is, js, aijs = _coriolis_poloidal_threaded(bi, bj; Ω)
+    is2, js2, aijs2 = _coriolis_toroidal_threaded(bi, bj; Ω)
+
+    append!(is, is2)
+    append!(js, js2)
+    append!(aijs, aijs2)
+
+    RHS = sparse(is, js, aijs, nui, nuj)
+    return RHS
+
+end
+
+_coriolis(::Val{true}, b::Basis; Ω::T=2.0) where T = _coriolis(Val(true), b, b; Ω)
+_coriolis(::Val{false}, b::Basis; Ω::T=2.0) where T = _coriolis(Val(false), b, b; Ω)
 
 """
 $(TYPEDSIGNATURES)
 
 Compute the sparse Galerkin projection matrix, by projecting the basis `b` onto the Coriolis operator.
 """
-coriolis(b::Basis; threads=false, Ω::T=2.0) where {T<:Number} = _coriolis(Val(threads), b; Ω)
+coriolis(b::Basis; threads=false, Ω::T=2.0, external=false) where {T<:Number} = _coriolis(Val(threads),b, b; Ω)
+coriolis(bi::Basis, bj::Basis; threads=false, Ω::T=2.0, external=false) where {T<:Number} = _coriolis(Val(threads),bi, bj; Ω)
