@@ -80,8 +80,10 @@ end
 @inline function np(b::Basis{Inviscid,Sphere})
     if isaxisymmetric(b)
         return _np(b.N,first(b.m))
-    else
+    elseif b.m == -b.N:b.N
         return _np(b.N)
+    else
+        return length(lmn_p(b))
     end
 end
 
@@ -97,8 +99,10 @@ end
 @inline function nt(b::Basis{Inviscid,Sphere})
     if isaxisymmetric(b)
         return _nt(b.N,first(b.m))
-    else
+    elseif b.m == -b.N:b.N
         return _nt(b.N)
+    else
+        return length(lmn_t(b))
     end
 end
 
