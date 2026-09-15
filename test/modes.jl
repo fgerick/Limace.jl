@@ -575,3 +575,38 @@ end
 
 
 end
+
+@testset "Luo & Jackson 2022 mode (ThinWall basis)" begin
+
+    import Limace.Bases
+
+    N = 50
+    m = 0
+    Le = 1e-4
+    Lu = 2 / Le
+
+
+    u = Inviscid(N; m)
+    b = Limace.ThinWall(N; m, q=0.0)
+    
+    bases = [u,b]
+
+    B0 = BasisElement(Basis{LJ22, Sphere}, Poloidal, (2,0,1), 1.0)
+
+    forcings = [Limace.Inertial(u), Limace.Inertial(b), Limace.Coriolis(u, 1/Le), Limace.Lorentz(u,b,B0), Limace.InductionB0(b,u,B0), Limace.Diffusion(b, 1/Lu)]
+
+    problem = LimaceProblem(bases, forcings)
+    Limace.assemble!(problem; threads=true)
+
+    target = -0.0066 - 1.033im
+    # target = -0.042+0.66im
+    evals, evecs = eigstarget(problem.RHS, problem.LHS, target; nev = 1)
+
+    lj22_n350 = -0.0065952461 - 1.0335959942im
+
+    abs(lj22_n350-first(evals))
+    @test any(isapprox.(evals, lj22_n350, atol = 1e-7))
+
+
+end
+

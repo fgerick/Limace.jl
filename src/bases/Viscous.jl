@@ -168,7 +168,7 @@ function _coriolis_st(l,l2,m,m2,n,n2; Ω::T = 2.0) where T
     return aij
 end
 
-function _coriolis_poloidal_poloidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lck, lmn2k_p, l, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_poloidal!(b::Basis{Viscous,Sphere}, bj::Basis{Viscous,Sphere}, is, js, aijs, lck, lmn2k_p, lmn2k_pj, l, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         njs_all = nrange_p(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -179,7 +179,7 @@ function _coriolis_poloidal_poloidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lc
     return nothing
 end
 
-function _coriolis_poloidal_toroidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_poloidal_toroidal!(b::Basis{Viscous,Sphere}, bj::Basis{Viscous,Sphere}, is, js, aijs, lck, _np, lmn2k_p, lmn2k_t, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_p(b,l)
         njs_all = nrange_t(b,l2)
         for n2 in max(n-2,first(njs_all)):min(n+2, last(njs_all))
@@ -191,7 +191,7 @@ function _coriolis_poloidal_toroidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lc
 end
 
 
-function _coriolis_toroidal_toroidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lck, _np, lmn2k_t, l, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_toroidal!(b::Basis{Viscous,Sphere}, bj::Basis{Viscous,Sphere}, is, js, aijs, lck, _np, _npj, lmn2k_t, lmn2k_tj, l, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l)
         njs_all = nrange_t(b,l)
         for n2 in max(n-1,first(njs_all)):min(n+1, last(njs_all))
@@ -202,7 +202,7 @@ function _coriolis_toroidal_toroidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lc
     return nothing
 end
 
-function _coriolis_toroidal_poloidal!(b::Basis{Viscous,Sphere}, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
+function _coriolis_toroidal_poloidal!(b::Basis{Viscous,Sphere}, bj::Basis{Viscous,Sphere}, is, js, aijs, lck, _np, lmn2k_t, lmn2k_p, l, l2, m, r, wr, Ω::T) where T
     for n in nrange_t(b,l) 
         njs_all = nrange_p(b,l2)
         for n2 in max(n-2,first(njs_all)):min(n+2, last(njs_all))
@@ -226,7 +226,7 @@ end
     return -ν*((1 + 2*l + 4*n)*(5 + 2*l + 4*n))/2
 end
 
-function diffusion(b::Basis{Viscous,Sphere}; ν::T=1.0, threads=false) where T
+function diffusion(b::Basis{Viscous,Sphere}; ν::T=1.0, threads=false, external=false) where T
     lmnp = lmn_p(b)
     lmnt = lmn_t(b)
 
