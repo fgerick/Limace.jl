@@ -107,7 +107,7 @@ end
     for mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
-        if lj ∈ ljsa
+        if (lj ∈ ljsa) && (mj ∈ buj.m)
             push!(As,adamgaunt(lj,l0,li, mj, m0, mi))
         end
     end
@@ -118,7 +118,7 @@ end
         for mi in intersect(bbi.m, -li:li)
             mj = adamgaunt_mjs(mi, m0)
             ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
-            if lj ∈ ljsa
+            if (lj ∈ ljsa) && (mj ∈ buj.m)
                 A = As[iA]
                 iA+=1
                 lmni = (li, mi, ni)
@@ -137,7 +137,7 @@ end
     for mi in intersect(bbi.m, -li:li)
         mj = elsasser_mjs(mi, m0)
         ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
-        if lj ∈ ljse
+        if (lj ∈ ljse) && (mj ∈ buj.m)
             push!(Es,elsasser(lj,l0,li, mj, m0, mi))
         end
     end
@@ -148,7 +148,7 @@ end
         for mi in intersect(bbi.m, -li:li)
             mj = elsasser_mjs(mi, m0)
             ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
-            if lj ∈ ljse
+            if (lj ∈ ljse) && (mj ∈ buj.m)
                 E = Es[iE]
                 iE+=1
                 lmni = (li, mi, ni)
@@ -168,7 +168,7 @@ end
     for mi in intersect(bbi.m, -li:li)
         mj = adamgaunt_mjs(mi, m0)
         ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
-        if lj ∈ ljsa
+        if (lj ∈ ljsa) && (mj ∈ buj.m)
             push!(As,adamgaunt(l0,lj,li, m0, mj, mi))
         end
     end
@@ -179,7 +179,7 @@ end
         for mi in intersect(bbi.m, -li:li)
             mj = adamgaunt_mjs(mi, m0)
             ljsa = adamgaunt_ljs(li, l0, mj, lptmax(buj))
-            if lj ∈ ljsa
+            if (lj ∈ ljsa) && (mj ∈ buj.m)
                 A = As[iA]
                 iA +=1
                 lmni = (li, mi, ni)
@@ -198,7 +198,7 @@ end
     for mi in intersect(bbi.m, -li:li)
         mj = elsasser_mjs(mi, m0)
         ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
-        if lj ∈ ljse
+        if (lj ∈ ljse) && (mj ∈ buj.m)
             push!(Es,elsasser(l0,lj,li, m0, mj, mi))
         end
     end
@@ -209,7 +209,7 @@ end
         for mi in intersect(bbi.m, -li:li)
             mj = elsasser_mjs(mi, m0)
             ljse = elsasser_ljs(li, l0, mj, lptmax(buj))
-            if lj ∈ ljse
+            if (lj ∈ ljse) && (mj ∈ buj.m)
                 E = Es[iE]
                 iE+=1
                 lmni = (li, mi, ni)
