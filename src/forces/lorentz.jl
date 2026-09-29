@@ -696,7 +696,7 @@ $(TYPEDSIGNATURES)
 
 Computes the Lorentz term for a poloidal/toroidal background magnetic field `B0`, a velocity basis `bui` and a magnetic field basis `bbj`.
 """
-function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,TH,T}; threads=false) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T}
+function lorentz(bui::TI, bbj::TJ, B0::BasisElement{T0,TH,T}; threads=false, external=false) where {TI<:Basis,TJ<:Basis,T0<:Basis,TH<:Helmholtz,T}
     if length(bui.m) == length(bbj.m) == 1
         return _lorentz(Val(threads), bui, bbj, B0)
     else

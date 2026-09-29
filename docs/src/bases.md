@@ -284,6 +284,7 @@ Limace.Bases.InviscidBC
 Limace.Bases.NoSlipBC
 Limace.Bases.PerfectlyConductingBC
 Limace.Bases.DirichletBC
+Limace.Bases.ThinWallBC
 ```
 
 ## Basis elements

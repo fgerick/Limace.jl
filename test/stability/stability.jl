@@ -14,7 +14,7 @@ end
 
 function update_and_solve_problem!(problem, α, update_f!)::ComplexF64
 	update_f!(problem, α)
-	Limace.solve!(problem; method=:sparse, target=0.0+0.0im, which=:LR, nev=1) #, mindim=20, maxdim=300) 	
+	Limace.solve!(problem; method=:sparse, target=0.0+1e-6im, which=:LR, nev=1) #, mindim=20, maxdim=300) 	
 	λ = problem.sol.values
     if (length(λ)>0)             
 		return first(λ)
@@ -61,7 +61,7 @@ Limace.Bases.t(::Type{Basis{FP83, Limace.Sphere}}, V::Limace.Sphere, l, m, n, r)
 @testset "Kaplan et al. (2017)" begin
 
 	
-	parameters = [(; Ek=1e-5, Pr=0.1, m=11, Ra_interval=(1e5,1e8), N=50),
+	parameters = [(; Ek=1e-5, Pr=0.1, m=11, Ra_interval=(1e5,1e8), N=60),
 				  (; Ek=3e-6, Pr=0.03, m=12, Ra_interval=(1e5,1e8), N=80),
 				  (; Ek=1e-6, Pr=0.01, m=11, Ra_interval=(1e5,1e9), N=100)]
 	
