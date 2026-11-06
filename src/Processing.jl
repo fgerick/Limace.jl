@@ -113,15 +113,32 @@ function reducematrix(a, u0, b0, u1, b1)
     return out
 end
 
+function reducevector(a, u0, b0, u1, b1)
+    i, j = getindices(u0, b0, u1, b1)
+    n = length(u1) + length(b1)
+    out = zeros(eltype(a), n)
+    a1 = a[i]
+    i2, j2 = getindices_nobc(u1, b1)
+    out[j2] = a1
+    return out
+end
+
+function increasevector(a, u0, b0, u1, b1)
+    i,_ = getindices(u1, b1, u0, b0)
+    n = length(u1) + length(b1)
+    out = zeros(eltype(a),n)
+    out[i] = a
+    return out
+end
+
 function usection(::Val{true}, λ, λ2, evecs, evecs2, u0, b0, u1, b1; threshc=0.99, threshλ=0.1)
     @assert u1.N > u0.N
-    nth = Threads.nthreads()
-    is = [Int[] for _ in 1:nth]
-    is2 = [Int[] for _ in 1:nth]
+    is = Int[]
+    is2 = Int[]
     inds = getindices(u1, b1, u0, b0)[2]
+    lck = ReentrantLock()
 
     Threads.@threads for i in eachindex(λ)
-        it = Threads.threadid()
         found = false
         ω = λ[i]
         for i2 in eachindex(λ2)
@@ -129,8 +146,10 @@ function usection(::Val{true}, λ, λ2, evecs, evecs2, u0, b0, u1, b1; threshc=0
             if (!found) && (abs(ω) * (1 - threshλ) < abs(ω2) < (1 + threshλ) * abs(ω))
                 c = cor(@views(evecs[:, i]), @views(evecs2[inds, i2]))
                 if (abs(c) > threshc) && (sign(imag(ω)) == sign(imag(ω2)))
-                    push!(is[it], i)
-                    push!(is2[it], i2)
+                    lock(lck) do
+                        push!(is, i)
+                        push!(is2, i2)
+                    end
                     found = true
                     @goto λi
                 end
@@ -156,14 +175,14 @@ function energies(problem::LimaceProblem)
     energies = [zeros(nev) for _ in 1:nbases]
 
     for i in 1:nbases
-        _LHS = inertial(problem.bases[i])
-        if Diagonal(_LHS) ≈ _LHS
-            LHS = Diagonal(_LHS)
-        elseif SymTridiagonal(_LHS) ≈ _LHS
-            LHS = SymTridiagonal(_LHS)
-        else
-            LHS = _LHS
-        end
+        LHS = inertial(problem.bases[i])
+        # if Diagonal(_LHS) ≈ _LHS
+        #     LHS = Diagonal(_LHS)
+        # elseif SymTridiagonal(_LHS) ≈ _LHS
+        #     LHS = SymTridiagonal(_LHS)
+        # else
+        #     LHS = _LHS
+        # end
         _range = sum(ns_bases[1:i-1]) + 1:sum(ns_bases[1:i])
         Threads.@threads for j in axes(x, 2)
             _x = view(x, _range, j)
