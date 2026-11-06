@@ -7,7 +7,7 @@ using SparseArrays
 using Statistics
 using ..Bases
 using ..Bases: lmn_p, lmn_t, lmn_p_bc, lmn_t_bc, lmn2k_p_dict, lmn2k_t_dict, _lmn2cdeg_p, _lmn2cdeg_t, _nrange_p, _nrange_t, lpmax, ltmax
-using ..Limace: LimaceProblem, inertial
+using ..Limace: LimaceProblem, inertial, Forcing, assemble!
 
 
 
@@ -69,6 +69,26 @@ function getindices(u0, u1)
     return indsu_bc, indsu
 end
 
+
+function getindices_nobc(u)
+
+    lmnpu = lmn_p_bc(u)
+    lmnpud = lmn2k_p_dict(u)
+    ipu = [lmnpud[i] for i in lmnpu]
+    jpu = [lmnpud[i] for i in lmn_p(u)]
+    np0 = length(lmn_p(u))
+
+    lmntu = lmn_t_bc(u)
+    lmntud = lmn2k_t_dict(u)
+    itu = [lmntud[i] + np0 for i in lmntu]
+    iu = vcat(ipu, itu)
+
+    jtu = [lmntud[i] + np0 for i in lmn_t(u)]
+    ju = vcat(jpu, jtu)
+
+    return iu,ju
+end
+
 function getindices_nobc(u, b)
 
     lmnpu = lmn_p_bc(u)
@@ -113,6 +133,122 @@ function reducematrix(a, u0, b0, u1, b1)
     return out
 end
 
+function reducematrixIJ(a, bi0, bj0, bi1, bj1)
+    i_bc,i= getindices(bi0, bi1)
+    j_bc,j= getindices(bj0, bj1)
+    n = length(bi1)
+    m = length(bj1)
+    out = spzeros(ComplexF64, n, m)
+    a1 = a[i_bc, j]
+    i2, _ = getindices_nobc(bi1)
+    _, j2 = getindices_nobc(bj1)
+    out[i2, j2] = a1
+    return out
+end
+
+function increasematrixIJ(a, bi0, bj0, bi1, bj1)
+    i_bc,i= getindices(bi1, bi0)
+    j_bc,j= getindices(bj1, bj0)
+    n = length(bi1)
+    m = length(bj1)
+    out = spzeros(ComplexF64, n, m)
+    out[i_bc, j] = a
+    return out
+end
+
+function movematrixIJ(a, bi0,bj0, bi1, bj1)
+    if bi0.N >= bi1.N 
+        return reducematrixIJ(a, bi0,bj0, bi1,bj1)
+    else
+        return increasematrixIJ(a, bi0,bj0, bi1,bj1)
+    end
+end
+
+function reduce(f::TF, f2::TF) where TF<:Forcing{1}
+    basiss = fieldnames(TF)[1]
+    basis = getfield(f,basiss)
+    basis2 = getfield(f2,basiss)
+    f2.mat = movematrixIJ(f.mat, basis, basis, basis2, basis2) 
+    f2.factor = f.factor
+    f2.preassembled=true
+    return f2
+end
+
+function reduce(f::TF, N2::Integer; m2=(-N2):N2) where TF<:Forcing{1}
+    basiss = fieldnames(TF)[1]
+    basis = getfield(f,basiss)
+    basis2 = reduce(basis, N2; m2)
+    f2 = deepcopy(f)
+    setfield!(f2, basiss, basis2)
+    f2.mat = movematrixIJ(f.mat, basis, basis, basis2, basis2) 
+    f2.factor = f.factor
+    f2.preassembled=true
+    return f2
+end
+
+
+function reduce(f::TF, f2::TF) where TF<:Forcing{2}
+
+    ibasiss = fieldnames(TF)[1]
+    jbasiss = fieldnames(TF)[2]
+    ibasis = getfield(f,ibasiss)
+    jbasis = getfield(f,jbasiss)
+    ibasis2 = getfield(f2,ibasiss)
+    jbasis2 = getfield(f2,jbasiss)
+
+    f2.mat = movematrixIJ(f.mat, ibasis, jbasis, ibasis2, jbasis2) 
+    f2.factor = f.factor
+    f2.preassembled=true
+    return f2
+end
+
+
+function reduce(f::TF, N2::Integer; m2=(-N2):N2) where TF<:Forcing{2}
+
+    ibasiss = fieldnames(TF)[1]
+    jbasiss = fieldnames(TF)[2]
+    ibasis = getfield(f, ibasiss)
+    jbasis = getfield(f, jbasiss)
+    ibasis2 = reduce(ibasis, N2; m2)
+    jbasis2 = reduce(jbasis, N2; m2)
+
+    f2 = deepcopy(f)
+    setfield!(f2, ibasiss, ibasis2)
+    setfield!(f2, jbasiss, jbasis2)
+    f2.mat = movematrixIJ(f.mat, ibasis, jbasis, ibasis2, jbasis2) 
+    f2.factor = f.factor
+    f2.preassembled=true
+    return f2
+end
+
+function reduce(b::Basis{T,V}, N2; m2=(-N2):N2) where {T, V<:Volume}
+    # N = b.N
+    # @assert N2<=N
+    return Basis{T,V}(; N=N2, m=m2, n=b.n, BC=b.BC, V=b.V, params=b.params)
+end
+
+function reduce(p::LimaceProblem, N2; m2 = (-N2):N2)
+    (; bases, forcings) = p
+    N = first(bases).N
+    # @assert N2<=N
+
+    bases2 = [reduce(b,N2; m2) for b in bases]
+    forcings2 = [reduce(f, N2; m2) for f in forcings]
+    
+    p2 = LimaceProblem(bases2, forcings2)
+    p2.preassembled=true
+    assemble!(p2)
+    return p2
+end
+
+function increasevector(a, u0, b0, u1, b1)
+    i,_ = getindices(u1, b1, u0, b0)
+    n = length(u1) + length(b1)
+    out = zeros(eltype(a),n)
+    out[i] = a
+    return out
+end
+
 function usection(::Val{true}, λ, λ2, evecs, evecs2, u0, b0, u1, b1; threshc=0.99, threshλ=0.1)
     @assert u1.N > u0.N
     nth = Threads.nthreads()
@@ -154,16 +290,11 @@ function energies(problem::LimaceProblem)
     ns_bases = length.(problem.bases)
     nev = size(x,2)
     energies = [zeros(nev) for _ in 1:nbases]
+    LHSs = [problem.LHS[sum(ns_bases[1:i-1])+1:sum(ns_bases[1:i]), sum(ns_bases[1:i-1])+1:sum(ns_bases[1:i])] for i in 1:nbases]
 
     for i in 1:nbases
-        _LHS = inertial(problem.bases[i])
-        if Diagonal(_LHS) ≈ _LHS
-            LHS = Diagonal(_LHS)
-        elseif SymTridiagonal(_LHS) ≈ _LHS
-            LHS = SymTridiagonal(_LHS)
-        else
-            LHS = _LHS
-        end
+        # LHS = sparse(complex(inertial(problem.bases[i])))
+        LHS = sparse(complex(LHSs[i]))
         _range = sum(ns_bases[1:i-1]) + 1:sum(ns_bases[1:i])
         Threads.@threads for j in axes(x, 2)
             _x = view(x, _range, j)
